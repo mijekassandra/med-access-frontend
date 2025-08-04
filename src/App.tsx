@@ -1,35 +1,58 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+// import { useState } from "react";
+
+// components
+import Sidebar from "./global-components/Sidebar";
+import Body from "./components/Body";
+
+// pages
+import BaseTheme2 from "./design-system/BaseTheme2";
+import KaraDesignSystem from "./design-system/KaraDesignSystem";
+import KassyDesignSystem from "./design-system/KassyDesignSystem";
+import MillborneDesignSystem from "./design-system/MillborneDesignSystem";
+import Login from "./features/auth/pages/Login";
 
 function App() {
-  const [count, setCount] = useState(0)
+  // Mock user data - in real app this would come from auth context
+  const mockUser = {
+    role: "doctor" as const,
+    name: "John Smith",
+    avatar: undefined,
+  };
+
+  const handleLogout = () => {
+    // Handle logout logic here
+    console.log("Logout clicked");
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <BrowserRouter>
+      <div className="flex h-screen bg-gray-100">
+        {/* Sidebar */}
+        <Sidebar
+          userRole={mockUser.role}
+          userName={mockUser.name}
+          onLogout={handleLogout}
+        />
+
+        {/* Main Content Area */}
+        <Routes>
+          {/* Design System Routes */}
+          <Route path="/base-theme" element={<BaseTheme2 />} />
+          <Route path="/kassy" element={<KassyDesignSystem />} />
+          <Route path="/millborne" element={<MillborneDesignSystem />} />
+          <Route path="/kara" element={<KaraDesignSystem />} />
+          <Route path="/" element={<Login />} />
+
+          {/* Main Application Routes */}
+          <Route path="/*" element={<Body />} />
+
+          {/* Fallback route for design system */}
+          {/* <Route path="/millborne" element={<MillborneDesignSystem />} /> */}
+        </Routes>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;

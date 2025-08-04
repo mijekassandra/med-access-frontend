@@ -1,3 +1,187 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-montserrat text-szBlack900;
+  }
+  p {
+    @apply font-dmSans text-sm tracking-tight text-szBlack900;
+  }
+}
+
+@layer components {
+  /*? ICONS */
+  .icon {
+    @apply text-current;
+  }
+
+  .icon-sm {
+    @apply w-4 h-4; /* 16px */
+  }
+
+  .icon-md {
+    @apply w-6 h-6; /* 24px */
+  }
+
+  .icon-lg {
+    @apply w-8 h-8; /* 32px */
+  }
+
+  /* ----------------RANGE---------------- */
+  /* Thumb */
+  input[type="range"].range-thumb-shadow::-webkit-slider-thumb {
+    @apply appearance-none bg-white w-4 h-4 rounded-full cursor-pointer shadow-custom-light;
+  }
+
+  input[type="range"].range-thumb-shadow::-moz-range-thumb {
+    @apply appearance-none bg-white w-4 h-4 rounded-full cursor-pointer shadow-custom-light;
+  }
+
+  /* Ring */
+  input[type="range"].range-thumb-ring:focus::-webkit-slider-thumb {
+    @apply ring-1 ring-szSecondary500; /* Yellow focus ring */
+  }
+
+  input[type="range"].range-thumb-ring:focus::-moz-range-thumb {
+    @apply ring-1 ring-szSecondary500; /* Yellow focus ring */
+  }
+
+  input[type="range"].range-thumb-ring:hover::-webkit-slider-thumb {
+    @apply ring-0 bg-szPrimary700;
+  }
+
+  input[type="range"].range-thumb-ring:hover::-moz-range-thumb {
+    @apply ring-0 bg-szPrimary700;
+  }
+
+  input[type="range"].range-thumb-ring:active::-webkit-slider-thumb {
+    @apply ring-0 bg-szPrimary900; /* Yellow focus ring */
+  }
+
+  input[type="range"].range-thumb-ring:active::-moz-range-thumb {
+    @apply ring-0 bg-szPrimary900; /* Yellow focus ring */
+  }
+
+  /* Disabled state (no hover, focus, or active styles) */
+  input[type="range"]:disabled.range-thumb-ring::-webkit-slider-thumb {
+    @apply ring-0 bg-szGrey300; /* Grey thumb and disabled cursor */
+  }
+
+  input[type="range"]:disabled.range-thumb-ring::-moz-range-thumb {
+    @apply ring-0 bg-szGrey300; /* Grey thumb and disabled cursor */
+  }
+
+  input[type="range"]:disabled.range-thumb-ring {
+    @apply bg-szGrey300; /* Grey track */
+  }
+
+  /* ----------------react-date-picker---------------- */
+  .custom-date-picker .react-date-picker__wrapper {
+    @apply border-0 font-dmSans text-body-small-reg text-szBlack700 font-bold font-normal group-hover:text-szPrimary900;
+  }
+
+  .custom-date-picker .react-date-picker__inputGroup input {
+    @apply text-gray-700 bg-white text-sm rounded-lg outline-none group-hover:text-szPrimary900;
+  }
+
+  /* Apply Tailwind styles to the calendar container */
+  .custom-date-picker .react-calendar {
+    @apply rounded-md p-6;
+  }
+
+  /* Style the calendar navigation (previous/next month buttons) */
+  .custom-date-picker .react-calendar__navigation {
+    @apply flex justify-between items-center gap-1;
+  }
+
+  /* Style the navigation buttons */
+  .custom-date-picker .react-calendar__navigation button {
+    @apply text-szPrimary700  focus:ring-2 focus:ring-blue-500 rounded-md hover:bg-white;
+  }
+
+  /* Style the current month and year text */
+  .custom-date-picker .react-calendar__navigation__label {
+    @apply text-h6 font-montserrat font-semibold;
+  }
+
+  /* Style the individual date tiles */
+  .custom-date-picker .react-calendar__tile {
+    @apply text-body-small-reg font-dmSans font-medium px-3 py-2;
+  }
+
+  /* Style for the current day */
+  .custom-date-picker .react-calendar__tile--now {
+    @apply bg-white;
+  }
+
+  /* Style the weekday headers */
+  .custom-date-picker .react-calendar__month-view__weekdays {
+    @apply grid grid-cols-7 text-center text-caption-all-caps font-dmSans font-bold text-szBlack700 mb-2;
+  }
+
+  .custom-date-picker .react-calendar__month-view__weekdays__weekday {
+    @apply text-szBlack700;
+  }
+
+  /* Make Sunday and Saturday yellow */
+  .custom-date-picker
+    .react-calendar__month-view__weekdays__weekday:first-child {
+    @apply text-szSecondary500;
+  }
+
+  .custom-date-picker
+    .react-calendar__month-view__weekdays__weekday:last-child {
+    @apply text-szSecondary500;
+  }
+
+  /* Make dates under Sunday yellow */
+  .custom-date-picker .react-calendar__month-view__days__day:nth-child(7n + 1) {
+    @apply text-szBlack700;
+  }
+
+  /* Make dates under Saturday yellow */
+  .custom-date-picker .react-calendar__month-view__days__day:nth-child(7n) {
+    @apply text-szBlack700;
+  }
+
+  /* Hover effect for date tiles */
+  /* .custom-date-picker .react-calendar__tile:hover {
+        @apply bg-green-500 underline underline-offset-8 decoration-2 decoration-szSecondary500 text-szBlack900;
+    } */
+
+  /* Active date tile */
+  .custom-date-picker .react-calendar__tile--active {
+    @apply bg-white underline underline-offset-8 decoration-2 decoration-szSecondary500 text-szBlack900;
+  }
+
+  /* Hide the clear button (x icon) */
+  /* .custom-date-picker .react-date-picker__clear-button {
+        display: none;
+    } */
+
+  /* Add custom styles for the disabled state */
+  .custom-date-picker .react-date-picker__wrapper.react-date-picker--disabled {
+    @apply bg-red-300; /* Change background color when disabled */
+  }
+
+  /* Style the input when DatePicker is disabled */
+  .custom-date-picker .react-date-picker__inputGroup input:disabled {
+    @apply bg-szGrey150 text-gray-500; /* Change background and text color when disabled */
+  }
+
+  .dashed-border-style {
+    background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='8' ry='8' stroke='%23C6C6C6FF' stroke-width='2' stroke-dasharray='8%2c 8' stroke-dashoffset='46' stroke-linecap='square'/%3e%3c/svg%3e");
+    border-radius: 8px;
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+  }
+}
