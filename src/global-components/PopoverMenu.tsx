@@ -8,12 +8,16 @@ interface PopoverMenuProps {
   zIndex?: string;
   size?: "small" | "medium" | "large";
   color?: string;
+  position?: "left" | "right";
+  width?: string;
 }
 
 const PopoverMenu: React.FC<PopoverMenuProps> = ({
   items,
   size = "small",
   color,
+  position = "right",
+  width = "w-fit",
 }) => {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -61,6 +65,8 @@ const PopoverMenu: React.FC<PopoverMenuProps> = ({
               setOpen(false);
             },
           }))}
+          position={position}
+          width={width}
         />
       )}
     </div>

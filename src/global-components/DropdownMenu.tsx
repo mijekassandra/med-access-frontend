@@ -9,14 +9,20 @@ export interface DropdownMenuItem {
 interface DropdownMenuProps {
   items: DropdownMenuItem[];
   className?: string;
+  position?: "left" | "right";
+  width?: string;
 }
 
 const DropdownMenu: React.FC<DropdownMenuProps> = ({
   items,
   className = "",
+  position = "right",
+  width = "w-fit",
 }) => (
   <div
-    className={`absolute left-0 mt-1 w-fit bg-white border rounded-lg z-10 ${className}`}
+    className={`absolute mt-1 bg-white border rounded-lg z-10 ${width} ${className} ${
+      position === "left" ? "right-0" : "left-0"
+    }`}
     style={{
       boxShadow: "0px 4px 15px 0px rgba(9, 18, 39, 0.2)",
     }}
@@ -25,7 +31,7 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({
       <button
         key={idx}
         onClick={item.onClick}
-        className="flex gap-[4px] px-[12px] py-[8px] w-full text-left text-szBlack800 hover:bg-szPrimary100"
+        className="flex gap-[4px] px-[12px] py-[8px] w-full text-left text-szBlack800 hover:bg-szGrey150"
       >
         {item.icon && (
           <span>

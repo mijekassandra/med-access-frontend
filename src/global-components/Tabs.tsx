@@ -62,7 +62,7 @@ const Tabs: React.FC<TabsProps> = ({ options, activeIndex, onTabChange }) => {
     right: "rounded-r-[23px]",
   };
   const inactiveStyle = "text-szGrey500 bg-[#F9F9F9]";
-  const activeStyle = "text-szPrimary500 bg-white";
+  const activeStyle = "text-szPrimary900 bg-white";
 
   if (isMobile) {
     const activeTab = options[activeIndex];
@@ -73,7 +73,7 @@ const Tabs: React.FC<TabsProps> = ({ options, activeIndex, onTabChange }) => {
           onClick={() => setDropdownOpen((open) => !open)}
         >
           <span className="flex items-center gap-2 min-w-[80px]">
-            <p className="text-body-small-reg text-szPrimary500 min-w-[50px]">
+            <p className="text-body-small-reg text-szPrimary900 min-w-[50px]">
               {activeTab.label}
             </p>
             {activeTab.number !== undefined && (
@@ -98,7 +98,7 @@ const Tabs: React.FC<TabsProps> = ({ options, activeIndex, onTabChange }) => {
   }
 
   return (
-    <div className="flex">
+    <div className="flex w-full">
       {options.map((opt, idx) => {
         const type =
           idx === 0 ? "left" : idx === options.length - 1 ? "right" : "middle";

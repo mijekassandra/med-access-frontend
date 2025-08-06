@@ -7,6 +7,7 @@ interface ModalProps {
   icon?: React.ReactNode;
   onClose: () => void;
   showCloseIcon?: boolean;
+  closeOnOverlayClick?: boolean;
 
   /** Header */
   showHeader?: boolean;
@@ -70,6 +71,7 @@ const Modal: React.FC<ModalProps> = ({
   showCloseIcon = true,
   buttonIcon,
   zIndex = 10,
+  closeOnOverlayClick = false,
 }) => {
   const [visible, setVisible] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
@@ -85,7 +87,9 @@ const Modal: React.FC<ModalProps> = ({
   }, [isOpen]);
 
   const handleOverlayClick = () => {
-    onClose();
+    if (closeOnOverlayClick) {
+      onClose();
+    }
   };
 
   const headerOptionClasses = {

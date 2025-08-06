@@ -155,7 +155,9 @@ const Sidebar: React.FC<SidebarProps> = ({
       <nav className="flex-1">
         <ul className="space-y-2">
           {menuItems.map((item) => {
-            const isActive = location.pathname === item.path;
+            const isActive =
+              location.pathname === item.path ||
+              location.pathname.startsWith(item.path + "/");
 
             return (
               <li key={item.id}>
@@ -168,7 +170,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                       ? "bg-szPrimary900 text-white"
                       : "text-szWhite100 hover:bg-szPrimary700 hover:text-white"
                   }`}
-                  title={isCollapsed ? item.label : undefined}
+                  // title={isCollapsed ? item.label : undefined}
                 >
                   {React.cloneElement(item.icon as React.ReactElement, {
                     className: "icon-md",

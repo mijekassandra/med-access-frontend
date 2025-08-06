@@ -1,186 +1,267 @@
-import React, { ReactElement, useState } from "react";
-import Chip from "./Chip";
-import Checkboxes from "./Checkboxes";
-import { More, Grid2, ArrangeVertical } from "iconsax-react";
+import React, { useState, useMemo } from "react";
+import PopoverMenu from "./PopoverMenu";
+import Pagination from "./Pagination";
+import { type DropdownMenuItem } from "./DropdownMenu";
 
-export type HeaderType =
-    | { type: "string"; header: string; accessor: string; icon?: React.ReactNode }
-    | { type: "more"; header: React.ReactNode; accessor: "more" }
-    | { type: "checkbox"; header: React.ReactNode; accessor: "checkbox" };
-
-interface TableProps {
-    headers: HeaderType[];
-    data: Record<string, React.ReactNode>[];
-    moreOptions?: {
-        icon?: ReactElement;
-        label: string;
-        onClick: (rowIndex: number) => void;
-    }[];
-    tableHeight?: string;
-    onRowClick?: (rowIndex: number) => void;
+export interface TableColumn<T = Record<string, any>> {
+  key: string;
+  header: string;
+  render?: (value: any, record: T, index: number) => React.ReactNode;
+  sortable?: boolean;
+  width?: string;
+  className?: string;
 }
 
-const Table: React.FC<TableProps> = ({ headers, data, moreOptions, tableHeight, onRowClick }) => {
-    const [sortConfig, setSortConfig] = useState<{
-        key: string;
-        direction: "asc" | "desc";
-    } | null>(null);
+export interface TableAction<T = Record<string, any>> {
+  label: string;
+  icon?: React.ReactNode;
+  onClick: (record: T) => void;
+  disabled?: (record: T) => boolean;
+}
 
-    const [selectedRows, setSelectedRows] = useState<{
-        [key: number]: boolean;
-    }>({});
-    const [openDropdown, setOpenDropdown] = useState<number | null>(null);
+export interface TableProps<T = Record<string, any>> {
+  data: T[];
+  columns: TableColumn<T>[];
+  actions?: TableAction<T>[];
+  searchable?: boolean;
+  searchPlaceholder?: string;
+  searchKeys?: (keyof T)[];
+  pagination?: {
+    currentPage: number;
+    totalPages: number;
+    onChange: (page: number) => void;
+  };
+  loading?: boolean;
+  emptyMessage?: string;
+  className?: string;
+  rowClassName?: string | ((record: T, index: number) => string);
+  onRowClick?: (record: T) => void;
+}
 
-    const isAllChecked = data.length > 0 && Object.keys(selectedRows).length === data.length;
+const Table = <T extends Record<string, any>>({
+  data,
+  columns,
+  actions = [],
+  searchKeys = [],
+  pagination,
+  loading = false,
+  emptyMessage = "No records found",
+  className = "",
+  rowClassName,
+  onRowClick,
+}: TableProps<T>) => {
+  const [searchTerm] = useState("");
+  const [sortConfig, setSortConfig] = useState<{
+    key: string;
+    direction: "asc" | "desc";
+  } | null>(null);
 
-    const handleHeaderCheckboxChange = () => {
-        if (isAllChecked) {
-            setSelectedRows({}); // Unselect all
-        } else {
-            const newSelection = data.reduce<{ [key: number]: boolean }>((acc, _, index) => {
-                acc[index] = true;
-                return acc;
-            }, {});
-            setSelectedRows(newSelection);
-        }
-    };
+  // Filter data based on search term
+  const filteredData = useMemo(() => {
+    if (!searchTerm.trim()) return data;
 
-    const handleRowCheckboxChange = (index: number) => {
-        setSelectedRows((prev) => {
-            const updatedSelection = { ...prev };
-            if (updatedSelection[index]) {
-                delete updatedSelection[index]; // Unselect
-            } else {
-                updatedSelection[index] = true; // Select
-            }
-            return updatedSelection;
-        });
-    };
+    return data.filter((record) => {
+      const searchableKeys =
+        searchKeys.length > 0 ? searchKeys : Object.keys(record);
 
-    const extractTextFromReactNode = (node: React.ReactNode): string => {
-        if (typeof node === "string") return node;
-        if (typeof node === "number") return node.toString();
-        if (React.isValidElement(node)) {
-            if (node.type === Chip) {
-                // Handle the Chip component specifically
-                return node.props.label;
-            }
-            // Traverse children recursively
-            const children = node.props.children;
-            if (typeof children === "string") return children;
-            if (Array.isArray(children)) {
-                return children.map(extractTextFromReactNode).join("");
-            }
-            return extractTextFromReactNode(children);
-        }
-        return "";
-    };
+      return searchableKeys.some((key) => {
+        const value = record[key];
+        if (value == null) return false;
 
-    const sortedData = React.useMemo(() => {
-        if (!sortConfig) return data;
-        return [...data].sort((a, b) => {
-            const aValue = extractTextFromReactNode(a[sortConfig.key]);
-            const bValue = extractTextFromReactNode(b[sortConfig.key]);
+        const stringValue = String(value).toLowerCase();
+        return stringValue.includes(searchTerm.toLowerCase());
+      });
+    });
+  }, [data, searchTerm, searchKeys]);
 
-            if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
-            if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
-            return 0;
-        });
-    }, [data, sortConfig]);
+  // Sort data
+  const sortedData = useMemo(() => {
+    if (!sortConfig) return filteredData;
 
-    const handleSort = (key: string) => {
-        setSortConfig((prev) =>
-            prev?.key === key ? { key, direction: prev.direction === "asc" ? "desc" : "asc" } : { key, direction: "asc" }
-        );
-    };
+    return [...filteredData].sort((a, b) => {
+      const aValue = a[sortConfig.key];
+      const bValue = b[sortConfig.key];
+
+      if (aValue == null && bValue == null) return 0;
+      if (aValue == null) return 1;
+      if (bValue == null) return -1;
+
+      const comparison = String(aValue).localeCompare(String(bValue));
+      return sortConfig.direction === "asc" ? comparison : -comparison;
+    });
+  }, [filteredData, sortConfig]);
+
+  const handleSort = (key: string) => {
+    setSortConfig((current) => {
+      if (current?.key === key) {
+        return {
+          key,
+          direction: current.direction === "asc" ? "desc" : "asc",
+        };
+      }
+      return { key, direction: "asc" };
+    });
+  };
+
+  const getRowClassName = (record: T, index: number) => {
+    const baseClass = "hover:bg-szGrey50 transition-colors duration-200";
+    const alternatingClass = index % 2 === 0 ? "bg-white" : "bg-szGrey25";
+    const customClass =
+      typeof rowClassName === "function"
+        ? rowClassName(record, index)
+        : rowClassName;
+    const clickableClass = onRowClick ? "cursor-pointer" : "";
+
+    return `${baseClass} ${alternatingClass} ${
+      customClass || ""
+    } ${clickableClass}`.trim();
+  };
+
+  const renderCell = (column: TableColumn<T>, record: T, index: number) => {
+    const value = record[column.key];
+
+    if (column.render) {
+      return column.render(value, record, index);
+    }
 
     return (
-        <div className={`overflow-x-auto rounded-md border border-szGrey200 ${tableHeight}`}>
-            <table className="min-w-full table-auto">
-                <thead>
-                    <tr className="bg-szGrey150">
-                        {headers.map((header, index) => (
-                            <th
-                                key={index}
-                                className="p-3 text-body-base-strong text-szBlack800 font-dmSans"
-                                onClick={() => handleSort(header.accessor)}
-                            >
-                                <div className="flex items-center">
-                                    {header.type === "string" && <span>{header.header}</span>}
-                                    {header.type === "more" && <Grid2 className="w-5 h-5" />}
-                                    {header.type === "checkbox" && (
-                                        <Checkboxes checked={isAllChecked} onChange={handleHeaderCheckboxChange} />
-                                    )}
-                                    {header.type === "string" && (
-                                        <span className="flex flex-row items-center justify-between w-1/2 gap-2 ml-2 text-gray-500">
-                                            <ArrangeVertical className="w-3 h-3" />
-                                            {header.icon && header.icon}
-                                        </span>
-                                    )}
-                                </div>
-                            </th>
-                        ))}
-                    </tr>
-                </thead>
-                <tbody>
-                    {sortedData.map((row, rowIndex) => (
-                        <tr className="border border-szLightGrey400 border-x-0 p-3" key={rowIndex}>
-                            {headers.map((header, colIndex) => (
-                                <td key={colIndex} className="p-3">
-                                    <div className="flex flex-row item-center gap-3 text-body-small-reg text-szBlack800 font-dmSans max-w-[220px]">
-                                        {header.accessor === "more" ? (
-                                            <div className="relative">
-                                                <button
-                                                    onClick={() => setOpenDropdown(openDropdown === rowIndex ? null : rowIndex)}
-                                                    className="focus:outline-none"
-                                                >
-                                                    <More className="w-5 h-5 cursor-pointer" />
-                                                </button>
-                                                {openDropdown === rowIndex && moreOptions && (
-                                                    <div className="absolute right-1 mt-0 bg-white border rounded-md shadow-lg z-10 w-fit">
-                                                        {moreOptions.map((option, optionIndex) => (
-                                                            <button
-                                                                key={optionIndex}
-                                                                onClick={() => {
-                                                                    option.onClick(rowIndex);
-                                                                    setOpenDropdown(null);
-                                                                }}
-                                                                className="flex flex-row items-center block text-left px-3 py-2 gap-[4px] text-body-small-reg text-szBlack800 font-dmSans hover:bg-szGrey150 whitespace-nowrap w-full"
-                                                            >
-                                                                {/* <Edit2 size="16" /> */}
-                                                                {/* {option.icon} */}
-                                                                {option.icon && React.cloneElement(option.icon, { size: 16 })}
-                                                                {option.label}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ) : header.accessor === "checkbox" ? (
-                                            <Checkboxes
-                                                checked={!!selectedRows[rowIndex]}
-                                                onChange={() => handleRowCheckboxChange(rowIndex)}
-                                            />
-                                        ) : (
-                                            <span
-                                                className="truncate overflow-hidden whitespace-nowrap block"
-                                                title={String(row[header.accessor] ?? "")}
-                                                onClick={() => {
-                                                    onRowClick?.(rowIndex);
-                                                }}
-                                            >
-                                                {row[header.accessor]}
-                                            </span>
-                                        )}
-                                    </div>
-                                </td>
-                            ))}
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
+      <p className="text-body-small-reg text-szBlack700">
+        {value != null ? String(value) : "-"}
+      </p>
     );
+  };
+
+  const getActionItems = (record: T): DropdownMenuItem[] => {
+    return actions.map((action) => ({
+      label: action.label,
+      icon: action.icon,
+      onClick: () => action.onClick(record),
+      disabled: action.disabled?.(record) || false,
+    }));
+  };
+
+  if (loading) {
+    return (
+      <div
+        className={`bg-white rounded-lg shadow-sm border border-gray-200 ${className}`}
+      >
+        <div className="p-6 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-szPrimary500 mx-auto"></div>
+          <p className="mt-2 text-szBlack700">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`bg-white rounded-lg shadow-sm border border-gray-200 ${className}`}
+    >
+      {/* Search Bar */}
+      {/* {searchable && (
+        <div className="p-4 border-b border-szLightGrey400">
+          <Input
+            placeholder={searchPlaceholder}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            icon={Box}
+            className="max-w-md"
+          />
+        </div>
+      )} */}
+
+      {/* Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-szGrey25 border-b border-szLightGrey400 ">
+              {columns.map((column) => (
+                <th
+                  key={column.key}
+                  className={`px-4 py-3 text-left text-szBlack800 font-dmSans bg-gray-100 ${
+                    column.sortable ? "cursor-pointer hover:bg-szGrey50" : ""
+                  } ${column.className || ""}`}
+                  style={{ width: column.width }}
+                  onClick={() => column.sortable && handleSort(column.key)}
+                >
+                  <div className="flex items-center gap-2 min-h-[44px]">
+                    <p className="text-body-base-strong text-szBlack700">
+                      {column.header}
+                    </p>
+                    {column.sortable && sortConfig?.key === column.key && (
+                      <p className="text-szPrimary500 text-body-small-strong">
+                        {sortConfig.direction === "asc" ? "↑" : "↓"}
+                      </p>
+                    )}
+                  </div>
+                </th>
+              ))}
+              {actions.length > 0 && (
+                <th className="px-4 py-3 text-left text-szBlack800 bg-gray-100">
+                  <p className="text-body-base-reg">Actions</p>
+                </th>
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {sortedData.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={columns.length + (actions.length > 0 ? 1 : 0)}
+                  className="px-4 py-8 text-center text-szBlack700 "
+                >
+                  {emptyMessage}
+                </td>
+              </tr>
+            ) : (
+              sortedData.map((record, index) => (
+                <tr
+                  key={index}
+                  className={
+                    getRowClassName(record, index) + " hover:bg-szPrimary50"
+                  }
+                  onClick={() => onRowClick?.(record)}
+                >
+                  {columns.map((column) => (
+                    <td
+                      key={column.key}
+                      className={`px-4 py-3 border-b border-szLightGrey400 ${
+                        column.className || ""
+                      }`}
+                    >
+                      {renderCell(column, record, index)}
+                    </td>
+                  ))}
+                  {actions.length > 0 && (
+                    <td className="px-4 py-3 border-b border-szLightGrey400">
+                      <PopoverMenu
+                        items={getActionItems(record)}
+                        size="small"
+                        color="text-szBlack700"
+                        position="left"
+                        width="w-36"
+                      />
+                    </td>
+                  )}
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination */}
+      {pagination && (
+        <div className="border-t border-szLightGrey400">
+          <Pagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            onChange={pagination.onChange}
+          />
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default Table;

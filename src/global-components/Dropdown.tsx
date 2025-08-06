@@ -61,7 +61,7 @@ const Dropdown: React.FC<DropdownProps> = ({
     const rect = buttonRef.current?.getBoundingClientRect();
     if (rect) {
       setPosition({
-        top: rect.bottom + 4, // Add gap of 4px
+        top: rect.bottom + 10, // Add gap of 4px
         left: rect.left,
         width: rect.width,
       });
@@ -210,9 +210,9 @@ const Dropdown: React.FC<DropdownProps> = ({
         {filteredOptions.map((option) => (
           <div
             key={option.value}
-            className={`flex items-center px-4 py-2 hover:bg-szPrimary100 cursor-pointer ${
+            className={`flex items-center px-4 py-2 hover:bg-szPrimary50 cursor-pointer ${
               selectedOptions.find((opt) => opt.value === option.value)
-                ? "bg-szPrimary100"
+                ? "bg-szPrimary50"
                 : ""
             }`}
             onClick={() => handleOptionClick(option)}
