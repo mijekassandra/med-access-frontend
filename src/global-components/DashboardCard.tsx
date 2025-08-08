@@ -5,6 +5,7 @@ interface DashboardCardProps {
   value: string | number;
   icon: React.ReactNode;
   variant?: "blue" | "green" | "orange" | "purple" | "grey";
+  className?: string;
 }
 
 const DashboardCard: React.FC<DashboardCardProps> = ({
@@ -12,6 +13,7 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
   value,
   icon,
   variant = "blue",
+  className = "",
 }) => {
   // Color variants configuration
   const colorVariants = {
@@ -50,17 +52,19 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
   const colors = colorVariants[variant];
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+    <div
+      className={`bg-white rounded-lg shadow-sm p-6 border border-gray-200 ${className}`}
+    >
       <div className="flex items-center justify-between h-full">
         <div className="">
           <p className="text-szDarkGrey600 text-body-small-strong">{title}</p>
           <h3 className="text-h3 text-szBlack800">{value}</h3>
         </div>
         <div
-          className={`w-12 h-12 ${colors.iconBg} rounded-lg flex items-center justify-center`}
+          className={`w-10 h-10 ${colors.iconBg} rounded-lg flex items-center justify-center flex-shrink-0`}
         >
           {React.cloneElement(icon as React.ReactElement, {
-            className: `w-6 h-6 ${colors.iconText}`,
+            className: `w-5 h-5 ${colors.iconText}`,
           })}
         </div>
       </div>

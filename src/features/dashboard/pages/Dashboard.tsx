@@ -1,51 +1,119 @@
 import React from "react";
 
 //icons
-import { Box, Calendar, Profile2User } from "iconsax-react";
+import {
+  Box,
+  Calendar,
+  DocumentText1,
+  NotificationBing,
+  Profile2User,
+  UserSquare,
+  Health,
+} from "iconsax-react";
 
 //components
 import DashboardCard from "../../../global-components/DashboardCard";
 import ContainerWrapper from "../../../components/ContainerWrapper";
+import UserMedicalRecordTable from "../components/UserMedicalRecordTable";
+import PersonnelDashboardTable from "../components/PersonnelDashboardTable";
 
 const Dashboard: React.FC = () => {
+  // const { user } = useAuth(); // Get current user and role
+
+  const user = {
+    role: "admin",
+  };
+
+  const renderTable = () => {
+    switch (user?.role) {
+      case "doctor":
+        return <UserMedicalRecordTable />;
+      case "admin":
+        return <PersonnelDashboardTable />;
+      default:
+        return <div>Access denied</div>;
+    }
+  };
+
   return (
-    <ContainerWrapper>
+    <ContainerWrapper className="space-y-8">
       {/* Dashboard Content */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
         {/* Quick Stats Cards */}
-        <DashboardCard
-          title="Appointment Requests"
-          value={1234}
-          icon={<Calendar />}
-          variant="blue"
-        />
+        {user?.role === "doctor" ? (
+          <>
+            <DashboardCard
+              title="Medical Records"
+              value={1234}
+              icon={<Profile2User />}
+              variant="blue"
+            />
+            <DashboardCard
+              title="Inventory"
+              value={1234}
+              icon={<Box />}
+              variant="orange"
+            />
+            <DashboardCard
+              title="Appointment Requests"
+              value={1234}
+              icon={<Calendar />}
+              variant="purple"
+            />
+            <DashboardCard
+              title="Health Education"
+              value={1234}
+              icon={<Health />}
+              variant="green"
+            />
 
-        <DashboardCard
-          title="Total Patients"
-          value={1234}
-          icon={<Profile2User />}
-          variant="green"
-        />
-        <DashboardCard
-          title="Total Available Medicines"
-          value={1234}
-          icon={<Box />}
-          variant="orange"
-        />
+            <DashboardCard
+              title="Reports"
+              value={1234}
+              icon={<DocumentText1 />}
+              variant="grey"
+              className="md:col-span-2 lg:col-span-1"
+            />
+          </>
+        ) : (
+          <>
+            <DashboardCard
+              title="Users"
+              value={1234}
+              icon={<Profile2User />}
+              variant="blue"
+            />
+            <DashboardCard
+              title="Inventory"
+              value={1234}
+              icon={<Box />}
+              variant="orange"
+            />
+            <DashboardCard
+              title="Patient Records"
+              value={1234}
+              icon={<UserSquare />}
+              variant="purple"
+            />
+            <DashboardCard
+              title="Announcements"
+              value={1234}
+              icon={<NotificationBing />}
+              variant="green"
+            />
+
+            <DashboardCard
+              title="Reports"
+              value={1234}
+              icon={<DocumentText1 />}
+              variant="grey"
+              className="md:col-span-2 lg:col-span-1"
+            />
+          </>
+        )}
       </div>
 
-      {/* Recent Activity Section */}
-      <div className="mt-8">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900 w-full">
-              View Medical Records
-            </h2>
-            {/* <Input placeholder="Search" /> */}
-          </div>
-          <div className="p-6"></div>
-        </div>
-      </div>
+      {renderTable()}
     </ContainerWrapper>
   );
 };

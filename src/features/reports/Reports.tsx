@@ -131,7 +131,7 @@ const Reports: React.FC = () => {
     <ContainerWrapper>
       <div className="grid grid-cols-1 gap-6">
         {/* Header with search and add button */}
-        <div className="flex items-center justify-between gap-8">
+        <div className="flex flex-col sm:flex-row items-end sm:items-center justify-between gap-3 sm:gap-6">
           <Inputs
             type="text"
             placeholder="Search reports..."
@@ -142,7 +142,7 @@ const Reports: React.FC = () => {
           <Button
             label="Add Health Report"
             leftIcon={<Add />}
-            className="w-[300px]"
+            className="w-fit sm:w-[280px] truncate"
             size="medium"
             onClick={() => setIsAddReportModalOpen(true)}
           />

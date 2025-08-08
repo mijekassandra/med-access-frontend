@@ -1,17 +1,17 @@
 import React from "react";
 
 interface DividerProps {
-    className?: string;
+  className?: string;
 }
 
 const Divider: React.FC<DividerProps> = ({
-    className = "py-[16px] px-[80px]",
+  className = "py-[16px] px-[80px]",
 }) => {
-    return (
-        <div className={`${className}`}>
-            <hr className="w-full" />
-        </div>
-    );
+  return (
+    <div className={`${className} flex items-center`}>
+      <hr className="w-full" />
+    </div>
+  );
 };
 
 export default Divider;

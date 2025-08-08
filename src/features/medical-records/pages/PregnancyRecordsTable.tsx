@@ -175,7 +175,7 @@ const PregnancyRecordsTable: React.FC = () => {
   };
 
   return (
-    <div className="bg-szGrey25 min-h-screen">
+    <div className="grid grid-cols-1 bg-szGrey25 min-h-screen">
       <Table
         data={records}
         columns={columns}

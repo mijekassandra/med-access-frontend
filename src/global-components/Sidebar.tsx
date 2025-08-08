@@ -14,6 +14,8 @@ import {
   ArrowLeft2,
   ArrowRight2,
   ArchiveBook,
+  Profile2User,
+  NotificationBing,
 } from "iconsax-react";
 
 //assets
@@ -90,28 +92,34 @@ const Sidebar: React.FC<SidebarProps> = ({
       ],
       admin: [
         {
-          id: "medical-records",
-          label: "MEDICAL RECORDS",
+          id: "users",
+          label: "USERS",
+          icon: <Profile2User />,
+          path: "/users",
+        },
+        {
+          id: "inventory",
+          label: "INVENTORY",
+          icon: <ArchiveBox />,
+          path: "/inventory",
+        },
+        {
+          id: "patient-records",
+          label: "PATIENT RECORDS",
           icon: <DocumentText />,
-          path: "/medical-records",
+          path: "/patient-records",
         },
         {
-          id: "telemedicine",
-          label: "TELEMEDICINE",
-          icon: <Monitor />,
-          path: "/telemedicine",
+          id: "announcements",
+          label: "ANNOUNCEMENTS",
+          icon: <NotificationBing />,
+          path: "/announcements",
         },
         {
-          id: "appointments",
-          label: "APPOINTMENTS",
-          icon: <Calendar />,
-          path: "/appointments",
-        },
-        {
-          id: "patients",
-          label: "PATIENTS",
-          icon: <User />,
-          path: "/patients",
+          id: "reports",
+          label: "REPORTS",
+          icon: <ArchiveBook />,
+          path: "/reports",
         },
       ],
     };

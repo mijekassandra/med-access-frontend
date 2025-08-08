@@ -16,7 +16,7 @@ import Login from "./features/auth/pages/Login";
 const AppLayout = () => {
   // Mock user data - in real app this would come from auth context
   const mockUser = {
-    role: "doctor" as const,
+    role: "admin" as const,
     name: "John Smith",
     avatar: undefined,
   };

@@ -11,6 +11,7 @@ import Telemedicine from "../features/telemedicine/pages/Telemedicine";
 import Inventory from "../features/inventory/Inventory";
 import HealthEducation from "../features/health-education/HealthEducation";
 import Reports from "../features/reports/Reports";
+import User from "../features/user/User";
 
 interface BodyProps {
   children?: React.ReactNode;
@@ -53,6 +54,12 @@ const Body = ({ children }: BodyProps) => {
           title: "Reports",
           subheader: "Manage health reports",
         };
+      case "/users/":
+      case "/users/personnels":
+        return {
+          title: "All Users",
+          subheader: "Manage all clients, and personnel",
+        };
       default:
         return {
           title: "Dashboard",
@@ -75,6 +82,7 @@ const Body = ({ children }: BodyProps) => {
           <Route path="/health-education/*" element={<HealthEducation />} />
           <Route path="/inventory/*" element={<Inventory />} />
           <Route path="/reports/*" element={<Reports />} />
+          <Route path="/users/*" element={<User />} />
         </Routes>
         {children}
       </div>

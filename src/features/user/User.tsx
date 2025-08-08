@@ -2,25 +2,25 @@ import React, { useState } from "react";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import ContainerWrapper from "../../components/ContainerWrapper";
 import Tabs from "../../global-components/Tabs";
-import PregnancyRecords from "./pages/PregnancyRecordsTable";
-import MedicalRecordTable from "./pages/MedicalRecordTable";
+import PersonnelTable from "./components/PersonnelTable";
+import ClientsTable from "./components/ClientsTable";
 
-const MedicalRecordsIndex: React.FC = () => {
+const User: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
   // Tab options
   const tabOptions = [
-    { label: "Medical Records", value: "medical-records" },
-    { label: "Pregnancy Records", value: "pregnancy-records" },
+    { label: "Clients", value: "clients" },
+    { label: "Personnel", value: "personnel" },
   ];
 
   // Determine active tab based on current route
   const getActiveTabIndex = () => {
-    if (location.pathname.includes("pregnancy-records")) {
+    if (location.pathname.includes("clients")) {
       return 1;
     }
-    return 0; // Default to medical records
+    return 0; // Default to personnel
   };
 
   const [activeTabIndex, setActiveTabIndex] = useState(getActiveTabIndex());
@@ -28,9 +28,9 @@ const MedicalRecordsIndex: React.FC = () => {
   const handleTabChange = (index: number) => {
     setActiveTabIndex(index);
     if (index === 0) {
-      navigate("/medical-records");
+      navigate("/users/");
     } else {
-      navigate("/medical-records/pregnancy-records");
+      navigate("/users/personnels");
     }
   };
 
@@ -48,13 +48,12 @@ const MedicalRecordsIndex: React.FC = () => {
 
         {/* Tab Content */}
         <Routes>
-          {/* <Route path="/" element={<MedicalRecords />} /> */}
-          <Route path="/" element={<MedicalRecordTable />} />
-          <Route path="/pregnancy-records" element={<PregnancyRecords />} />
+          <Route path="/" element={<ClientsTable />} />
+          <Route path="/personnels" element={<PersonnelTable />} />
         </Routes>
       </div>
     </ContainerWrapper>
   );
 };
 
-export default MedicalRecordsIndex;
+export default User;

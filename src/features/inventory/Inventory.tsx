@@ -166,7 +166,7 @@ const Inventory: React.FC = () => {
     <ContainerWrapper>
       <div className="grid grid-cols-1 gap-6">
         {/* Header with search and add button */}
-        <div className="flex items-center justify-between gap-8">
+        <div className="flex flex-col sm:flex-row items-end sm:items-center justify-between gap-3 sm:gap-6">
           <Inputs
             type="text"
             placeholder="Search medicines..."
@@ -177,7 +177,7 @@ const Inventory: React.FC = () => {
           <Button
             label="Add Medicine"
             leftIcon={<Add />}
-            className="w-[250px]"
+            className="w-fit sm:w-[200px] truncate"
             size="medium"
             onClick={() => setIsAddMedicineModalOpen(true)}
           />

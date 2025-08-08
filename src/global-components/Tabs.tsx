@@ -67,9 +67,9 @@ const Tabs: React.FC<TabsProps> = ({ options, activeIndex, onTabChange }) => {
   if (isMobile) {
     const activeTab = options[activeIndex];
     return (
-      <div className="relative w-fit " ref={menuRef}>
+      <div className="relative w-full" ref={menuRef}>
         <button
-          className={`flex items-center justify-between w-fit px-[16px] py-[8px] border border-[1px] border-szGrey200 rounded-[23px] bg-white gap-[8px] ${activeStyle}`}
+          className={`flex items-center justify-between w-full px-[16px] py-[8px] border border-[1px] border-szGrey200 rounded-[23px] bg-white gap-[8px] ${activeStyle}`}
           onClick={() => setDropdownOpen((open) => !open)}
         >
           <span className="flex items-center gap-2 min-w-[80px]">

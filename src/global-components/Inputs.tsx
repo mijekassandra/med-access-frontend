@@ -74,26 +74,27 @@ const Input: React.FC<InputProps> = ({
             </p>
           </>
         ) : (
-          <input
-            id={label}
-            type={type}
-            placeholder={placeholder}
-            value={value}
-            onChange={onChange}
-            disabled={disabled}
-            className={`${sharedStyles} min-h-[44px] ${
-              Icon ? "pr-10" : ""
-            } disabled:border-szLightGrey400 disabled:hover:border-szLightGrey400 disabled:bg-szGrey150 disabled:cursor-not-allowed `}
-          />
+          <div
+            className={`${sharedStyles} flex w-full items-center gap-2 justify-between bg-white min-h-[44px] disabled:border-szLightGrey400 disabled:hover:border-szLightGrey400 disabled:bg-szGrey150 disabled:cursor-not-allowed `}
+          >
+            <input
+              id={label}
+              type={type}
+              placeholder={placeholder}
+              value={value}
+              onChange={onChange}
+              disabled={disabled}
+              className="flex-1 bg-transparent border-none outline-none p-0 m-0 text-inherit font-inherit"
+            />
+            <div className="text-szLightGrey40 ">
+              {Icon && (
+                <button type="button" onClick={iconClick}>
+                  <Icon className="w-4 h-4 text-gray-500" />
+                </button>
+              )}
+            </div>
+          </div>
         )}
-
-        <div className="absolute flex items-center inset-y-0 right-0 pr-2.5 text-szLightGrey40">
-          {Icon && (
-            <button type="button" onClick={iconClick}>
-              <Icon className="w-4 h-4 text-gray-500" />
-            </button>
-          )}
-        </div>
       </div>
       {description && (
         <p className="mt-1 text-caption-reg text-szDarkGrey600 font-dmSan">

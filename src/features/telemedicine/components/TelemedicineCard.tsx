@@ -65,7 +65,7 @@ const TelemedicineCard: React.FC<TelemedicineCardProps> = ({
         <div className="flex items-start gap-2 flex-1">
           <Avatar src={avatar} alt={name} size="medium" />
           <div className="flex-1 min-w-0">
-            <p className="text-body-small-strong font-semibold text-gray-900 truncate">
+            <p className="text-body-small-strong font-semibold text-gray-900 max-w-[100px] md:max-w-full">
               {name}
             </p>
             {description && (
@@ -82,7 +82,7 @@ const TelemedicineCard: React.FC<TelemedicineCardProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center space-x-2 ml-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 items-center">
           {status === "pending" && (
             <>
               <Button
@@ -105,6 +105,7 @@ const TelemedicineCard: React.FC<TelemedicineCardProps> = ({
               size="small"
               variant="primary"
               onClick={() => {}}
+              className="col-span-2"
             />
           )}
         </div>
