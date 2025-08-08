@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 //icons
 import { Eye, EyeSlash } from "iconsax-react";
@@ -9,10 +10,18 @@ import Checkboxes from "../../../global-components/Checkboxes";
 import Button from "../../../global-components/Button";
 
 const LoginForm = () => {
+  const navigate = useNavigate();
+
   const [showPassword, setShowPassword] = useState(false);
   const [text, setText] = useState("");
   const [textIcon, setTextIcon] = useState("");
   const [isChecked, setIsChecked] = useState(false);
+
+  const handleLogin = () => {
+    console.log("Login");
+    // Navigate to dashboard after successful login
+    navigate("/dashboard");
+  };
 
   return (
     <div className="flex flex-col gap-10 w-[280px] sm:w-[360px]">
@@ -51,6 +60,7 @@ const LoginForm = () => {
         size="medium"
         type="button"
         fullWidth
+        onClick={handleLogin}
       />
     </div>
   );

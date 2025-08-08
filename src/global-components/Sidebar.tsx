@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 //icons
 import {
@@ -32,16 +32,16 @@ export interface MenuItem {
 export interface SidebarProps {
   userRole?: "admin" | "doctor" | "client";
   userName?: string;
-  onLogout?: () => void;
   className?: string;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
   userRole = "admin",
-  onLogout,
   className = "",
 }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isManualCollapse, setIsManualCollapse] = useState(false);
 
@@ -69,6 +69,11 @@ const Sidebar: React.FC<SidebarProps> = ({
     // Cleanup event listener on component unmount
     return () => window.removeEventListener("resize", handleResize);
   }, [isManualCollapse]);
+
+  //handle logout
+  const handleLogout = () => {
+    navigate("/");
+  };
 
   // Handle manual collapse toggle
   const handleManualToggle = () => {
@@ -238,7 +243,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Logout Section */}
       <div className="border-t border-szPrimary900 pt-4">
         <button
-          onClick={onLogout}
+          onClick={handleLogout}
           className={`group relative flex items-center w-full px-4 py-3 text-szWhite100 hover:bg-szPrimary700 hover:text-white rounded-lg transition-colors duration-200 ${
             isCollapsed ? "justify-center" : "space-x-3"
           }`}
