@@ -1,14 +1,18 @@
 import React, { useState } from "react";
 
 //icons
-import { Add, SearchNormal1 } from "iconsax-react";
+import { Add, SearchNormal1, Edit, Trash, Eye } from "iconsax-react";
 
 // components
-import Table, { type TableColumn } from "../../global-components/Table";
+import Table, {
+  type TableColumn,
+  type TableAction,
+} from "../../global-components/Table";
 import ContainerWrapper from "../../components/ContainerWrapper";
 import Inputs from "../../global-components/Inputs";
 import Button from "../../global-components/Button";
 import AddHealthReport from "./component/AddHealthReport";
+import Dropdown, { type Option } from "../../global-components/Dropdown";
 
 // Sample data type
 interface HealthReport {
@@ -64,6 +68,11 @@ const Reports: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddReportModalOpen, setIsAddReportModalOpen] = useState(false);
 
+  //sample only
+  const user = {
+    role: "doctor",
+  };
+
   // Define columns
   const columns: TableColumn<HealthReport>[] = [
     {
@@ -116,6 +125,45 @@ const Reports: React.FC = () => {
     },
   ];
 
+  // Define actions similar to ClientsTable
+  const actions: TableAction<HealthReport>[] = [
+    {
+      label: "View Details",
+      icon: <Eye size={16} />,
+      onClick: (record) => {
+        console.log("View details for:", record);
+        alert(`Viewing details for ID: ${record.id}`);
+      },
+    },
+    {
+      label: "Edit Report",
+      icon: <Edit size={16} />,
+      onClick: (record) => {
+        console.log("Edit report:", record);
+        alert(`Editing report for ID: ${record.id}`);
+      },
+    },
+    {
+      label: "Delete Report",
+      icon: <Trash size={16} />,
+      onClick: (record) => {
+        console.log("Delete report:", record);
+        if (
+          confirm(
+            `Are you sure you want to delete the report with ID: ${record.id}?`
+          )
+        ) {
+          setReports(reports.filter((r) => r.id !== record.id));
+        }
+      },
+      disabled: (record) => record.id === "001",
+    },
+  ];
+
+  const handleSelectionChange = (selected: Option | Option[]) => {
+    console.log("Selected Filter:", selected);
+  };
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     console.log("Page changed to:", page);
@@ -131,27 +179,56 @@ const Reports: React.FC = () => {
     <ContainerWrapper>
       <div className="grid grid-cols-1 gap-6">
         {/* Header with search and add button */}
-        <div className="flex flex-col sm:flex-row items-end sm:items-center justify-between gap-3 sm:gap-6">
+        <div className="flex flex-col md:flex-row items-end md:items-center justify-between gap-3 md:gap-6">
           <Inputs
             type="text"
             placeholder="Search reports..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             icon={SearchNormal1}
+            className=""
           />
-          <Button
-            label="Add Health Report"
-            leftIcon={<Add />}
-            className="w-fit sm:w-[280px] truncate"
-            size="medium"
-            onClick={() => setIsAddReportModalOpen(true)}
-          />
+
+          {user.role === "admin" ? (
+            <div
+              className={`flex gap-4 items-center justify-end w-full sm:w-fit`}
+            >
+              <Button
+                label="Print Report"
+                className={`w-[45%] sm:w-[180px] truncate ${
+                  user.role === "admin" ? "w-[60%]" : "w-[180px]"
+                }`}
+                size="medium"
+              />
+              <div className="min-w-[55%] sm:min-w-[160px]">
+                <Dropdown
+                  options={[
+                    { label: "All", value: "all" },
+                    { label: "Medicine", value: "medicine" },
+                    { label: "Equipment", value: "equipment" },
+                  ]}
+                  label="Filter by:"
+                  placeholder="Filter by"
+                  onSelectionChange={handleSelectionChange}
+                />
+              </div>
+            </div>
+          ) : (
+            <Button
+              label="Add Health Report"
+              leftIcon={<Add />}
+              className="w-fit sm:w-[280px] truncate"
+              size="medium"
+              onClick={() => setIsAddReportModalOpen(true)}
+            />
+          )}
         </div>
 
         {/* Table */}
         <Table
           data={filteredReports}
           columns={columns}
+          actions={actions}
           searchable={false} // We're handling search manually
           pagination={{
             currentPage,

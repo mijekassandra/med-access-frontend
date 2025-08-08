@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import Modal from "../../../global-components/Modal";
 import Inputs from "../../../global-components/Inputs";
+import SnackbarAlert from "../../../global-components/SnackbarAlert";
 
 interface AddMedicineModalProps {
   isOpen: boolean;
@@ -8,57 +9,86 @@ interface AddMedicineModalProps {
 }
 
 const AddMedicineModal = ({ isOpen, onClose }: AddMedicineModalProps) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [showSnackbar, setShowSnackbar] = useState(false);
+
+  const handleSubmit = async () => {
+    setIsLoading(true);
+
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    setIsLoading(false);
+    setShowSnackbar(true);
+    onClose();
+  };
+
+  const handleCloseSnackbar = () => {
+    setShowSnackbar(false);
+  };
+
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      showButton={false}
-      title="Add Medicine"
-      modalWidth="w-[640px]"
-      contentHeight="h-[50vh]"
-      headerOptions="left"
-      footerOptions="stacked-left"
-      footerButtons={[
-        {
-          label: "Cancel",
-          variant: "ghost",
-          onClick: () => onClose(),
-          size: "medium",
-        },
-        {
-          label: "Submit",
-          variant: "primary",
-          onClick: () => onClose(),
-          size: "medium",
-        },
-      ]}
-      content={
-        <div className="space-y-4 mt-2">
-          {/* Full width inputs */}
-          <Inputs label="MEDICINE NAME" placeholder="Enter Medicine Name" />
+    <>
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        showButton={false}
+        title="Add Medicine"
+        modalWidth="w-[640px]"
+        contentHeight="h-[50vh]"
+        headerOptions="left"
+        footerOptions="stacked-left"
+        footerButtons={[
+          {
+            label: "Cancel",
+            variant: "ghost",
+            onClick: () => onClose(),
+            size: "medium",
+          },
+          {
+            label: "Submit",
+            variant: "primary",
+            onClick: handleSubmit,
+            size: "medium",
+            loading: isLoading,
+          },
+        ]}
+        content={
+          <div className="space-y-4 mt-2">
+            {/* Full width inputs */}
+            <Inputs label="MEDICINE NAME" placeholder="Enter Medicine Name" />
 
-          {/* 2-column grid for other inputs */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">
-            <Inputs label="DOSAGE" placeholder="Enter Dosage" />
-            <Inputs label="STOCK" placeholder="Enter Stock" />
+            {/* 2-column grid for other inputs */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">
+              <Inputs label="DOSAGE" placeholder="Enter Dosage" />
+              <Inputs label="STOCK" placeholder="Enter Stock" />
+              <Inputs
+                label="EXPIRY DATE"
+                placeholder="Enter Expiry Date"
+                type="date"
+              />
+              <Inputs label="BATCH NO" placeholder="Enter Batch No" />
+            </div>
+
+            {/* Full width description */}
             <Inputs
-              label="EXPIRY DATE"
-              placeholder="Enter Expiry Date"
-              type="date"
+              label="DESCRIPTION"
+              placeholder="Enter Description"
+              isTextarea
+              maxCharacter={150}
             />
-            <Inputs label="BATCH NO" placeholder="Enter Batch No" />
           </div>
+        }
+      ></Modal>
 
-          {/* Full width description */}
-          <Inputs
-            label="DESCRIPTION"
-            placeholder="Enter Description"
-            isTextarea
-            maxCharacter={150}
-          />
-        </div>
-      }
-    ></Modal>
+      <SnackbarAlert
+        isOpen={showSnackbar}
+        title="Medicine has been added successfully!"
+        type="success"
+        onClose={handleCloseSnackbar}
+        duration={3000}
+      />
+    </>
   );
 };
 

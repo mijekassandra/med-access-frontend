@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 //icons
@@ -6,8 +6,6 @@ import {
   DocumentText,
   Monitor,
   Logout,
-  User,
-  Calendar,
   ArchiveBox,
   Health,
   Element4,
@@ -45,6 +43,39 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isManualCollapse, setIsManualCollapse] = useState(false);
+
+  // Handle responsive behavior
+  useEffect(() => {
+    const handleResize = () => {
+      // Check if screen width is medium (768px) or below
+      if (window.innerWidth <= 768) {
+        setIsCollapsed(true);
+        setIsManualCollapse(false); // Reset manual flag on small screens
+      } else {
+        // Only auto-expand if it wasn't manually collapsed
+        if (!isManualCollapse) {
+          setIsCollapsed(false);
+        }
+      }
+    };
+
+    // Set initial state based on screen size
+    handleResize();
+
+    // Add event listener for window resize
+    window.addEventListener("resize", handleResize);
+
+    // Cleanup event listener on component unmount
+    return () => window.removeEventListener("resize", handleResize);
+  }, [isManualCollapse]);
+
+  // Handle manual collapse toggle
+  const handleManualToggle = () => {
+    const newCollapsedState = !isCollapsed;
+    setIsCollapsed(newCollapsedState);
+    setIsManualCollapse(newCollapsedState);
+  };
 
   // Menu configurations for different roles
   const getMenuItems = (role: string): MenuItem[] => {
@@ -147,7 +178,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <ButtonsIcon
             icon={isCollapsed ? <ArrowRight2 /> : <ArrowLeft2 />}
             size="medium"
-            onClick={() => setIsCollapsed(!isCollapsed)}
+            onClick={handleManualToggle}
           />
         </div>
 

@@ -39,7 +39,7 @@ export default {
 
         success900: "#12451F",
         success700: "#34C759",
-        success50: "#B6CBBD",
+        success50: "#EFFBF2",
 
         greenText: "#1D973C",
 

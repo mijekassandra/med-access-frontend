@@ -3,7 +3,7 @@ import React from "react";
 interface ButtonsIconProps {
   icon: React.ReactNode;
   onClick?: () => void;
-  variant?: "primary" | "secondary" | "ghost";
+  variant?: "primary" | "secondary" | "ghost" | "warning";
   size?: "large" | "medium" | "small";
   disabled?: boolean;
   type?: "button" | "submit" | "reset";
@@ -41,6 +41,9 @@ const ButtonsIcon: React.FC<ButtonsIconProps> = ({
     ghost: `bg-transparent ${
       customColor ? `text-${customColor}` : "text-szPrimary900"
     } hover:text-szPrimary900 active:text-szPrimary900 focus:outline focus:outline-1 focus:outline-szPrimary900 focus:bg-white`,
+    warning: `bg-red-100 ${
+      customColor ? `text-${customColor}` : "text-red-600"
+    } hover:bg-red-200 active:bg-red-300 focus:outline focus:outline-1 focus:outline-red-600`,
   };
   const iconSizeClasses = {
     large: "icon-md", //24

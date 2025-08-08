@@ -12,6 +12,8 @@ import Inventory from "../features/inventory/Inventory";
 import HealthEducation from "../features/health-education/HealthEducation";
 import Reports from "../features/reports/Reports";
 import User from "../features/user/User";
+import PatientRecords from "../features/patient-records/PatientRecords";
+import Announcement from "../features/announcements/Announcement";
 
 interface BodyProps {
   children?: React.ReactNode;
@@ -44,6 +46,11 @@ const Body = ({ children }: BodyProps) => {
           title: "Inventory",
           subheader: "Manage inventory and stock",
         };
+      case "/patient-records":
+        return {
+          title: "Patient Records",
+          subheader: "Manage patient records",
+        };
       case "/health-education":
         return {
           title: "Health Education",
@@ -59,6 +66,11 @@ const Body = ({ children }: BodyProps) => {
         return {
           title: "All Users",
           subheader: "Manage all clients, and personnel",
+        };
+      case "/announcements":
+        return {
+          title: "Announcements",
+          subheader: "Manage announcements",
         };
       default:
         return {
@@ -78,11 +90,13 @@ const Body = ({ children }: BodyProps) => {
           {/* Main Application Routes */}
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/medical-records/*" element={<MedicalRecordsIndex />} />
-          <Route path="/telemedicine/*" element={<Telemedicine />} />
-          <Route path="/health-education/*" element={<HealthEducation />} />
-          <Route path="/inventory/*" element={<Inventory />} />
-          <Route path="/reports/*" element={<Reports />} />
+          <Route path="/telemedicine" element={<Telemedicine />} />
+          <Route path="/health-education" element={<HealthEducation />} />
+          <Route path="/inventory" element={<Inventory />} />
           <Route path="/users/*" element={<User />} />
+          <Route path="/patient-records" element={<PatientRecords />} />
+          <Route path="/announcements" element={<Announcement />} />
+          <Route path="/reports" element={<Reports />} />
         </Routes>
         {children}
       </div>

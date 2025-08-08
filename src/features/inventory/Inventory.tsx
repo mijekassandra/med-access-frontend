@@ -9,6 +9,7 @@ import ContainerWrapper from "../../components/ContainerWrapper";
 import Inputs from "../../global-components/Inputs";
 import Button from "../../global-components/Button";
 import AddMedicineModal from "./component/AddMedicineModal";
+import Dropdown, { type Option } from "../../global-components/Dropdown";
 
 // Sample data type
 interface Medicine {
@@ -75,6 +76,15 @@ const Inventory: React.FC = () => {
   const [medicines, setMedicines] = useState<Medicine[]>(sampleData);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddMedicineModalOpen, setIsAddMedicineModalOpen] = useState(false);
+
+  //sample only
+  const user = {
+    role: "admin",
+  };
+
+  const handleSelectionChange = (selected: Option | Option[]) => {
+    console.log("Selected Filter:", selected);
+  };
 
   // Define columns
   const columns: TableColumn<Medicine>[] = [
@@ -166,7 +176,7 @@ const Inventory: React.FC = () => {
     <ContainerWrapper>
       <div className="grid grid-cols-1 gap-6">
         {/* Header with search and add button */}
-        <div className="flex flex-col sm:flex-row items-end sm:items-center justify-between gap-3 sm:gap-6">
+        <div className="flex flex-col md:flex-row items-end md:items-center justify-between gap-3 md:gap-6">
           <Inputs
             type="text"
             placeholder="Search medicines..."
@@ -174,13 +184,37 @@ const Inventory: React.FC = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             icon={SearchNormal1}
           />
-          <Button
-            label="Add Medicine"
-            leftIcon={<Add />}
-            className="w-fit sm:w-[200px] truncate"
-            size="medium"
-            onClick={() => setIsAddMedicineModalOpen(true)}
-          />
+          <div
+            className={`flex gap-4 items-center ${
+              user.role === "admin" ? "justify-between" : "justify-end"
+            }`}
+          >
+            {user.role === "admin" && (
+              <div className="min-w-[40%] sm:min-w-[160px]">
+                <Dropdown
+                  options={[
+                    { label: "All", value: "all" },
+                    { label: "Medicine", value: "medicine" },
+                    { label: "Equipment", value: "equipment" },
+                  ]}
+                  label="Filter by:"
+                  placeholder="Filter by"
+                  onSelectionChange={handleSelectionChange}
+                />
+              </div>
+            )}
+
+            <Button
+              label="Add Medicine"
+              leftIcon={<Add />}
+              // className="w-[60%] sm:w-[180px] truncate"
+              className={`w-[60%] sm:w-[180px] truncate ${
+                user.role === "admin" ? "w-[60%]" : "w-[180px]"
+              }`}
+              size="medium"
+              onClick={() => setIsAddMedicineModalOpen(true)}
+            />
+          </div>
         </div>
 
         {/* Table */}

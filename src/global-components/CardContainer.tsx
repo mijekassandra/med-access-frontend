@@ -15,14 +15,14 @@ const CardContainer: React.FC<CardContainerProps> = ({
 }) => {
   return (
     <div
-      className={`rounded-2xl flex flex-col p-4 h-full border border-szGrey200 ${
+      className={`rounded-lg flex flex-col p-4 h-full border border-szGrey200 ${
         backgroundColor || "bg-szWhite100"
       }`}
     >
       {(icon || title) && (
         <div className={"flex flex-row gap-2 text-szSecondary500 mb-4"}>
           {icon}
-          <p className="text-h6 font-montserrat">{title}</p>
+          <h4 className="text-h4">{title}</h4>
         </div>
       )}
       {content}
