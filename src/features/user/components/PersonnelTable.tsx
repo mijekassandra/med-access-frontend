@@ -169,9 +169,9 @@ const PersonnelTable = () => {
   );
 
   return (
-    <div className="grid grid-cols-1 gap-6">
+    <div className="flex-1 flex flex-col gap-6">
       {/* Header with title, search and add button */}
-      <div className="flex flex-col sm:flex-row items-end sm:items-center justify-between gap-3 sm:gap-6">
+      <div className="flex flex-col sm:flex-row items-end sm:items-center justify-between gap-3 sm:gap-6 flex-shrink-0">
         <Inputs
           type="text"
           placeholder="Search personnel..."
@@ -190,22 +190,24 @@ const PersonnelTable = () => {
       </div>
 
       {/* Table */}
-      <Table
-        data={filteredPersonnel}
-        columns={columns}
-        actions={actions}
-        searchable={false} // We're handling search manually
-        pagination={{
-          currentPage,
-          totalPages: Math.ceil(filteredPersonnel.length / 10), // 10 items per page
-          onChange: handlePageChange,
-        }}
-        emptyMessage="No personnel found"
-        onRowClick={(record) => {
-          console.log("Row clicked:", record);
-        }}
-        className="shadow-sm"
-      />
+      <div className="flex-1">
+        <Table
+          data={filteredPersonnel}
+          columns={columns}
+          actions={actions}
+          searchable={false} // We're handling search manually
+          pagination={{
+            currentPage,
+            totalPages: Math.ceil(filteredPersonnel.length / 10), // 10 items per page
+            onChange: handlePageChange,
+          }}
+          emptyMessage="No personnel found"
+          onRowClick={(record) => {
+            console.log("Row clicked:", record);
+          }}
+          className="shadow-sm h-full"
+        />
+      </div>
 
       <AddPersonnelModal
         isOpen={isAddPersonnelModalOpen}

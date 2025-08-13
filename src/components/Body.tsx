@@ -83,9 +83,9 @@ const Body = ({ children }: BodyProps) => {
   const { title, subheader } = getPageInfo(location.pathname);
 
   return (
-    <div className="flex-1 min-h-screen flex flex-col">
+    <div className="flex-1 h-screen flex flex-col overflow-hidden">
       <Appbar title={title} subheader={subheader} />
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-y-auto">
         <Routes>
           {/* Main Application Routes */}
           <Route path="/dashboard" element={<Dashboard />} />

@@ -170,8 +170,8 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <div
-      className={`bg-szBackground text-white min-h-screen flex justify-between flex-col py-6 px-4 gap-6 transition-all duration-300 ${
-        isCollapsed ? "w-[84px]" : "w-[256px]"
+      className={`bg-szBackground text-white min-h-screen flex justify-between flex-col py-6 px-4 gap-6 transition-all duration-300 overflow-y-auto ${
+        isCollapsed ? "w-[84px] " : "w-[256px]"
       } ${className}`}
     >
       <div className="w-full">
@@ -206,6 +206,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             return (
               <li key={item.id}>
                 <Link
+                  title={item.label}
                   to={item.path}
                   className={`group relative flex items-center ${
                     isCollapsed ? "justify-center" : "space-x-3"
@@ -217,21 +218,14 @@ const Sidebar: React.FC<SidebarProps> = ({
                   // title={isCollapsed ? item.label : undefined}
                 >
                   {React.cloneElement(item.icon as React.ReactElement, {
-                    className: "icon-md",
+                    className: `flex-shrink-0 ${
+                      isCollapsed ? "w-5 h-5" : "icon-md"
+                    }`,
                   })}
                   {!isCollapsed && (
                     <p className="text-szWhite100 text-body-small-strong">
                       {item.label}
                     </p>
-                  )}
-
-                  {/* Tooltip - only show when collapsed */}
-                  {isCollapsed && (
-                    <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                      {item.label}
-                      {/* Tooltip arrow */}
-                      <div className="absolute left-0 top-1/2 transform -translate-x-1 -translate-y-1/2 w-0 h-0 border-l-0 border-r-4 border-t-2 border-b-2 border-l-transparent border-r-gray-800 border-t-transparent border-b-transparent"></div>
-                    </div>
                   )}
                 </Link>
               </li>
@@ -249,18 +243,11 @@ const Sidebar: React.FC<SidebarProps> = ({
           }`}
           title={isCollapsed ? "Logout" : undefined}
         >
-          <Logout className="icon-md" />
+          <Logout
+            className={`flex-shrink-0 ${isCollapsed ? "icon-sm" : "icon-md"}`}
+          />
           {!isCollapsed && (
             <p className="text-szWhite100 text-body-small-strong">Logout</p>
-          )}
-
-          {/* Tooltip for logout - only show when collapsed */}
-          {isCollapsed && (
-            <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-              Logout
-              {/* Tooltip arrow */}
-              <div className="absolute left-0 top-1/2 transform -translate-x-1 -translate-y-1/2 w-0 h-0 border-l-0 border-r-4 border-t-2 border-b-2 border-l-transparent border-r-gray-800 border-t-transparent border-b-transparent"></div>
-            </div>
           )}
         </button>
       </div>

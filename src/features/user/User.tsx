@@ -36,9 +36,9 @@ const User: React.FC = () => {
 
   return (
     <ContainerWrapper>
-      <div className="w-full space-y-8">
+      <div className="w-full flex-1 flex flex-col space-y-8">
         {/* Tabs */}
-        <div className="w-full">
+        <div className="w-full flex-shrink-0">
           <Tabs
             options={tabOptions}
             activeIndex={activeTabIndex}
@@ -47,10 +47,12 @@ const User: React.FC = () => {
         </div>
 
         {/* Tab Content */}
-        <Routes>
-          <Route path="/" element={<ClientsTable />} />
-          <Route path="/personnels" element={<PersonnelTable />} />
-        </Routes>
+        <div className="flex-1">
+          <Routes>
+            <Route path="/" element={<ClientsTable />} />
+            <Route path="/personnels" element={<PersonnelTable />} />
+          </Routes>
+        </div>
       </div>
     </ContainerWrapper>
   );

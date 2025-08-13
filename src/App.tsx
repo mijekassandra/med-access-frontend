@@ -16,7 +16,7 @@ import Login from "./features/auth/pages/Login";
 const AppLayout = () => {
   // Mock user data - in real app this would come from auth context
   const mockUser = {
-    role: "admin" as const,
+    role: "doctor" as const,
     name: "John Smith",
     avatar: undefined,
   };
@@ -27,7 +27,7 @@ const AppLayout = () => {
   };
 
   return (
-    <div className="flex min-h-screen overflow-auto">
+    <div className="flex h-screen overflow-hidden">
       {/* Sidebar */}
       <Sidebar
         userRole={mockUser.role}

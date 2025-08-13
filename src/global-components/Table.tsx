@@ -155,21 +155,8 @@ const Table = <T extends Record<string, any>>({
 
   return (
     <div
-      className={`bg-white rounded-lg shadow-sm border border-gray-200 ${className}`}
+      className={`bg-white rounded-lg shadow-sm border border-gray-200 h-fit ${className}`}
     >
-      {/* Search Bar */}
-      {/* {searchable && (
-        <div className="p-4 border-b border-szLightGrey400">
-          <Input
-            placeholder={searchPlaceholder}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            icon={Box}
-            className="max-w-md"
-          />
-        </div>
-      )} */}
-
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full">
