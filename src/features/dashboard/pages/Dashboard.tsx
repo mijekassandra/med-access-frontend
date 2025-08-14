@@ -21,7 +21,7 @@ const Dashboard: React.FC = () => {
   // const { user } = useAuth(); // Get current user and role
 
   const user = {
-    role: "admin",
+    role: "doctor",
   };
 
   const renderTable = () => {

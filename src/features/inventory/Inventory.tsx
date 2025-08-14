@@ -73,7 +73,7 @@ const sampleData: Medicine[] = [
 
 const Inventory: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [medicines, setMedicines] = useState<Medicine[]>(sampleData);
+  const [medicines] = useState<Medicine[]>(sampleData);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddMedicineModalOpen, setIsAddMedicineModalOpen] = useState(false);
 

@@ -17,9 +17,10 @@ import Announcement from "../features/announcements/Announcement";
 
 interface BodyProps {
   children?: React.ReactNode;
+  userRole?: "admin" | "doctor";
 }
 
-const Body = ({ children }: BodyProps) => {
+const Body = ({ children, userRole = "doctor" }: BodyProps) => {
   const location = useLocation();
 
   // Function to get title and subheader based on current path
@@ -84,7 +85,7 @@ const Body = ({ children }: BodyProps) => {
 
   return (
     <div className="flex-1 h-screen flex flex-col overflow-hidden">
-      <Appbar title={title} subheader={subheader} />
+      <Appbar title={title} subheader={subheader} userRole={userRole} />
       <div className="flex-1 overflow-y-auto">
         <Routes>
           {/* Main Application Routes */}

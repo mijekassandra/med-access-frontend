@@ -9,6 +9,8 @@ import Table, {
   type TableAction,
 } from "../../../global-components/Table";
 import Chip from "../../../global-components/Chip";
+import Inputs from "../../../global-components/Inputs";
+import Dropdown, { type Option } from "../../../global-components/Dropdown";
 
 // Sample data type
 interface PregnancyRecord {
@@ -75,6 +77,16 @@ const sampleData: PregnancyRecord[] = [
 const PregnancyRecordsTable: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [records, setRecords] = useState<PregnancyRecord[]>(sampleData);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  //sample only
+  const user = {
+    role: "admin",
+  };
+
+  const handleSelectionChange = (selected: Option | Option[]) => {
+    console.log("Selected Filter:", selected);
+  };
 
   // Define columns
   const columns: TableColumn<PregnancyRecord>[] = [
@@ -174,26 +186,64 @@ const PregnancyRecordsTable: React.FC = () => {
     console.log("Page changed to:", page);
   };
 
+  const filteredRecords = records.filter((record) =>
+    Object.values(record).some((value) =>
+      value.toString().toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  );
+
   return (
     <div className="grid grid-cols-1 bg-szGrey25 min-h-screen">
-      <Table
-        data={records}
-        columns={columns}
-        actions={actions}
-        searchable={true}
-        searchPlaceholder="Search pregnancy records..."
-        searchKeys={["id", "milestoneName", "status"]}
-        pagination={{
-          currentPage,
-          totalPages: Math.ceil(records.length / 5), // 5 items per page
-          onChange: handlePageChange,
-        }}
-        emptyMessage="No pregnancy records found"
-        onRowClick={(record) => {
-          console.log("Row clicked:", record);
-        }}
-        className="shadow-sm"
-      />
+      <div className="grid grid-cols-1 gap-6">
+        {/* Header with search and filter */}
+        <div className="flex flex-col md:flex-row items-end md:items-center justify-between gap-3 md:gap-6">
+          <Inputs
+            type="text"
+            placeholder="Search pregnancy records..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <div
+            className={`flex gap-4 items-center ${
+              user.role === "admin" ? "justify-between" : "justify-end"
+            }`}
+          >
+            {user.role === "admin" && (
+              <div className="min-w-[40%] sm:min-w-[160px]">
+                <Dropdown
+                  options={[
+                    { label: "All", value: "all" },
+                    { label: "Ongoing", value: "ongoing" },
+                    { label: "Completed", value: "completed" },
+                    { label: "Pending", value: "pending" },
+                  ]}
+                  label="Filter by:"
+                  placeholder="Filter by"
+                  onSelectionChange={handleSelectionChange}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Table */}
+        <Table
+          data={filteredRecords}
+          columns={columns}
+          actions={actions}
+          searchable={false} // We're handling search manually
+          pagination={{
+            currentPage,
+            totalPages: Math.ceil(filteredRecords.length / 5), // 5 items per page
+            onChange: handlePageChange,
+          }}
+          emptyMessage="No pregnancy records found"
+          onRowClick={(record) => {
+            console.log("Row clicked:", record);
+          }}
+          className="shadow-sm"
+        />
+      </div>
     </div>
   );
 };

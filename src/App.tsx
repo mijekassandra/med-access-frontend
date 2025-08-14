@@ -36,7 +36,7 @@ const AppLayout = () => {
       />
 
       {/* Main Content Area */}
-      <Body />
+      <Body userRole={mockUser.role} />
     </div>
   );
 };

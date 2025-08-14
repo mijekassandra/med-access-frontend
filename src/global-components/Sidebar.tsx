@@ -36,7 +36,7 @@ export interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
-  userRole = "admin",
+  userRole = "doctor",
   className = "",
 }) => {
   const location = useLocation();
@@ -44,10 +44,15 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isManualCollapse, setIsManualCollapse] = useState(false);
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
 
   // Handle responsive behavior
   useEffect(() => {
     const handleResize = () => {
+      // Check if screen width is small (640px) or below
+      const isSmall = window.innerWidth <= 640;
+      setIsSmallScreen(isSmall);
+
       // Check if screen width is medium (768px) or below
       if (window.innerWidth <= 768) {
         setIsCollapsed(true);
@@ -77,6 +82,11 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   // Handle manual collapse toggle
   const handleManualToggle = () => {
+    // Prevent toggle on small screens
+    if (isSmallScreen) {
+      return;
+    }
+
     const newCollapsedState = !isCollapsed;
     setIsCollapsed(newCollapsedState);
     setIsManualCollapse(newCollapsedState);
@@ -180,11 +190,14 @@ const Sidebar: React.FC<SidebarProps> = ({
             isCollapsed ? "justify-center" : "justify-end"
           } flex  mb-4`}
         >
-          <ButtonsIcon
-            icon={isCollapsed ? <ArrowRight2 /> : <ArrowLeft2 />}
-            size="medium"
-            onClick={handleManualToggle}
-          />
+          <div className={isSmallScreen ? "opacity-50" : ""}>
+            <ButtonsIcon
+              icon={isCollapsed ? <ArrowRight2 /> : <ArrowLeft2 />}
+              size="medium"
+              onClick={handleManualToggle}
+              disabled={isSmallScreen}
+            />
+          </div>
         </div>
 
         {/* Logo Section */}

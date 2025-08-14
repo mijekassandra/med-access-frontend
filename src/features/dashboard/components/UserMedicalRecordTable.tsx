@@ -12,6 +12,7 @@ import Inputs from "../../../global-components/Inputs";
 import Button from "../../../global-components/Button";
 import AddUserMedicalModal from "./AddUserMedicalModal";
 import Divider from "../../../global-components/Divider";
+import Dropdown, { type Option } from "../../../global-components/Dropdown";
 
 // Sample data type
 interface MedicalRecord {
@@ -74,6 +75,15 @@ const UserMedicalRecordTable = () => {
     useState<MedicalRecord[]>(sampleData);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+
+  //sample only
+  const user = {
+    role: "admin",
+  };
+
+  const handleSelectionChange = (selected: Option | Option[]) => {
+    console.log("Selected Filter:", selected);
+  };
 
   // Define columns
   const columns: TableColumn<MedicalRecord>[] = [
@@ -185,7 +195,7 @@ const UserMedicalRecordTable = () => {
           <Divider className="flex-1 h-full " />
         </div>
 
-        <div className="flex flex-col sm:flex-row items-end sm:items-center justify-between gap-3 sm:gap-6">
+        <div className="flex flex-col md:flex-row items-end md:items-center justify-between gap-3 md:gap-6">
           <Inputs
             type="text"
             placeholder="Search medical records..."
@@ -194,13 +204,36 @@ const UserMedicalRecordTable = () => {
             icon={SearchNormal1}
             className=""
           />
-          <Button
-            label="Add User"
-            leftIcon={<Add />}
-            className="w-fit sm:w-[170px] truncate"
-            size="medium"
-            onClick={() => setIsAddUserModalOpen(true)}
-          />
+          <div
+            className={`flex gap-4 items-center ${
+              user.role === "admin" ? "justify-between" : "justify-end"
+            }`}
+          >
+            {user.role === "admin" && (
+              <div className="min-w-[40%] sm:min-w-[160px]">
+                <Dropdown
+                  options={[
+                    { label: "All", value: "all" },
+                    { label: "Active", value: "active" },
+                    { label: "Completed", value: "completed" },
+                  ]}
+                  label="Filter by:"
+                  placeholder="Filter by"
+                  onSelectionChange={handleSelectionChange}
+                />
+              </div>
+            )}
+
+            <Button
+              label="Add User"
+              leftIcon={<Add />}
+              className={`w-fit sm:w-[170px] truncate ${
+                user.role === "admin" ? "w-[60%]" : "w-[180px]"
+              }`}
+              size="medium"
+              onClick={() => setIsAddUserModalOpen(true)}
+            />
+          </div>
         </div>
         {/* <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-3 sm:gap-6">
           <Inputs
