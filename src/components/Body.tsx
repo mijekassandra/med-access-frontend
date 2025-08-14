@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 
 //component
 import Appbar from "./Appbar";
@@ -41,6 +41,11 @@ const Body = ({ children, userRole = "doctor" }: BodyProps) => {
         return {
           title: "Telemedicine",
           subheader: "Manage virtual consultations and appointments",
+        };
+      case "/users":
+        return {
+          title: "Users",
+          subheader: "Manage all clients, and personnel",
         };
       case "/inventory":
         return {
@@ -98,6 +103,9 @@ const Body = ({ children, userRole = "doctor" }: BodyProps) => {
           <Route path="/patient-records" element={<PatientRecords />} />
           <Route path="/announcements" element={<Announcement />} />
           <Route path="/reports" element={<Reports />} />
+
+          {/* Catch all non-existent routes and redirect to 404 */}
+          <Route path="*" element={<Navigate to="/404" replace />} />
         </Routes>
         {children}
       </div>

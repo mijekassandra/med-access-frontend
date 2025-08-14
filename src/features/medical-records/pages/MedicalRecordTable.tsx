@@ -1,5 +1,9 @@
 import React, { useState } from "react";
-import { Edit, Trash, Eye } from "iconsax-react";
+
+//icons
+import { Edit, Trash, Eye, SearchNormal1 } from "iconsax-react";
+
+//components
 import Table, {
   type TableColumn,
   type TableAction,
@@ -173,56 +177,55 @@ const MedicalRecordTable: React.FC = () => {
   );
 
   return (
-    <div className="grid grid-cols-1 bg-szGrey25 min-h-screen">
-      <div className="grid grid-cols-1 gap-6">
-        {/* Header with search and filter */}
-        <div className="flex flex-col md:flex-row items-end md:items-center justify-between gap-3 md:gap-6">
-          <Inputs
-            type="text"
-            placeholder="Search medical records..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <div
-            className={`flex gap-4 items-center ${
-              user.role === "admin" ? "justify-between" : "justify-end"
-            }`}
-          >
-            {user.role === "admin" && (
-              <div className="min-w-[40%] sm:min-w-[160px]">
-                <Dropdown
-                  options={[
-                    { label: "All", value: "all" },
-                    { label: "Active", value: "active" },
-                    { label: "Completed", value: "completed" },
-                  ]}
-                  label="Filter by:"
-                  placeholder="Filter by"
-                  onSelectionChange={handleSelectionChange}
-                />
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Table */}
-        <Table
-          data={filteredRecords}
-          columns={columns}
-          actions={actions}
-          searchable={false} // We're handling search manually
-          pagination={{
-            currentPage,
-            totalPages: Math.ceil(filteredRecords.length / 5), // 5 items per page
-            onChange: handlePageChange,
-          }}
-          emptyMessage="No medical records found"
-          onRowClick={(record) => {
-            console.log("Row clicked:", record);
-          }}
-          className="shadow-sm"
+    <div className="grid grid-cols-1 gap-6">
+      {/* Header with search and filter */}
+      <div className="flex flex-col md:flex-row items-end md:items-center justify-between gap-3 md:gap-6">
+        <Inputs
+          type="text"
+          placeholder="Search medical records..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          icon={SearchNormal1}
         />
+        <div
+          className={`flex gap-4 items-center ${
+            user.role === "admin" ? "justify-between" : "justify-end"
+          }`}
+        >
+          {user.role === "admin" && (
+            <div className="min-w-[40%] sm:min-w-[160px]">
+              <Dropdown
+                options={[
+                  { label: "All", value: "all" },
+                  { label: "Active", value: "active" },
+                  { label: "Completed", value: "completed" },
+                ]}
+                label="Filter by:"
+                placeholder="Filter by"
+                onSelectionChange={handleSelectionChange}
+              />
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Table */}
+      <Table
+        data={filteredRecords}
+        columns={columns}
+        actions={actions}
+        searchable={false} // We're handling search manually
+        pagination={{
+          currentPage,
+          totalPages: Math.ceil(filteredRecords.length / 5), // 5 items per page
+          onChange: handlePageChange,
+        }}
+        emptyMessage="No medical records found"
+        onRowClick={(record) => {
+          console.log("Row clicked:", record);
+        }}
+        className="shadow-sm"
+      />
     </div>
   );
 };

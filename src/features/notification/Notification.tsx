@@ -9,7 +9,6 @@ import {
 } from "iconsax-react";
 import Badge from "../../global-components/Badge";
 import Button from "../../global-components/Button";
-import ButtonsIcon from "../../global-components/ButtonsIcon";
 
 // Notification types
 export interface NotificationItem {
@@ -258,18 +257,12 @@ const Notification: React.FC<NotificationProps> = ({
         <Badge
           badgeContent={unreadCount > 0 ? unreadCount.toString() : undefined}
           variant={unreadCount > 0 ? "standard" : "dot"}
-          color={userRole === "admin" ? "#284738" : "#E4970B"}
+          color={"#E4970B"}
         >
           <NotificationIcon
             variant="Bulk"
             onClick={() => setIsOpen(!isOpen)}
-            className={`w-7 h-7 cursor-pointer ${
-              userRole === "admin"
-                ? "text-szPrimary500"
-                : userRole === "doctor"
-                ? "text-szSecondary700"
-                : "text-szPrimary700"
-            }`}
+            className={`w-7 h-7 cursor-pointer text-szSecondary500`}
           />
         </Badge>
       </>
@@ -282,7 +275,7 @@ const Notification: React.FC<NotificationProps> = ({
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
             <h3 className="text-lg font-semibold text-gray-900">
-              {userRole === "admin" ? "System Notifications" : "Notifications"}
+              Notifications
             </h3>
             <div className="flex items-center gap-1">
               {unreadCount > 0 && (
@@ -294,17 +287,6 @@ const Notification: React.FC<NotificationProps> = ({
                   className="text-sm text-szPrimary500 hover:text-szPrimary700 font-medium"
                 />
               )}
-              {/* <ButtonsIcon
-                onClick={() => setIsOpen(false)}
-                size="small"
-                variant="ghost"
-                icon={
-                  <CloseCircle
-                    variant="Linear"
-                    className="w-3 h-3 text-gray-400"
-                  />
-                }
-              /> */}
             </div>
           </div>
 

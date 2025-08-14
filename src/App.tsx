@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 // components
 import Sidebar from "./global-components/Sidebar";
 import Body from "./components/Body";
+import PageNotFound from "./components/PageNotFound";
 
 // pages
 import BaseTheme2 from "./design-system/BaseTheme2";
@@ -16,24 +17,15 @@ import Login from "./features/auth/pages/Login";
 const AppLayout = () => {
   // Mock user data - in real app this would come from auth context
   const mockUser = {
-    role: "doctor" as const,
+    role: "admin" as const,
     name: "John Smith",
     avatar: undefined,
-  };
-
-  const handleLogout = () => {
-    // Handle logout logic here
-    console.log("Logout clicked");
   };
 
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Sidebar */}
-      <Sidebar
-        userRole={mockUser.role}
-        userName={mockUser.name}
-        onLogout={handleLogout}
-      />
+      <Sidebar userRole={mockUser.role} userName={mockUser.name} />
 
       {/* Main Content Area */}
       <Body userRole={mockUser.role} />
@@ -53,6 +45,9 @@ function App() {
         <Route path="/kassy" element={<KassyDesignSystem />} />
         <Route path="/millborne" element={<MillborneDesignSystem />} />
         <Route path="/kara" element={<KaraDesignSystem />} />
+
+        {/* 404 Page - Standalone route for direct access */}
+        <Route path="/404" element={<PageNotFound />} />
 
         {/* Main Application Routes - with sidebar layout */}
         <Route path="/*" element={<AppLayout />} />
