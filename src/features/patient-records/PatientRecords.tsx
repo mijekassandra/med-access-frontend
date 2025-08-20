@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 
 // icons
-import { SearchNormal1, Eye, Edit, Trash } from "iconsax-react";
+import { SearchNormal1, Edit, Trash } from "iconsax-react";
 
 // components
 import ContainerWrapper from "../../components/ContainerWrapper";
@@ -124,15 +124,7 @@ const PatientRecords: React.FC = () => {
 
   const actions: TableAction<PatientRecord>[] = [
     {
-      label: "View Details",
-      icon: <Eye size={16} />,
-      onClick: (record) => {
-        console.log("View details for:", record);
-        alert(`Viewing details for ID: ${record.id}`);
-      },
-    },
-    {
-      label: "Edit",
+      label: "Edit Record",
       icon: <Edit size={16} />,
       onClick: (record) => {
         console.log("Edit record:", record);
@@ -140,7 +132,7 @@ const PatientRecords: React.FC = () => {
       },
     },
     {
-      label: "Delete",
+      label: "Delete Record",
       icon: <Trash size={16} />,
       onClick: (record) => {
         if (confirm(`Delete patient with ID: ${record.id}?`)) {

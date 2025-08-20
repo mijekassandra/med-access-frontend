@@ -12,7 +12,7 @@ interface SnackbarAlertProps {
   duration?: number;
   position?: {
     vertical: "top" | "bottom";
-    horizontal: "left" | "right";
+    horizontal: "left" | "right" | "center";
   };
   showCloseButton?: boolean;
   action?: { label: string; onClick: () => void };
@@ -67,7 +67,11 @@ const SnackbarAlert: React.FC<SnackbarAlertProps> = ({
           : "translateX(20px)"
         : "none",
     ...(position.vertical === "top" ? { top: "16px" } : { bottom: "16px" }),
-    ...(position.horizontal === "left" ? { left: "16px" } : { right: "16px" }),
+    ...(position.horizontal === "left"
+      ? { left: "16px" }
+      : position.horizontal === "center"
+      ? { left: "50%", transform: "translateX(-50%)" }
+      : { right: "16px" }),
   };
 
   const typeStyle = {

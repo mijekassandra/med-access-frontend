@@ -220,7 +220,10 @@ const Table = <T extends Record<string, any>>({
                     </td>
                   ))}
                   {actions.length > 0 && (
-                    <td className="px-4 py-3 border-b border-szLightGrey400">
+                    <td
+                      className="px-4 py-3 border-b border-szLightGrey400"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <PopoverMenu
                         items={getActionItems(record)}
                         size="small"

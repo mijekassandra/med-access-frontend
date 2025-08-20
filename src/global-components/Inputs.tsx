@@ -38,8 +38,10 @@ const Input: React.FC<InputProps> = ({
   placeholder:text-szBlack700 ${
     error
       ? "border-error700 focus:ring-szBlack700"
+      : disabled
+      ? "border-gray-300 focus:ring-gray-300"
       : "border-szLightGrey400 focus:ring-szBlack700"
-  } hover:border-szPrimary700 ${className}`;
+  } ${!disabled ? "hover:border-szPrimary700" : ""} ${className}`;
 
   const countCharacters = (text: string = "") => {
     return text.length;
@@ -67,7 +69,7 @@ const Input: React.FC<InputProps> = ({
               maxLength={maxCharacter}
               onChange={onChange}
               disabled={disabled}
-              className={`${sharedStyles} min-h-[100px] min-w-[300px] resize-none disabled:border-szLightGrey400 disabled:hover:border-szGrey300 disabled:bg-szWhite100 disabled:cursor-not-allowed `}
+              className={`${sharedStyles} min-h-[100px] min-w-[300px] resize-none disabled:bg-gray-50 disabled:cursor-not-allowed `}
             />
             {maxCharacter && (
               <p className="flex justify-end mt-1 pr-1 text-caption-all-caps text-szLightGrey400">
@@ -77,7 +79,9 @@ const Input: React.FC<InputProps> = ({
           </>
         ) : (
           <div
-            className={`${sharedStyles} flex w-full items-center gap-2 justify-between bg-white min-h-[44px] disabled:border-szLightGrey400 disabled:hover:border-szLightGrey400 disabled:bg-szGrey150 disabled:cursor-not-allowed `}
+            className={`${sharedStyles} flex w-full items-center gap-2 justify-between ${
+              disabled ? "bg-gray-50" : "bg-white"
+            } min-h-[44px] disabled:cursor-not-allowed `}
           >
             <input
               id={label}

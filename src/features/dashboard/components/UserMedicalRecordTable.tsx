@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 //icons
-import { Add, SearchNormal1, Edit, Trash, Eye } from "iconsax-react";
+import { Add, SearchNormal1, Edit, Trash } from "iconsax-react";
 
 // components
 import Table, {
@@ -11,61 +11,53 @@ import Table, {
 import Inputs from "../../../global-components/Inputs";
 import Button from "../../../global-components/Button";
 import AddUserMedicalModal from "./AddUserMedicalModal";
-import Divider from "../../../global-components/Divider";
-import Dropdown, { type Option } from "../../../global-components/Dropdown";
+import DeleteConfirmation from "../../../components/DeleteConfirmation";
 
 // Sample data type
 interface MedicalRecord {
   id: string;
   fullName: string;
   diagnosis: string;
-  treatmentPlan: string;
   dateOfRecord: string;
+  treatmentPlan: string;
 }
 
 // Sample data
 const sampleData: MedicalRecord[] = [
   {
     id: "001",
-    fullName: "Anna B. Garcia",
-    diagnosis: "Acute Tonsillitis",
-    treatmentPlan: "Antibiotics, rest",
-    dateOfRecord: "2024-06-10 09:40:00",
+    fullName: "John Doe",
+    diagnosis: "Hypertension",
+    dateOfRecord: "2024-06-01T10:30",
+    treatmentPlan: "Prescribed medication and lifestyle changes",
   },
   {
     id: "002",
-    fullName: "Maria Santos",
-    diagnosis: "Hypertension",
-    treatmentPlan: "Blood pressure medication",
-    dateOfRecord: "2024-06-09 14:30:00",
+    fullName: "Jane Smith",
+    diagnosis: "Diabetes Type 2",
+    dateOfRecord: "2024-06-02T14:15",
+    treatmentPlan: "Insulin therapy and diet management",
   },
   {
     id: "003",
-    fullName: "Juan Dela Cruz",
-    diagnosis: "Diabetes Type 2",
-    treatmentPlan: "Insulin therapy, diet control",
-    dateOfRecord: "2024-06-08 11:15:00",
+    fullName: "Mike Johnson",
+    diagnosis: "Asthma",
+    dateOfRecord: "2024-06-03T09:45",
+    treatmentPlan: "Inhaler prescription and breathing exercises",
   },
   {
     id: "004",
-    fullName: "Carmen Reyes",
-    diagnosis: "Bronchitis",
-    treatmentPlan: "Cough syrup, steam inhalation",
-    dateOfRecord: "2024-06-07 16:45:00",
+    fullName: "Sarah Wilson",
+    diagnosis: "Migraine",
+    dateOfRecord: "2024-06-04T16:20",
+    treatmentPlan: "Pain management and trigger avoidance",
   },
   {
     id: "005",
-    fullName: "Pedro Martinez",
-    diagnosis: "Migraine",
-    treatmentPlan: "Pain relievers, rest in dark room",
-    dateOfRecord: "2024-06-06 10:20:00",
-  },
-  {
-    id: "006",
-    fullName: "Isabella Torres",
-    diagnosis: "Urinary Tract Infection",
-    treatmentPlan: "Antibiotics, increased water intake",
-    dateOfRecord: "2024-06-05 13:55:00",
+    fullName: "David Brown",
+    diagnosis: "Arthritis",
+    dateOfRecord: "2024-06-05T11:10",
+    treatmentPlan: "Physical therapy and anti-inflammatory medication",
   },
 ];
 
@@ -75,15 +67,12 @@ const UserMedicalRecordTable = () => {
     useState<MedicalRecord[]>(sampleData);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
-
-  //sample only
-  const user = {
-    role: "admin",
-  };
-
-  const handleSelectionChange = (selected: Option | Option[]) => {
-    console.log("Selected Filter:", selected);
-  };
+  const [isEditUserModalOpen, setIsEditUserModalOpen] = useState(false);
+  const [isViewUserModalOpen, setIsViewUserModalOpen] = useState(false);
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
+    useState(false);
+  const [selectedMedicalRecord, setSelectedMedicalRecord] =
+    useState<MedicalRecord | null>(null);
 
   // Define columns
   const columns: TableColumn<MedicalRecord>[] = [
@@ -117,23 +106,27 @@ const UserMedicalRecordTable = () => {
       ),
     },
     {
-      key: "treatmentPlan",
-      header: "Treatment Plan",
-      sortable: true,
-      render: (value) => (
-        <span className="text-body-small-reg text-szBlack700">{value}</span>
-      ),
-    },
-    {
       key: "dateOfRecord",
       header: "Date of Record",
       width: "160px",
       sortable: true,
       render: (value) => (
         <div className="text-body-small-reg text-szBlack700">
-          <div>{value.split(" ")[0]}</div>
-          <div className="text-xs text-szBlack500">{value.split(" ")[1]}</div>
+          <div>{new Date(value).toLocaleDateString()}</div>
+          <div className="text-xs text-szBlack500">
+            {new Date(value).toLocaleTimeString()}
+          </div>
         </div>
+      ),
+    },
+    {
+      key: "treatmentPlan",
+      header: "Treatment Plan",
+      sortable: true,
+      render: (value) => (
+        <span className="text-body-small-reg text-szBlack700">
+          {value.length > 50 ? `${value.substring(0, 50)}...` : value}
+        </span>
       ),
     },
   ];
@@ -141,33 +134,19 @@ const UserMedicalRecordTable = () => {
   // Define actions
   const actions: TableAction<MedicalRecord>[] = [
     {
-      label: "View Details",
-      icon: <Eye size={16} />,
-      onClick: (record) => {
-        console.log("View details for:", record);
-        alert(`Viewing details for ID: ${record.id}`);
-      },
-    },
-    {
       label: "Edit Record",
       icon: <Edit size={16} />,
       onClick: (record) => {
-        console.log("Edit record:", record);
-        alert(`Editing record for ID: ${record.id}`);
+        setSelectedMedicalRecord(record);
+        setIsEditUserModalOpen(true);
       },
     },
     {
       label: "Delete Record",
       icon: <Trash size={16} />,
       onClick: (record) => {
-        console.log("Delete record:", record);
-        if (
-          confirm(
-            `Are you sure you want to delete the record for ID: ${record.id}?`
-          )
-        ) {
-          setMedicalRecords(medicalRecords.filter((r) => r.id !== record.id));
-        }
+        setSelectedMedicalRecord(record);
+        setIsDeleteConfirmationOpen(true);
       },
       disabled: (record) => record.id === "001", // Disable for first record as example
     },
@@ -178,6 +157,31 @@ const UserMedicalRecordTable = () => {
     console.log("Page changed to:", page);
   };
 
+  const handleEditSave = (updatedRecord: MedicalRecord) => {
+    setMedicalRecords(
+      medicalRecords.map((record) =>
+        record.id === updatedRecord.id ? updatedRecord : record
+      )
+    );
+  };
+
+  const handleDeleteConfirm = () => {
+    if (selectedMedicalRecord) {
+      setMedicalRecords(
+        medicalRecords.filter((r) => r.id !== selectedMedicalRecord.id)
+      );
+      setIsDeleteConfirmationOpen(false);
+      setSelectedMedicalRecord(null);
+    }
+  };
+
+  const handleCloseModals = () => {
+    setIsAddUserModalOpen(false);
+    setIsEditUserModalOpen(false);
+    setIsViewUserModalOpen(false);
+    setSelectedMedicalRecord(null);
+  };
+
   const filteredRecords = medicalRecords.filter((record) =>
     Object.values(record).some((value) =>
       value.toString().toLowerCase().includes(searchTerm.toLowerCase())
@@ -186,72 +190,23 @@ const UserMedicalRecordTable = () => {
 
   return (
     <div className="grid grid-cols-1 gap-6">
-      {/* Header with title, search and add button */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-8">
-          <h4 className="text-h4 font-semibold text-szBlack700">
-            View Medical Records
-          </h4>
-          <Divider className="flex-1 h-full " />
-        </div>
-
-        <div className="flex flex-col md:flex-row items-end md:items-center justify-between gap-3 md:gap-6">
-          <Inputs
-            type="text"
-            placeholder="Search medical records..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            icon={SearchNormal1}
-            className=""
-          />
-          <div
-            className={`flex gap-4 items-center ${
-              user.role === "admin" ? "justify-between" : "justify-end"
-            }`}
-          >
-            {user.role === "admin" && (
-              <div className="min-w-[40%] sm:min-w-[160px]">
-                <Dropdown
-                  options={[
-                    { label: "All", value: "all" },
-                    { label: "Active", value: "active" },
-                    { label: "Completed", value: "completed" },
-                  ]}
-                  label="Filter by:"
-                  placeholder="Filter by"
-                  onSelectionChange={handleSelectionChange}
-                />
-              </div>
-            )}
-
-            <Button
-              label="Add User"
-              leftIcon={<Add />}
-              className={`w-fit sm:w-[170px] truncate ${
-                user.role === "admin" ? "w-[60%]" : "w-[180px]"
-              }`}
-              size="medium"
-              onClick={() => setIsAddUserModalOpen(true)}
-            />
-          </div>
-        </div>
-        {/* <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-3 sm:gap-6">
-          <Inputs
-            type="text"
-            placeholder="Search medical records..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            icon={SearchNormal1}
-            className=""
-          />
-          <Button
-            label="Add User"
-            leftIcon={<Add />}
-            className="w-full sm:w-[200px]"
-            size="medium"
-            onClick={() => setIsAddUserModalOpen(true)}
-          />
-        </div> */}
+      {/* Header with search and add button */}
+      <div className="flex flex-col md:flex-row items-end md:items-center justify-between gap-3 md:gap-6">
+        <Inputs
+          type="text"
+          placeholder="Search medical records..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          icon={SearchNormal1}
+          className=""
+        />
+        <Button
+          label="Add User"
+          leftIcon={<Add />}
+          className="w-full sm:w-[200px]"
+          size="medium"
+          onClick={() => setIsAddUserModalOpen(true)}
+        />
       </div>
 
       {/* Table */}
@@ -267,14 +222,46 @@ const UserMedicalRecordTable = () => {
         }}
         emptyMessage="No medical records found"
         onRowClick={(record) => {
-          console.log("Row clicked:", record);
+          setSelectedMedicalRecord(record);
+          setIsViewUserModalOpen(true);
         }}
         className="shadow-sm"
       />
 
+      {/* Add User Medical Modal */}
       <AddUserMedicalModal
         isOpen={isAddUserModalOpen}
-        onClose={() => setIsAddUserModalOpen(false)}
+        onClose={handleCloseModals}
+        mode="add"
+      />
+
+      {/* Edit User Medical Modal */}
+      <AddUserMedicalModal
+        isOpen={isEditUserModalOpen}
+        onClose={handleCloseModals}
+        mode="edit"
+        medicalRecord={selectedMedicalRecord || undefined}
+        onSave={handleEditSave}
+      />
+
+      {/* View User Medical Modal */}
+      <AddUserMedicalModal
+        isOpen={isViewUserModalOpen}
+        onClose={handleCloseModals}
+        mode="view"
+        medicalRecord={selectedMedicalRecord || undefined}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmation
+        isOpen={isDeleteConfirmationOpen}
+        onClose={() => {
+          setIsDeleteConfirmationOpen(false);
+          setSelectedMedicalRecord(null);
+        }}
+        onClick={handleDeleteConfirm}
+        title="Delete Medical Record"
+        description={`Are you sure you want to delete the medical record for "${selectedMedicalRecord?.fullName}"? `}
       />
     </div>
   );

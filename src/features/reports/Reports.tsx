@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 //icons
-import { Add, SearchNormal1, Edit, Trash, Eye } from "iconsax-react";
+import { Add, SearchNormal1, Edit, Trash } from "iconsax-react";
 
 // components
 import Table, {
@@ -12,6 +12,7 @@ import ContainerWrapper from "../../components/ContainerWrapper";
 import Inputs from "../../global-components/Inputs";
 import Button from "../../global-components/Button";
 import AddHealthReport from "./component/AddHealthReport";
+import DeleteConfirmation from "../../components/DeleteConfirmation";
 import Dropdown, { type Option } from "../../global-components/Dropdown";
 
 // Sample data type
@@ -67,6 +68,13 @@ const Reports: React.FC = () => {
   const [reports, setReports] = useState<HealthReport[]>(sampleData);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddReportModalOpen, setIsAddReportModalOpen] = useState(false);
+  const [isEditReportModalOpen, setIsEditReportModalOpen] = useState(false);
+  const [isViewReportModalOpen, setIsViewReportModalOpen] = useState(false);
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
+    useState(false);
+  const [selectedReport, setSelectedReport] = useState<HealthReport | null>(
+    null
+  );
 
   //sample only
   const user = {
@@ -125,36 +133,22 @@ const Reports: React.FC = () => {
     },
   ];
 
-  // Define actions similar to ClientsTable
+  // Define actions
   const actions: TableAction<HealthReport>[] = [
-    {
-      label: "View Details",
-      icon: <Eye size={16} />,
-      onClick: (record) => {
-        console.log("View details for:", record);
-        alert(`Viewing details for ID: ${record.id}`);
-      },
-    },
     {
       label: "Edit Report",
       icon: <Edit size={16} />,
       onClick: (record) => {
-        console.log("Edit report:", record);
-        alert(`Editing report for ID: ${record.id}`);
+        setSelectedReport(record);
+        setIsEditReportModalOpen(true);
       },
     },
     {
       label: "Delete Report",
       icon: <Trash size={16} />,
       onClick: (record) => {
-        console.log("Delete report:", record);
-        if (
-          confirm(
-            `Are you sure you want to delete the report with ID: ${record.id}?`
-          )
-        ) {
-          setReports(reports.filter((r) => r.id !== record.id));
-        }
+        setSelectedReport(record);
+        setIsDeleteConfirmationOpen(true);
       },
       disabled: (record) => record.id === "001",
     },
@@ -167,6 +161,29 @@ const Reports: React.FC = () => {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     console.log("Page changed to:", page);
+  };
+
+  const handleEditSave = (updatedReport: HealthReport) => {
+    setReports(
+      reports.map((report) =>
+        report.id === updatedReport.id ? updatedReport : report
+      )
+    );
+  };
+
+  const handleDeleteConfirm = () => {
+    if (selectedReport) {
+      setReports(reports.filter((r) => r.id !== selectedReport.id));
+      setIsDeleteConfirmationOpen(false);
+      setSelectedReport(null);
+    }
+  };
+
+  const handleCloseModals = () => {
+    setIsAddReportModalOpen(false);
+    setIsEditReportModalOpen(false);
+    setIsViewReportModalOpen(false);
+    setSelectedReport(null);
   };
 
   const filteredReports = reports.filter((report) =>
@@ -237,14 +254,47 @@ const Reports: React.FC = () => {
           }}
           emptyMessage="No reports found"
           onRowClick={(record) => {
-            console.log("Row clicked:", record);
+            setSelectedReport(record);
+            setIsViewReportModalOpen(true);
           }}
           className="shadow-sm"
         />
       </div>
+
+      {/* Add Health Report Modal */}
       <AddHealthReport
         isOpen={isAddReportModalOpen}
-        onClose={() => setIsAddReportModalOpen(false)}
+        onClose={handleCloseModals}
+        mode="add"
+      />
+
+      {/* Edit Health Report Modal */}
+      <AddHealthReport
+        isOpen={isEditReportModalOpen}
+        onClose={handleCloseModals}
+        mode="edit"
+        report={selectedReport || undefined}
+        onSave={handleEditSave}
+      />
+
+      {/* View Health Report Modal */}
+      <AddHealthReport
+        isOpen={isViewReportModalOpen}
+        onClose={handleCloseModals}
+        mode="view"
+        report={selectedReport || undefined}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmation
+        isOpen={isDeleteConfirmationOpen}
+        onClose={() => {
+          setIsDeleteConfirmationOpen(false);
+          setSelectedReport(null);
+        }}
+        onClick={handleDeleteConfirm}
+        title="Delete Health Report"
+        description={`Are you sure you want to delete the report "${selectedReport?.title}"? `}
       />
     </ContainerWrapper>
   );

@@ -77,6 +77,9 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   //handle logout
   const handleLogout = () => {
+    // Clear session storage
+    sessionStorage.removeItem("userRole");
+    sessionStorage.removeItem("userEmail");
     navigate("/");
   };
 

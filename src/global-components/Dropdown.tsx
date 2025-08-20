@@ -261,7 +261,7 @@ const Dropdown: React.FC<DropdownProps> = ({
           isOpen ? "outline-szPrimary500 text-szPrimary500" : ""
         } ${
           disabled
-            ? "bg-gray-50 text-gray-400 cursor-not-allowed py-3"
+            ? "bg-gray-50 text-gray-400 cursor-default py-3"
             : multiSelect && selectedOptions.length > 0
             ? "bg-szWhite100 py-2"
             : "bg-white py-3 text-szBlack700 hover:outline-szPrimary900 hover:text-szPrimary900 active:outline-szBlack700 active:text-szBlack700 group"

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 //icons
-import { Add, SearchNormal1, Edit, Trash, Eye } from "iconsax-react";
+import { Add, SearchNormal1, Edit, Trash } from "iconsax-react";
 
 // components
 import Table, {
@@ -11,6 +11,7 @@ import Table, {
 import Inputs from "../../../global-components/Inputs";
 import Button from "../../../global-components/Button";
 import AddClientModal from "./AddClientModal";
+import DeleteConfirmation from "../../../components/DeleteConfirmation";
 import Dropdown, { type Option } from "../../../global-components/Dropdown";
 
 // Sample data type
@@ -72,11 +73,11 @@ const ClientsTable = () => {
   const [clients, setClients] = useState<Client[]>(sampleData);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
-
-  //sample only
-  const user = {
-    role: "admin",
-  };
+  const [isEditClientModalOpen, setIsEditClientModalOpen] = useState(false);
+  const [isViewClientModalOpen, setIsViewClientModalOpen] = useState(false);
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
+    useState(false);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   const handleSelectionChange = (selected: Option | Option[]) => {
     console.log("Selected Filter:", selected);
@@ -146,33 +147,19 @@ const ClientsTable = () => {
   // Define actions
   const actions: TableAction<Client>[] = [
     {
-      label: "View Details",
-      icon: <Eye size={16} />,
-      onClick: (record) => {
-        console.log("View details for:", record);
-        alert(`Viewing details for ID: ${record.id}`);
-      },
-    },
-    {
       label: "Edit Client",
       icon: <Edit size={16} />,
       onClick: (record) => {
-        console.log("Edit client:", record);
-        alert(`Editing client for ID: ${record.id}`);
+        setSelectedClient(record);
+        setIsEditClientModalOpen(true);
       },
     },
     {
       label: "Delete Client",
       icon: <Trash size={16} />,
       onClick: (record) => {
-        console.log("Delete client:", record);
-        if (
-          confirm(
-            `Are you sure you want to delete the client with ID: ${record.id}?`
-          )
-        ) {
-          setClients(clients.filter((c) => c.id !== record.id));
-        }
+        setSelectedClient(record);
+        setIsDeleteConfirmationOpen(true);
       },
       disabled: (record) => record.id === "001", // Disable for first record as example
     },
@@ -183,15 +170,38 @@ const ClientsTable = () => {
     console.log("Page changed to:", page);
   };
 
-  const filteredClients = clients.filter((record) =>
-    Object.values(record).some((value) =>
+  const handleEditSave = (updatedClient: Client) => {
+    setClients(
+      clients.map((client) =>
+        client.id === updatedClient.id ? updatedClient : client
+      )
+    );
+  };
+
+  const handleDeleteConfirm = () => {
+    if (selectedClient) {
+      setClients(clients.filter((c) => c.id !== selectedClient.id));
+      setIsDeleteConfirmationOpen(false);
+      setSelectedClient(null);
+    }
+  };
+
+  const handleCloseModals = () => {
+    setIsAddClientModalOpen(false);
+    setIsEditClientModalOpen(false);
+    setIsViewClientModalOpen(false);
+    setSelectedClient(null);
+  };
+
+  const filteredClients = clients.filter((client) =>
+    Object.values(client).some((value) =>
       value.toString().toLowerCase().includes(searchTerm.toLowerCase())
     )
   );
 
   return (
     <div className="grid grid-cols-1 gap-6">
-      {/* Header with title, search and add button */}
+      {/* Header with search and add button */}
       <div className="flex flex-col md:flex-row items-end md:items-center justify-between gap-3 md:gap-6">
         <Inputs
           type="text"
@@ -201,32 +211,24 @@ const ClientsTable = () => {
           icon={SearchNormal1}
           className=""
         />
-        <div
-          className={`flex gap-4 items-center ${
-            user.role === "admin" ? "justify-between" : "justify-end"
-          }`}
-        >
-          {user.role === "admin" && (
-            <div className="min-w-[40%] sm:min-w-[160px]">
-              <Dropdown
-                options={[
-                  { label: "All", value: "all" },
-                  { label: "New", value: "new" },
-                  { label: "Returning", value: "returning" },
-                ]}
-                label="Filter by:"
-                placeholder="Filter by"
-                onSelectionChange={handleSelectionChange}
-              />
-            </div>
-          )}
+        <div className={`flex gap-4 items-center `}>
+          <div className="min-w-[40%] sm:min-w-[160px]">
+            <Dropdown
+              options={[
+                { label: "All", value: "all" },
+                { label: "New", value: "new" },
+                { label: "Returning", value: "returning" },
+              ]}
+              label="Filter by:"
+              placeholder="Filter by"
+              onSelectionChange={handleSelectionChange}
+            />
+          </div>
 
           <Button
             label="Add User"
             leftIcon={<Add />}
-            className={`w-fit sm:w-[170px] truncate ${
-              user.role === "admin" ? "w-[60%]" : "w-[180px]"
-            }`}
+            className={`w-fit sm:w-[170px] truncate`}
             size="medium"
             onClick={() => setIsAddClientModalOpen(true)}
           />
@@ -246,14 +248,46 @@ const ClientsTable = () => {
         }}
         emptyMessage="No clients found"
         onRowClick={(record) => {
-          console.log("Row clicked:", record);
+          setSelectedClient(record);
+          setIsViewClientModalOpen(true);
         }}
         className="shadow-sm"
       />
 
+      {/* Add Client Modal */}
       <AddClientModal
         isOpen={isAddClientModalOpen}
-        onClose={() => setIsAddClientModalOpen(false)}
+        onClose={handleCloseModals}
+        mode="add"
+      />
+
+      {/* Edit Client Modal */}
+      <AddClientModal
+        isOpen={isEditClientModalOpen}
+        onClose={handleCloseModals}
+        mode="edit"
+        client={selectedClient || undefined}
+        onSave={handleEditSave}
+      />
+
+      {/* View Client Modal */}
+      <AddClientModal
+        isOpen={isViewClientModalOpen}
+        onClose={handleCloseModals}
+        mode="view"
+        client={selectedClient || undefined}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmation
+        isOpen={isDeleteConfirmationOpen}
+        onClose={() => {
+          setIsDeleteConfirmationOpen(false);
+          setSelectedClient(null);
+        }}
+        onClick={handleDeleteConfirm}
+        title="Delete Client"
+        description={`Are you sure you want to delete the client "${selectedClient?.username}"? `}
       />
     </div>
   );

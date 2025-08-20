@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-// import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // components
 import Sidebar from "./global-components/Sidebar";
@@ -15,20 +15,33 @@ import Login from "./features/auth/pages/Login";
 
 // Main app layout component with sidebar
 const AppLayout = () => {
-  // Mock user data - in real app this would come from auth context
-  const mockUser = {
-    role: "admin" as const,
-    name: "John Smith",
-    avatar: undefined,
-  };
+  const [userRole, setUserRole] = useState<"admin" | "doctor">("doctor");
+  const [userName, setUserName] = useState("User");
+
+  useEffect(() => {
+    // Get user role from sessionStorage
+    const storedRole = sessionStorage.getItem("userRole") as
+      | "admin"
+      | "doctor"
+      | null;
+    const storedEmail = sessionStorage.getItem("userEmail");
+
+    if (storedRole) {
+      setUserRole(storedRole);
+    }
+
+    if (storedEmail) {
+      setUserName(storedEmail.split("@")[0]); // Use email prefix as username
+    }
+  }, []);
 
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Sidebar */}
-      <Sidebar userRole={mockUser.role} userName={mockUser.name} />
+      <Sidebar userRole={userRole} userName={userName} />
 
       {/* Main Content Area */}
-      <Body userRole={mockUser.role} />
+      <Body userRole={userRole} />
     </div>
   );
 };

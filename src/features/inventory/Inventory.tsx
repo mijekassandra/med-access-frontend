@@ -1,22 +1,26 @@
 import React, { useState } from "react";
 
 //icons
-import { Add, SearchNormal1 } from "iconsax-react";
+import { Add, SearchNormal1, Edit, Trash } from "iconsax-react";
 
 // components
-import Table, { type TableColumn } from "../../global-components/Table";
+import Table, {
+  type TableColumn,
+  type TableAction,
+} from "../../global-components/Table";
 import ContainerWrapper from "../../components/ContainerWrapper";
 import Inputs from "../../global-components/Inputs";
 import Button from "../../global-components/Button";
 import AddMedicineModal from "./component/AddMedicineModal";
+import DeleteConfirmation from "../../components/DeleteConfirmation";
 import Dropdown, { type Option } from "../../global-components/Dropdown";
 
 // Sample data type
 interface Medicine {
   id: string;
-  name: string;
+  medicineName: string;
   dosage: string;
-  stock: number;
+  stock: string;
   description: string;
   expiryDate: string;
   batchNo: string;
@@ -26,45 +30,45 @@ interface Medicine {
 const sampleData: Medicine[] = [
   {
     id: "001",
-    name: "Mefenamic",
+    medicineName: "Mefenamic",
     dosage: "500mg",
-    stock: 100,
+    stock: "100",
     description: "Pain Reliever",
     expiryDate: "2025-06-30",
     batchNo: "B2024A",
   },
   {
     id: "002",
-    name: "Paracetamol",
+    medicineName: "Paracetamol",
     dosage: "250mg",
-    stock: 150,
+    stock: "150",
     description: "Fever Reducer",
     expiryDate: "2025-08-15",
     batchNo: "B2024B",
   },
   {
     id: "003",
-    name: "Amoxicillin",
+    medicineName: "Amoxicillin",
     dosage: "500mg",
-    stock: 75,
+    stock: "75",
     description: "Antibiotic",
     expiryDate: "2025-04-20",
     batchNo: "B2024C",
   },
   {
     id: "004",
-    name: "Ibuprofen",
+    medicineName: "Ibuprofen",
     dosage: "400mg",
-    stock: 200,
+    stock: "200",
     description: "Anti-inflammatory",
     expiryDate: "2025-07-10",
     batchNo: "B2024D",
   },
   {
     id: "005",
-    name: "Omeprazole",
+    medicineName: "Omeprazole",
     dosage: "20mg",
-    stock: 50,
+    stock: "50",
     description: "Acid Reducer",
     expiryDate: "2025-05-25",
     batchNo: "B2024E",
@@ -73,9 +77,16 @@ const sampleData: Medicine[] = [
 
 const Inventory: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [medicines] = useState<Medicine[]>(sampleData);
+  const [medicines, setMedicines] = useState<Medicine[]>(sampleData);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddMedicineModalOpen, setIsAddMedicineModalOpen] = useState(false);
+  const [isEditMedicineModalOpen, setIsEditMedicineModalOpen] = useState(false);
+  const [isViewMedicineModalOpen, setIsViewMedicineModalOpen] = useState(false);
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
+    useState(false);
+  const [selectedMedicine, setSelectedMedicine] = useState<Medicine | null>(
+    null
+  );
 
   //sample only
   const user = {
@@ -93,9 +104,14 @@ const Inventory: React.FC = () => {
       header: "Med ID",
       width: "100px",
       sortable: true,
+      render: (value) => (
+        <span className="text-body-small-reg text-szBlack700 font-medium">
+          {value}
+        </span>
+      ),
     },
     {
-      key: "name",
+      key: "medicineName",
       header: "Name",
       sortable: true,
       render: (value) => (
@@ -156,15 +172,54 @@ const Inventory: React.FC = () => {
     },
   ];
 
+  // Define actions
+  const actions: TableAction<Medicine>[] = [
+    {
+      label: "Edit Medicine",
+      icon: <Edit size={16} />,
+      onClick: (record) => {
+        setSelectedMedicine(record);
+        setIsEditMedicineModalOpen(true);
+      },
+    },
+    {
+      label: "Delete Medicine",
+      icon: <Trash size={16} />,
+      onClick: (record) => {
+        setSelectedMedicine(record);
+        setIsDeleteConfirmationOpen(true);
+      },
+      disabled: (record) => record.id === "001", // Disable for first record as example
+    },
+  ];
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     console.log("Page changed to:", page);
   };
 
-  //   const handleAddMedicine = () => {
-  //     console.log("Add medicine clicked");
-  //     alert("Add Medicine functionality would be implemented here");
-  //   };
+  const handleEditSave = (updatedMedicine: Medicine) => {
+    setMedicines(
+      medicines.map((medicine) =>
+        medicine.id === updatedMedicine.id ? updatedMedicine : medicine
+      )
+    );
+  };
+
+  const handleDeleteConfirm = () => {
+    if (selectedMedicine) {
+      setMedicines(medicines.filter((m) => m.id !== selectedMedicine.id));
+      setIsDeleteConfirmationOpen(false);
+      setSelectedMedicine(null);
+    }
+  };
+
+  const handleCloseModals = () => {
+    setIsAddMedicineModalOpen(false);
+    setIsEditMedicineModalOpen(false);
+    setIsViewMedicineModalOpen(false);
+    setSelectedMedicine(null);
+  };
 
   const filteredMedicines = medicines.filter((medicine) =>
     Object.values(medicine).some((value) =>
@@ -207,7 +262,6 @@ const Inventory: React.FC = () => {
             <Button
               label="Add Medicine"
               leftIcon={<Add />}
-              // className="w-[60%] sm:w-[180px] truncate"
               className={`w-[60%] sm:w-[180px] truncate ${
                 user.role === "admin" ? "w-[60%]" : "w-[180px]"
               }`}
@@ -221,6 +275,7 @@ const Inventory: React.FC = () => {
         <Table
           data={filteredMedicines}
           columns={columns}
+          actions={actions}
           searchable={false} // We're handling search manually
           pagination={{
             currentPage,
@@ -229,14 +284,47 @@ const Inventory: React.FC = () => {
           }}
           emptyMessage="No medicines found"
           onRowClick={(record) => {
-            console.log("Row clicked:", record);
+            setSelectedMedicine(record);
+            setIsViewMedicineModalOpen(true);
           }}
           className="shadow-sm"
         />
       </div>
+
+      {/* Add Medicine Modal */}
       <AddMedicineModal
         isOpen={isAddMedicineModalOpen}
-        onClose={() => setIsAddMedicineModalOpen(false)}
+        onClose={handleCloseModals}
+        mode="add"
+      />
+
+      {/* Edit Medicine Modal */}
+      <AddMedicineModal
+        isOpen={isEditMedicineModalOpen}
+        onClose={handleCloseModals}
+        mode="edit"
+        medicine={selectedMedicine || undefined}
+        onSave={handleEditSave}
+      />
+
+      {/* View Medicine Modal */}
+      <AddMedicineModal
+        isOpen={isViewMedicineModalOpen}
+        onClose={handleCloseModals}
+        mode="view"
+        medicine={selectedMedicine || undefined}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmation
+        isOpen={isDeleteConfirmationOpen}
+        onClose={() => {
+          setIsDeleteConfirmationOpen(false);
+          setSelectedMedicine(null);
+        }}
+        onClick={handleDeleteConfirm}
+        title="Delete Medicine"
+        description={`Are you sure you want to delete the medicine "${selectedMedicine?.medicineName}"? `}
       />
     </ContainerWrapper>
   );
