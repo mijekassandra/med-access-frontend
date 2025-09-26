@@ -97,13 +97,13 @@ const AddUserMedicalModal = ({
   const getModalTitle = () => {
     switch (mode) {
       case "add":
-        return "ADD USER MEDICAL RECORD";
+        return "ADD PATIENT MEDICAL RECORD";
       case "edit":
-        return "EDIT USER MEDICAL RECORD";
+        return "EDIT PATIENT MEDICAL RECORD";
       case "view":
-        return "USER MEDICAL RECORD DETAILS";
+        return "PATIENT MEDICAL RECORD DETAILS";
       default:
-        return "USER MEDICAL RECORD";
+        return "PATIENT MEDICAL RECORD";
     }
   };
 

@@ -45,12 +45,12 @@ const Body = ({ children, userRole = "doctor" }: BodyProps) => {
       case "/users":
         return {
           title: "Users",
-          subheader: "Manage all clients, and personnel",
+          subheader: "Manage all patients, and personnel",
         };
-      case "/inventory":
+      case "/medicine-inventory":
         return {
-          title: "Inventory",
-          subheader: "Manage inventory and stock",
+          title: "Medicine Inventory",
+          subheader: "Manage medicine inventory ",
         };
       case "/patient-records":
         return {
@@ -71,7 +71,7 @@ const Body = ({ children, userRole = "doctor" }: BodyProps) => {
       case "/users/personnels":
         return {
           title: "All Users",
-          subheader: "Manage all clients, and personnel",
+          subheader: "Manage all patients, and personnel",
         };
       case "/announcements":
         return {
@@ -98,7 +98,7 @@ const Body = ({ children, userRole = "doctor" }: BodyProps) => {
           <Route path="/medical-records/*" element={<MedicalRecordsIndex />} />
           <Route path="/telemedicine" element={<Telemedicine />} />
           <Route path="/health-education" element={<HealthEducation />} />
-          <Route path="/inventory" element={<Inventory />} />
+          <Route path="/medicine-inventory" element={<Inventory />} />
           <Route path="/users/*" element={<User />} />
           <Route path="/patient-records" element={<PatientRecords />} />
           <Route path="/announcements" element={<Announcement />} />

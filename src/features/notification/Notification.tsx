@@ -23,7 +23,7 @@ export interface NotificationItem {
 
 // Props interface
 interface NotificationProps {
-  userRole?: "admin" | "doctor" | "client";
+  userRole?: "admin" | "doctor" | "patient";
   notifications?: NotificationItem[];
   onNotificationClick?: (notification: NotificationItem) => void;
   onMarkAsRead?: (notificationId: string) => void;
@@ -126,7 +126,7 @@ const Notification: React.FC<NotificationProps> = ({
         },
       ];
     } else {
-      // Client role
+      // Patient role
       return [
         {
           id: "1",

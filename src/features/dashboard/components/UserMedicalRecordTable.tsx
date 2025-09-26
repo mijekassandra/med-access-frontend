@@ -201,9 +201,9 @@ const UserMedicalRecordTable = () => {
           className=""
         />
         <Button
-          label="Add User"
+          label="Add Patient"
           leftIcon={<Add />}
-          className="w-full sm:w-[200px]"
+          className="w-full sm:w-[220px]"
           size="medium"
           onClick={() => setIsAddUserModalOpen(true)}
         />

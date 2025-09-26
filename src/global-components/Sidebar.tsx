@@ -30,7 +30,7 @@ export interface MenuItem {
 }
 
 export interface SidebarProps {
-  userRole?: "admin" | "doctor" | "client";
+  userRole?: "admin" | "doctor" | "patient";
   userName?: string;
   className?: string;
 }
@@ -121,10 +121,10 @@ const Sidebar: React.FC<SidebarProps> = ({
           path: "/telemedicine",
         },
         {
-          id: "inventory",
-          label: "INVENTORY",
+          id: "medicine-inventory",
+          label: "MEDICINE INVENTORY",
           icon: <ArchiveBox />,
-          path: "/inventory",
+          path: "/medicine-inventory",
         },
         {
           id: "health-education",
@@ -147,10 +147,10 @@ const Sidebar: React.FC<SidebarProps> = ({
           path: "/users",
         },
         {
-          id: "inventory",
-          label: "INVENTORY",
+          id: "medicine-inventory",
+          label: "MEDICINE INVENTORY",
           icon: <ArchiveBox />,
-          path: "/inventory",
+          path: "/medicine-inventory",
         },
         {
           id: "patient-records",

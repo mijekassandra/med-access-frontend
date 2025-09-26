@@ -10,12 +10,12 @@ import Table, {
 } from "../../../global-components/Table";
 import Inputs from "../../../global-components/Inputs";
 import Button from "../../../global-components/Button";
-import AddClientModal from "./AddClientModal";
+import AddPatientModal from "./AddPatientTable";
 import DeleteConfirmation from "../../../components/DeleteConfirmation";
 import Dropdown, { type Option } from "../../../global-components/Dropdown";
 
 // Sample data type
-interface Client {
+interface Patient {
   id: string;
   username: string;
   address: string;
@@ -25,7 +25,7 @@ interface Client {
 }
 
 // Sample data
-const sampleData: Client[] = [
+const sampleData: Patient[] = [
   {
     id: "001",
     username: "johndoe",
@@ -68,23 +68,23 @@ const sampleData: Client[] = [
   },
 ];
 
-const ClientsTable = () => {
+const PatientsTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [clients, setClients] = useState<Client[]>(sampleData);
+  const [patients, setPatients] = useState<Patient[]>(sampleData);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
-  const [isEditClientModalOpen, setIsEditClientModalOpen] = useState(false);
-  const [isViewClientModalOpen, setIsViewClientModalOpen] = useState(false);
+  const [isAddPatientModalOpen, setIsAddPatientModalOpen] = useState(false);
+  const [isEditPatientModalOpen, setIsEditPatientModalOpen] = useState(false);
+  const [isViewPatientModalOpen, setIsViewPatientModalOpen] = useState(false);
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
     useState(false);
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
 
   const handleSelectionChange = (selected: Option | Option[]) => {
     console.log("Selected Filter:", selected);
   };
 
   // Define columns
-  const columns: TableColumn<Client>[] = [
+  const columns: TableColumn<Patient>[] = [
     {
       key: "id",
       header: "ID",
@@ -145,20 +145,20 @@ const ClientsTable = () => {
   ];
 
   // Define actions
-  const actions: TableAction<Client>[] = [
+  const actions: TableAction<Patient>[] = [
     {
-      label: "Edit Client",
+      label: "Edit Patient",
       icon: <Edit size={16} />,
       onClick: (record) => {
-        setSelectedClient(record);
-        setIsEditClientModalOpen(true);
+        setSelectedPatient(record);
+        setIsEditPatientModalOpen(true);
       },
     },
     {
-      label: "Delete Client",
+      label: "Delete Patient",
       icon: <Trash size={16} />,
       onClick: (record) => {
-        setSelectedClient(record);
+        setSelectedPatient(record);
         setIsDeleteConfirmationOpen(true);
       },
       disabled: (record) => record.id === "001", // Disable for first record as example
@@ -170,31 +170,31 @@ const ClientsTable = () => {
     console.log("Page changed to:", page);
   };
 
-  const handleEditSave = (updatedClient: Client) => {
-    setClients(
-      clients.map((client) =>
-        client.id === updatedClient.id ? updatedClient : client
+  const handleEditSave = (updatedPatient: Patient) => {
+    setPatients(
+      patients.map((patient) =>
+        patient.id === updatedPatient.id ? updatedPatient : patient
       )
     );
   };
 
   const handleDeleteConfirm = () => {
-    if (selectedClient) {
-      setClients(clients.filter((c) => c.id !== selectedClient.id));
+    if (selectedPatient) {
+      setPatients(patients.filter((p) => p.id !== selectedPatient.id));
       setIsDeleteConfirmationOpen(false);
-      setSelectedClient(null);
+      setSelectedPatient(null);
     }
   };
 
   const handleCloseModals = () => {
-    setIsAddClientModalOpen(false);
-    setIsEditClientModalOpen(false);
-    setIsViewClientModalOpen(false);
-    setSelectedClient(null);
+    setIsAddPatientModalOpen(false);
+    setIsEditPatientModalOpen(false);
+    setIsViewPatientModalOpen(false);
+    setSelectedPatient(null);
   };
 
-  const filteredClients = clients.filter((client) =>
-    Object.values(client).some((value) =>
+  const filteredPatients = patients.filter((patient) =>
+    Object.values(patient).some((value) =>
       value.toString().toLowerCase().includes(searchTerm.toLowerCase())
     )
   );
@@ -205,7 +205,7 @@ const ClientsTable = () => {
       <div className="flex flex-col md:flex-row items-end md:items-center justify-between gap-3 md:gap-6">
         <Inputs
           type="text"
-          placeholder="Search clients..."
+          placeholder="Search patients..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           icon={SearchNormal1}
@@ -230,52 +230,52 @@ const ClientsTable = () => {
             leftIcon={<Add />}
             className={`w-fit sm:w-[170px] truncate`}
             size="medium"
-            onClick={() => setIsAddClientModalOpen(true)}
+            onClick={() => setIsAddPatientModalOpen(true)}
           />
         </div>
       </div>
 
       {/* Table */}
       <Table
-        data={filteredClients}
+        data={filteredPatients}
         columns={columns}
         actions={actions}
         searchable={false} // We're handling search manually
         pagination={{
           currentPage,
-          totalPages: Math.ceil(filteredClients.length / 10), // 10 items per page
+          totalPages: Math.ceil(filteredPatients.length / 10), // 10 items per page
           onChange: handlePageChange,
         }}
-        emptyMessage="No clients found"
+        emptyMessage="No patients found"
         onRowClick={(record) => {
-          setSelectedClient(record);
-          setIsViewClientModalOpen(true);
+          setSelectedPatient(record);
+          setIsViewPatientModalOpen(true);
         }}
         className="shadow-sm"
       />
 
-      {/* Add Client Modal */}
-      <AddClientModal
-        isOpen={isAddClientModalOpen}
+      {/* Add Patient Modal */}
+      <AddPatientModal
+        isOpen={isAddPatientModalOpen}
         onClose={handleCloseModals}
         mode="add"
       />
 
-      {/* Edit Client Modal */}
-      <AddClientModal
-        isOpen={isEditClientModalOpen}
+      {/* Edit Patient Modal */}
+      <AddPatientModal
+        isOpen={isEditPatientModalOpen}
         onClose={handleCloseModals}
         mode="edit"
-        client={selectedClient || undefined}
+        patient={selectedPatient || undefined}
         onSave={handleEditSave}
       />
 
-      {/* View Client Modal */}
-      <AddClientModal
-        isOpen={isViewClientModalOpen}
+      {/* View Patient Modal */}
+      <AddPatientModal
+        isOpen={isViewPatientModalOpen}
         onClose={handleCloseModals}
         mode="view"
-        client={selectedClient || undefined}
+        patient={selectedPatient || undefined}
       />
 
       {/* Delete Confirmation Modal */}
@@ -283,14 +283,14 @@ const ClientsTable = () => {
         isOpen={isDeleteConfirmationOpen}
         onClose={() => {
           setIsDeleteConfirmationOpen(false);
-          setSelectedClient(null);
+          setSelectedPatient(null);
         }}
         onClick={handleDeleteConfirm}
-        title="Delete Client"
-        description={`Are you sure you want to delete the client "${selectedClient?.username}"? `}
+        title="Delete Patient"
+        description={`Are you sure you want to delete the patient "${selectedPatient?.username}"? `}
       />
     </div>
   );
 };
 
-export default ClientsTable;
+export default PatientsTable;

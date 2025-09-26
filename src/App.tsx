@@ -54,10 +54,10 @@ function App() {
         <Route path="/" element={<Login />} />
 
         {/* Design System Routes - standalone */}
-        <Route path="/base-theme" element={<BaseTheme2 />} />
+        {/* <Route path="/base-theme" element={<BaseTheme2 />} />
         <Route path="/kassy" element={<KassyDesignSystem />} />
         <Route path="/millborne" element={<MillborneDesignSystem />} />
-        <Route path="/kara" element={<KaraDesignSystem />} />
+        <Route path="/kara" element={<KaraDesignSystem />} /> */}
 
         {/* 404 Page - Standalone route for direct access */}
         <Route path="/404" element={<PageNotFound />} />
