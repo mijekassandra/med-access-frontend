@@ -10,10 +10,20 @@ export interface BaseEntity {
 export interface UsersTable {
   user_id: number;           // Primary Key, Integer(11)
   username: string;          // Varchar(30), Alphanumeric
+  email?: string;            // Varchar(50), Email format (optional)
   password: string;          // Varchar(255), Hashed
+  firstName: string;         // Varchar(30), Alphabetic
+  lastName: string;          // Varchar(30), Alphabetic
+  address: string;           // Varchar(100), Alphanumeric
+  phone: string;             // Varchar(15), Numeric
+  gender: string;            // Varchar(10), Gender
+  dateOfBirth: Date;         // Date, YYYY-MM-DD
+  profilePicture: string;    // Varchar(255), URL or path
   role: 'admin' | 'doctor' | 'patient'; // Enum, 10 chars
-  email: string;             // Varchar(50), Email format
+  isActive: boolean;         // Boolean, Account status
+  lastLogin?: Date;          // Datetime, YYYY-MM-DD HH:MM:SS (optional)
   created_at: Date;          // Datetime, YYYY-MM-DD HH:MM:SS
+  updated_at?: Date;         // Datetime, YYYY-MM-DD HH:MM:SS (optional)
 }
 
 // Patient table model
@@ -223,6 +233,29 @@ export interface NotificationWithUser extends NotificationsTable {
 
 export interface AccessLogWithUser extends AccessLogTable {
   user: UsersTable;
+}
+
+// Frontend-specific user types for components
+export interface User extends UsersTable {
+  // Additional frontend-specific properties can be added here
+}
+
+export interface Patient extends PatientTable {
+  user: UsersTable;
+  // Additional frontend-specific properties
+  id: string; // For frontend component compatibility
+  username: string; // From user table
+  email?: string; // From user table
+  contactNumber: string; // Maps to contact_no
+  dateRegistered: string; // ISO date string for frontend
+}
+
+export interface Personnel extends DoctorTable {
+  user: UsersTable;
+  // Additional frontend-specific properties
+  id: string; // For frontend component compatibility
+  fullName: string; // Maps to full_name
+  contactNumber: string; // Maps to contact_no
 }
 
 // Database models collection
