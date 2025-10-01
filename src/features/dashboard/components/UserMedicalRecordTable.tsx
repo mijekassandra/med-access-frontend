@@ -10,7 +10,7 @@ import Table, {
 } from "../../../global-components/Table";
 import Inputs from "../../../global-components/Inputs";
 import Button from "../../../global-components/Button";
-import AddUserMedicalModal from "./AddUserMedicalModal";
+import AddUserMedicalModal from "../../medical-records/components/AddUserMedicalModal";
 import DeleteConfirmation from "../../../components/DeleteConfirmation";
 
 // Sample data type
@@ -191,7 +191,7 @@ const UserMedicalRecordTable = () => {
   return (
     <div className="grid grid-cols-1 gap-6">
       {/* Header with search and add button */}
-      <div className="flex flex-col md:flex-row items-end md:items-center justify-between gap-3 md:gap-6">
+      <div className="flex flex-col lg:flex-row items-end md:items-center justify-between gap-3 md:gap-6">
         <Inputs
           type="text"
           placeholder="Search medical records..."

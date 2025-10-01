@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 //icons
-import { Edit, Trash, Eye } from "iconsax-react";
+import { Edit, Trash, Eye, SearchNormal1, Add } from "iconsax-react";
 
 // components
 import Table, {
@@ -11,6 +11,8 @@ import Table, {
 import Chip from "../../../global-components/Chip";
 import Inputs from "../../../global-components/Inputs";
 import Dropdown, { type Option } from "../../../global-components/Dropdown";
+import Button from "../../../global-components/Button";
+import AddPregnancyRecordModal from "../components/AddPregnancyRecordModal";
 
 // Sample data type
 interface PregnancyRecord {
@@ -78,6 +80,7 @@ const PregnancyRecordsTable: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [records, setRecords] = useState<PregnancyRecord[]>(sampleData);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isAddPregnancyModalOpen, setIsAddPregnancyModalOpen] = useState(false);
 
   //sample only
   const user = {
@@ -195,12 +198,13 @@ const PregnancyRecordsTable: React.FC = () => {
   return (
     <div className="grid grid-cols-1 gap-6">
       {/* Header with search and filter */}
-      <div className="flex flex-col md:flex-row items-end md:items-center justify-between gap-3 md:gap-6">
+      <div className="flex flex-col lg:flex-row items-end md:items-center justify-between gap-3 md:gap-6">
         <Inputs
           type="text"
           placeholder="Search pregnancy records..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          icon={SearchNormal1}
         />
         <div
           className={`flex gap-4 items-center ${
@@ -222,6 +226,16 @@ const PregnancyRecordsTable: React.FC = () => {
               />
             </div>
           )}
+
+          <Button
+            label="Add Pregnancy Record"
+            leftIcon={<Add />}
+            className={`w-[60%] sm:w-[220px] truncate ${
+              user.role === "admin" ? "w-[60%]" : "w-[200px]"
+            }`}
+            size="medium"
+            onClick={() => setIsAddPregnancyModalOpen(true)}
+          />
         </div>
       </div>
 
@@ -241,6 +255,17 @@ const PregnancyRecordsTable: React.FC = () => {
           console.log("Row clicked:", record);
         }}
         className="shadow-sm"
+      />
+
+      {/* Add Pregnancy Record Modal */}
+      <AddPregnancyRecordModal
+        isOpen={isAddPregnancyModalOpen}
+        onClose={() => setIsAddPregnancyModalOpen(false)}
+        mode="add"
+        onSave={(newRecord) => {
+          console.log("New pregnancy record:", newRecord);
+          // Here you would typically add the new record to your state or make an API call
+        }}
       />
     </div>
   );

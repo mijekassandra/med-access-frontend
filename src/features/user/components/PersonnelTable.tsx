@@ -188,7 +188,7 @@ const PersonnelTable = () => {
   return (
     <div className="grid grid-cols-1 gap-6">
       {/* Header with search and add button */}
-      <div className="flex flex-col md:flex-row items-end md:items-center justify-between gap-3 md:gap-6 flex-shrink-0">
+      <div className="flex flex-col lg:flex-row items-end md:items-center justify-between gap-3 md:gap-6 flex-shrink-0">
         <Inputs
           type="text"
           placeholder="Search personnel..."

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 //icons
-import { Edit, Trash, Eye, SearchNormal1 } from "iconsax-react";
+import { Edit, Trash, Eye, SearchNormal1, Add } from "iconsax-react";
 
 //components
 import Table, {
@@ -10,6 +10,8 @@ import Table, {
 } from "../../../global-components/Table";
 import Inputs from "../../../global-components/Inputs";
 import Dropdown, { type Option } from "../../../global-components/Dropdown";
+import Button from "../../../global-components/Button";
+import AddUserMedicalModal from "../components/AddUserMedicalModal";
 
 // Sample data type
 interface MedicalRecord {
@@ -77,6 +79,7 @@ const MedicalRecordTable: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [records, setRecords] = useState<MedicalRecord[]>(sampleData);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isAddMedicalModalOpen, setIsAddMedicalModalOpen] = useState(false);
 
   //sample only
   const user = {
@@ -179,7 +182,7 @@ const MedicalRecordTable: React.FC = () => {
   return (
     <div className="grid grid-cols-1 gap-6">
       {/* Header with search and filter */}
-      <div className="flex flex-col md:flex-row items-end md:items-center justify-between gap-3 md:gap-6">
+      <div className="flex flex-col lg:flex-row items-end md:items-center justify-between gap-3 md:gap-6">
         <Inputs
           type="text"
           placeholder="Search medical records..."
@@ -206,6 +209,16 @@ const MedicalRecordTable: React.FC = () => {
               />
             </div>
           )}
+
+          <Button
+            label="Add Patient"
+            leftIcon={<Add />}
+            className={`w-[60%] sm:w-[180px] truncate ${
+              user.role === "admin" ? "w-[60%]" : "w-[180px]"
+            }`}
+            size="medium"
+            onClick={() => setIsAddMedicalModalOpen(true)}
+          />
         </div>
       </div>
 
@@ -225,6 +238,17 @@ const MedicalRecordTable: React.FC = () => {
           console.log("Row clicked:", record);
         }}
         className="shadow-sm"
+      />
+
+      {/* Add Medical Record Modal */}
+      <AddUserMedicalModal
+        isOpen={isAddMedicalModalOpen}
+        onClose={() => setIsAddMedicalModalOpen(false)}
+        mode="add"
+        onSave={(newRecord) => {
+          console.log("New medical record:", newRecord);
+          // Here you would typically add the new record to your state or make an API call
+        }}
       />
     </div>
   );

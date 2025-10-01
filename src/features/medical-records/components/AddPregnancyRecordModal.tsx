@@ -2,59 +2,70 @@ import React, { useState, useEffect } from "react";
 import Modal from "../../../global-components/Modal";
 import Inputs from "../../../global-components/Inputs";
 import SnackbarAlert from "../../../global-components/SnackbarAlert";
+import Dropdown, { type Option } from "../../../global-components/Dropdown";
 
-interface MedicalRecord {
+interface PregnancyRecord {
   id: string;
   fullName: string;
-  diagnosis: string;
-  dateOfRecord: string;
-  treatmentPlan: string;
+  startDate: string;
+  weeksOfPregnancy: number;
+  milestoneName: string;
+  status: "Ongoing" | "Completed" | "Pending";
 }
 
-interface AddUserMedicalModalProps {
+interface AddPregnancyRecordModalProps {
   isOpen: boolean;
   onClose: () => void;
   mode: "add" | "edit" | "view";
-  medicalRecord?: MedicalRecord;
-  onSave?: (medicalRecord: MedicalRecord) => void;
+  pregnancyRecord?: PregnancyRecord;
+  onSave?: (pregnancyRecord: PregnancyRecord) => void;
 }
 
-const AddUserMedicalModal = ({
+const statusOptions = [
+  { label: "Ongoing", value: "Ongoing" },
+  { label: "Completed", value: "Completed" },
+  { label: "Pending", value: "Pending" },
+];
+
+const AddPregnancyRecordModal = ({
   isOpen,
   onClose,
   mode,
-  medicalRecord,
+  pregnancyRecord,
   onSave,
-}: AddUserMedicalModalProps) => {
+}: AddPregnancyRecordModalProps) => {
   const [formData, setFormData] = useState({
     fullName: "",
-    diagnosis: "",
-    dateOfRecord: "",
-    treatmentPlan: "",
+    startDate: "",
+    weeksOfPregnancy: 0,
+    milestoneName: "",
+    status: "Ongoing" as "Ongoing" | "Completed" | "Pending",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [showSnackbar, setShowSnackbar] = useState(false);
 
   // Initialize form data when editing or viewing
   useEffect(() => {
-    if (medicalRecord && (mode === "edit" || mode === "view")) {
+    if (pregnancyRecord && (mode === "edit" || mode === "view")) {
       setFormData({
-        fullName: medicalRecord.fullName,
-        diagnosis: medicalRecord.diagnosis,
-        dateOfRecord: medicalRecord.dateOfRecord,
-        treatmentPlan: medicalRecord.treatmentPlan,
+        fullName: pregnancyRecord.fullName,
+        startDate: pregnancyRecord.startDate,
+        weeksOfPregnancy: pregnancyRecord.weeksOfPregnancy,
+        milestoneName: pregnancyRecord.milestoneName,
+        status: pregnancyRecord.status,
       });
     } else if (mode === "add") {
       setFormData({
         fullName: "",
-        diagnosis: "",
-        dateOfRecord: "",
-        treatmentPlan: "",
+        startDate: "",
+        weeksOfPregnancy: 0,
+        milestoneName: "",
+        status: "Ongoing",
       });
     }
-  }, [medicalRecord, mode, isOpen]);
+  }, [pregnancyRecord, mode, isOpen]);
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | number) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -72,7 +83,7 @@ const AddUserMedicalModal = ({
 
     if (onSave && mode === "edit") {
       onSave({
-        id: medicalRecord?.id || "",
+        id: pregnancyRecord?.id || "",
         ...formData,
       });
     }
@@ -83,9 +94,10 @@ const AddUserMedicalModal = ({
   const handleCancel = () => {
     setFormData({
       fullName: "",
-      diagnosis: "",
-      dateOfRecord: "",
-      treatmentPlan: "",
+      startDate: "",
+      weeksOfPregnancy: 0,
+      milestoneName: "",
+      status: "Ongoing",
     });
     onClose();
   };
@@ -97,13 +109,13 @@ const AddUserMedicalModal = ({
   const getModalTitle = () => {
     switch (mode) {
       case "add":
-        return "ADD PATIENT MEDICAL RECORD";
+        return "ADD PREGNANCY RECORD";
       case "edit":
-        return "EDIT PATIENT MEDICAL RECORD";
+        return "EDIT PREGNANCY RECORD";
       case "view":
-        return "PATIENT MEDICAL RECORD DETAILS";
+        return "PREGNANCY RECORD DETAILS";
       default:
-        return "PATIENT MEDICAL RECORD";
+        return "PREGNANCY RECORD";
     }
   };
 
@@ -156,35 +168,56 @@ const AddUserMedicalModal = ({
             {/* 2-column grid for other inputs */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">
               <Inputs
-                label="DIAGNOSIS"
-                placeholder="Enter Diagnosis"
-                value={formData.diagnosis}
-                onChange={(e) => handleInputChange("diagnosis", e.target.value)}
+                label="START DATE"
+                placeholder="Enter Start Date"
+                type="date"
+                value={formData.startDate}
+                onChange={(e) => handleInputChange("startDate", e.target.value)}
                 disabled={mode === "view"}
               />
               <Inputs
-                label="DATE OF RECORD"
-                placeholder="Enter Date of Record"
-                type="datetime-local"
-                value={formData.dateOfRecord}
+                label="WEEKS OF PREGNANCY"
+                placeholder="Enter Weeks"
+                type="number"
+                value={formData.weeksOfPregnancy.toString()}
                 onChange={(e) =>
-                  handleInputChange("dateOfRecord", e.target.value)
+                  handleInputChange(
+                    "weeksOfPregnancy",
+                    parseInt(e.target.value) || 0
+                  )
                 }
                 disabled={mode === "view"}
               />
             </div>
 
-            {/* Full width treatment plan */}
+            {/* Milestone name */}
             <Inputs
-              label="TREATMENT PLAN"
-              placeholder="Enter Treatment Plan"
-              isTextarea
-              maxCharacter={150}
-              value={formData.treatmentPlan}
+              label="MILESTONE NAME"
+              placeholder="Enter Milestone Name"
+              value={formData.milestoneName}
               onChange={(e) =>
-                handleInputChange("treatmentPlan", e.target.value)
+                handleInputChange("milestoneName", e.target.value)
               }
               disabled={mode === "view"}
+            />
+
+            {/* Status dropdown */}
+            <Dropdown
+              label="STATUS"
+              placeholder="Select Status"
+              size="small"
+              options={statusOptions}
+              value={statusOptions.find(
+                (option) => option.value === formData.status
+              )}
+              onSelectionChange={(selected) =>
+                handleInputChange(
+                  "status",
+                  Array.isArray(selected) ? selected[0]?.value : selected.value
+                )
+              }
+              disabled={mode === "view"}
+              usePortal={true}
             />
           </div>
         }
@@ -192,7 +225,7 @@ const AddUserMedicalModal = ({
 
       <SnackbarAlert
         isOpen={showSnackbar}
-        title={`User medical record has been ${
+        title={`Pregnancy record has been ${
           mode === "edit" ? "updated" : "added"
         } successfully.`}
         type="success"
@@ -203,4 +236,4 @@ const AddUserMedicalModal = ({
   );
 };
 
-export default AddUserMedicalModal;
+export default AddPregnancyRecordModal;
