@@ -145,7 +145,7 @@ export interface HealthReportWithDoctor extends HealthReportTable {
 
 // Medicine table model
 export interface MedicineTable {
-  medicine_id: number;       // Primary Key, Integer(11)
+  id: number | string;       // Primary Key, Integer(11)
   name: string;              // Varchar(40), Alphanumeric
   description: string;       // Text, 200 chars
   dosage: string;            // Varchar(30), Alphanumeric

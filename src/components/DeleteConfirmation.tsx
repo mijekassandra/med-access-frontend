@@ -14,6 +14,7 @@ interface DeleteConfirmationProps {
   icon?: React.ReactNode;
   description?: string;
   subDescription?: string;
+  isLoading?: boolean;
 }
 
 const DeleteConfirmation: React.FC<DeleteConfirmationProps> = ({
@@ -24,6 +25,7 @@ const DeleteConfirmation: React.FC<DeleteConfirmationProps> = ({
   title = "Confirmation",
   description = "Are you sure you want to delete this item? This action cannot be undone.",
   subDescription,
+  isLoading = false,
 }) => {
   return (
     <Modal
@@ -46,13 +48,16 @@ const DeleteConfirmation: React.FC<DeleteConfirmationProps> = ({
           variant: "ghost",
           onClick: onClose,
           size: "medium",
+          disabled: isLoading,
         },
         {
-          label: "Delete",
+          label: isLoading ? "Deleting..." : "Delete",
           variant: "secondaryDark",
           onClick: onClick,
           size: "medium",
           leftIcon: <Trash />,
+          disabled: isLoading,
+          loading: isLoading,
         },
       ]}
       content={

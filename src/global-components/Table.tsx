@@ -74,6 +74,39 @@ const Table = <T extends Record<string, any>>({
     });
   }, [data, searchTerm, searchKeys]);
 
+  // Smart sorting function that handles different data types
+  const smartSort = (aValue: any, bValue: any): number => {
+    if (aValue == null && bValue == null) return 0;
+    if (aValue == null) return 1;
+    if (bValue == null) return -1;
+
+    // Convert to strings for type checking
+    const aStr = String(aValue).trim();
+    const bStr = String(bValue).trim();
+
+    // Check if values are numbers (including negative numbers and decimals)
+    const aNum = Number(aValue);
+    const bNum = Number(bValue);
+    if (!isNaN(aNum) && !isNaN(bNum) && aStr !== "" && bStr !== "") {
+      return aNum - bNum;
+    }
+
+    // Check if values are valid dates
+    const aDate = new Date(aValue);
+    const bDate = new Date(bValue);
+    if (
+      !isNaN(aDate.getTime()) &&
+      !isNaN(bDate.getTime()) &&
+      aDate.getTime() !== 0 &&
+      bDate.getTime() !== 0
+    ) {
+      return aDate.getTime() - bDate.getTime();
+    }
+
+    // Default to string comparison (case-insensitive)
+    return aStr.toLowerCase().localeCompare(bStr.toLowerCase());
+  };
+
   // Sort data
   const sortedData = useMemo(() => {
     if (!sortConfig) return filteredData;
@@ -82,11 +115,7 @@ const Table = <T extends Record<string, any>>({
       const aValue = a[sortConfig.key];
       const bValue = b[sortConfig.key];
 
-      if (aValue == null && bValue == null) return 0;
-      if (aValue == null) return 1;
-      if (bValue == null) return -1;
-
-      const comparison = String(aValue).localeCompare(String(bValue));
+      const comparison = smartSort(aValue, bValue);
       return sortConfig.direction === "asc" ? comparison : -comparison;
     });
   }, [filteredData, sortConfig]);

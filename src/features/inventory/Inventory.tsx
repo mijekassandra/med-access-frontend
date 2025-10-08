@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 
 //icons
 import { Add, SearchNormal1, Edit, Trash } from "iconsax-react";
@@ -13,92 +13,56 @@ import Inputs from "../../global-components/Inputs";
 import Button from "../../global-components/Button";
 import AddMedicineModal from "./component/AddMedicineModal";
 import DeleteConfirmation from "../../components/DeleteConfirmation";
-import Dropdown, { type Option } from "../../global-components/Dropdown";
+import SnackbarAlert from "../../global-components/SnackbarAlert";
 
-// Sample data type
-interface Medicine {
-  id: string;
-  medicineName: string;
-  dosage: string;
-  stock: string;
-  description: string;
-  expiryDate: string;
-  batchNo: string;
-}
+// types
+import type { MedicineTable } from "../../types/database";
 
-// Sample data
-const sampleData: Medicine[] = [
-  {
-    id: "001",
-    medicineName: "Mefenamic",
-    dosage: "500mg",
-    stock: "100",
-    description: "Pain Reliever",
-    expiryDate: "2025-06-30",
-    batchNo: "B2024A",
-  },
-  {
-    id: "002",
-    medicineName: "Paracetamol",
-    dosage: "250mg",
-    stock: "150",
-    description: "Fever Reducer",
-    expiryDate: "2025-08-15",
-    batchNo: "B2024B",
-  },
-  {
-    id: "003",
-    medicineName: "Amoxicillin",
-    dosage: "500mg",
-    stock: "75",
-    description: "Antibiotic",
-    expiryDate: "2025-04-20",
-    batchNo: "B2024C",
-  },
-  {
-    id: "004",
-    medicineName: "Ibuprofen",
-    dosage: "400mg",
-    stock: "200",
-    description: "Anti-inflammatory",
-    expiryDate: "2025-07-10",
-    batchNo: "B2024D",
-  },
-  {
-    id: "005",
-    medicineName: "Omeprazole",
-    dosage: "20mg",
-    stock: "50",
-    description: "Acid Reducer",
-    expiryDate: "2025-05-25",
-    batchNo: "B2024E",
-  },
-];
+// integration
+import {
+  useGetMedicineInventoryQuery,
+  useDeleteMedicineInventoryMutation,
+} from "./api/medicineInventoryApi";
 
 const Inventory: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [medicines, setMedicines] = useState<Medicine[]>(sampleData);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddMedicineModalOpen, setIsAddMedicineModalOpen] = useState(false);
   const [isEditMedicineModalOpen, setIsEditMedicineModalOpen] = useState(false);
   const [isViewMedicineModalOpen, setIsViewMedicineModalOpen] = useState(false);
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
     useState(false);
-  const [selectedMedicine, setSelectedMedicine] = useState<Medicine | null>(
-    null
+  const [selectedMedicine, setSelectedMedicine] =
+    useState<MedicineTable | null>(null);
+  const [showSnackbar, setShowSnackbar] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarType, setSnackbarType] = useState<"success" | "error">(
+    "success"
   );
+
+  // Pagination constants
+  const ITEMS_PER_PAGE = 10;
+
+  // Search debouncing
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
 
   //sample only
   const user = {
     role: "admin",
   };
 
-  const handleSelectionChange = (selected: Option | Option[]) => {
-    console.log("Selected Filter:", selected);
-  };
+  //! rtk query -----------------------
+  const { data: medicines = [] } = useGetMedicineInventoryQuery();
 
-  // Define columns
-  const columns: TableColumn<Medicine>[] = [
+  const [deleteMedicine, { isLoading: isDeleting }] =
+    useDeleteMedicineInventoryMutation();
+
+  useEffect(() => {
+    console.log("selectedMedicine: ", selectedMedicine);
+  }, [selectedMedicine]);
+
+  //! Define columns -----------------------
+  const columns: TableColumn<MedicineTable>[] = [
     {
       key: "id",
       header: "Med ID",
@@ -111,7 +75,7 @@ const Inventory: React.FC = () => {
       ),
     },
     {
-      key: "medicineName",
+      key: "name",
       header: "Name",
       sortable: true,
       render: (value) => (
@@ -143,11 +107,16 @@ const Inventory: React.FC = () => {
       header: "Description",
       sortable: true,
       render: (value) => (
-        <span className="text-body-small-reg text-szBlack700">{value}</span>
+        <span
+          className="text-body-small-reg text-szBlack700 text-ellipsis overflow-hidden whitespace-nowrap block max-w-[200px]"
+          title={value}
+        >
+          {value}
+        </span>
       ),
     },
     {
-      key: "expiryDate",
+      key: "expiration_date",
       header: "Expiry Date",
       width: "140px",
       sortable: true,
@@ -162,7 +131,7 @@ const Inventory: React.FC = () => {
       ),
     },
     {
-      key: "batchNo",
+      key: "batch_no",
       header: "Batch no.",
       width: "120px",
       sortable: true,
@@ -172,8 +141,8 @@ const Inventory: React.FC = () => {
     },
   ];
 
-  // Define actions
-  const actions: TableAction<Medicine>[] = [
+  //! Define actions -----------------------
+  const actions: TableAction<MedicineTable>[] = [
     {
       label: "Edit Medicine",
       icon: <Edit size={16} />,
@@ -189,31 +158,54 @@ const Inventory: React.FC = () => {
         setSelectedMedicine(record);
         setIsDeleteConfirmationOpen(true);
       },
-      disabled: (record) => record.id === "001", // Disable for first record as example
+      disabled: (record) => record.id === "1",
     },
   ];
 
+  //! Pagination -----------------------
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    console.log("Page changed to:", page);
   };
 
-  const handleEditSave = (updatedMedicine: Medicine) => {
-    setMedicines(
-      medicines.map((medicine) =>
-        medicine.id === updatedMedicine.id ? updatedMedicine : medicine
-      )
-    );
+  //! Search term -----------------------
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300); // 300ms delay
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm]);
+
+  //? Edit save -----------------------
+  const handleEditSave = (updatedMedicine: MedicineTable) => {
+    // TODO: Implement edit API call
+    console.log("Edit medicine:", updatedMedicine);
   };
 
-  const handleDeleteConfirm = () => {
+  //? Delete confirm -----------------------
+  const handleDeleteConfirm = async () => {
     if (selectedMedicine) {
-      setMedicines(medicines.filter((m) => m.id !== selectedMedicine.id));
-      setIsDeleteConfirmationOpen(false);
-      setSelectedMedicine(null);
+      try {
+        await deleteMedicine({ id: selectedMedicine.id }).unwrap();
+        setIsDeleteConfirmationOpen(false);
+        setSelectedMedicine(null);
+        setSnackbarMessage("Medicine deleted successfully!");
+        setSnackbarType("success");
+        setShowSnackbar(true);
+      } catch (error) {
+        console.error("Failed to delete medicine:", error);
+        setSnackbarMessage("Failed to delete medicine. Please try again.");
+        setSnackbarType("error");
+        setShowSnackbar(true); // Keep the modal open so the user can try again
+      }
     }
   };
 
+  //! Close modals -----------------------
   const handleCloseModals = () => {
     setIsAddMedicineModalOpen(false);
     setIsEditMedicineModalOpen(false);
@@ -221,11 +213,49 @@ const Inventory: React.FC = () => {
     setSelectedMedicine(null);
   };
 
-  const filteredMedicines = medicines.filter((medicine) =>
-    Object.values(medicine).some((value) =>
-      value.toString().toLowerCase().includes(searchTerm.toLowerCase())
-    )
+  //! Close snackbar -----------------------
+  const handleCloseSnackbar = () => {
+    setShowSnackbar(false);
+  };
+
+  //! Search medicines -----------------------
+  const searchMedicines = useCallback(
+    (medicines: MedicineTable[], searchTerm: string): MedicineTable[] => {
+      if (!searchTerm.trim()) return medicines;
+
+      const searchLower = searchTerm.toLowerCase().trim();
+
+      return medicines.filter((medicine) => {
+        // Search in specific fields with priority
+        const searchableFields = [
+          medicine.name,
+          medicine.description,
+          medicine.dosage,
+          medicine.batch_no,
+          medicine.id.toString(),
+          medicine.stock.toString(),
+          new Date(medicine.expiration_date).toLocaleDateString(),
+        ];
+
+        return searchableFields.some((field) => {
+          if (field == null) return false;
+          return field.toString().toLowerCase().includes(searchLower);
+        });
+      });
+    },
+    []
   );
+
+  //! Filter medicines based on search term -----------------------
+  const filteredMedicines = useMemo(() => {
+    return searchMedicines(medicines, debouncedSearchTerm);
+  }, [medicines, debouncedSearchTerm, searchMedicines]);
+
+  //! Calculate pagination -----------------------
+  const totalPages = Math.ceil(filteredMedicines.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedMedicines = filteredMedicines.slice(startIndex, endIndex);
 
   return (
     <ContainerWrapper>
@@ -234,7 +264,7 @@ const Inventory: React.FC = () => {
         <div className="flex flex-col lg:flex-row items-end md:items-center justify-between gap-3 md:gap-6">
           <Inputs
             type="text"
-            placeholder="Search medicines..."
+            placeholder="Search medicines by name, dosage, batch no., etc..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             icon={SearchNormal1}
@@ -244,7 +274,7 @@ const Inventory: React.FC = () => {
               user.role === "admin" ? "justify-between" : "justify-end"
             }`}
           >
-            {user.role === "admin" && (
+            {/* {user.role === "admin" && (
               <div className="min-w-[40%] sm:min-w-[160px]">
                 <Dropdown
                   options={[
@@ -257,7 +287,7 @@ const Inventory: React.FC = () => {
                   onSelectionChange={handleSelectionChange}
                 />
               </div>
-            )}
+            )} */}
 
             <Button
               label="Add Medicine"
@@ -273,16 +303,20 @@ const Inventory: React.FC = () => {
 
         {/* Table */}
         <Table
-          data={filteredMedicines}
+          data={paginatedMedicines}
           columns={columns}
           actions={actions}
           searchable={false} // We're handling search manually
           pagination={{
             currentPage,
-            totalPages: Math.ceil(filteredMedicines.length / 10), // 10 items per page
+            totalPages,
             onChange: handlePageChange,
           }}
-          emptyMessage="No medicines found"
+          emptyMessage={
+            debouncedSearchTerm
+              ? `No medicines found matching "${debouncedSearchTerm}"`
+              : "No medicines found"
+          }
           onRowClick={(record) => {
             setSelectedMedicine(record);
             setIsViewMedicineModalOpen(true);
@@ -324,7 +358,18 @@ const Inventory: React.FC = () => {
         }}
         onClick={handleDeleteConfirm}
         title="Delete Medicine"
-        description={`Are you sure you want to delete the medicine "${selectedMedicine?.medicineName}"? `}
+        description={`Are you sure you want to delete the medicine "${selectedMedicine?.name}"? 
+        This action cannot be undone.`}
+        isLoading={isDeleting}
+      />
+
+      {/* Snackbar Alert */}
+      <SnackbarAlert
+        isOpen={showSnackbar}
+        title={snackbarMessage}
+        type={snackbarType}
+        onClose={handleCloseSnackbar}
+        duration={3000}
       />
     </ContainerWrapper>
   );
