@@ -1,48 +1,264 @@
-import React, { useState } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 
 //icons
-import { Trash } from "iconsax-react";
+import { Edit2, Trash, SearchNormal1 } from "iconsax-react";
 
 //components
 import ContainerWrapper from "../../components/ContainerWrapper";
 import Button from "../../global-components/Button";
-import Input from "../../global-components/Inputs";
+import Inputs from "../../global-components/Inputs";
 import CardContainer from "../../global-components/CardContainer";
 import ButtonsIcon from "../../global-components/ButtonsIcon";
 import Divider from "../../global-components/Divider";
 import Pagination from "../../global-components/Pagination";
 import DeleteConfirmation from "../../components/DeleteConfirmation";
 import UploadAnnouncement from "./components/UploadAnnouncement";
+import EditAnnouncementModal from "./components/EditAnnouncementModal";
+import SnackbarAlert from "../../global-components/SnackbarAlert";
+
+// types
+import type { AnnouncementTable } from "../../types/database";
+
+// integration
+import {
+  useGetAnnouncementsQuery,
+  useDeleteAnnouncementMutation,
+  useAddAnnouncementMutation,
+} from "./api/announcementApi";
 
 const Announcement = () => {
-  const [postText, setPostText] = useState("");
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
   const [isPosting, setIsPosting] = useState(false);
+  const [formErrors, setFormErrors] = useState({
+    title: "",
+    content: "",
+  });
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
     useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isEditAnnouncementModalOpen, setIsEditAnnouncementModalOpen] =
+    useState(false);
+  const [isViewAnnouncementModalOpen, setIsViewAnnouncementModalOpen] =
+    useState(false);
+  const [selectedAnnouncement, setSelectedAnnouncement] =
+    useState<AnnouncementTable | null>(null);
+  const [showSnackbar, setShowSnackbar] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarType, setSnackbarType] = useState<"success" | "error">(
+    "success"
+  );
+
+  // Pagination constants
+  const ITEMS_PER_PAGE = 3; // Show 3 announcements per page
+
+  // Search debouncing
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
+
+  //! rtk query -----------------------
+  const { data: announcements = [] } = useGetAnnouncementsQuery();
+
+  const [deleteAnnouncement, { isLoading: isDeleting }] =
+    useDeleteAnnouncementMutation();
+  const [addAnnouncement] = useAddAnnouncementMutation();
+
+  useEffect(() => {
+    console.log("selectedAnnouncement: ", selectedAnnouncement);
+  }, [selectedAnnouncement]);
+
+  //! Pagination -----------------------
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  //! Search term -----------------------
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300); // 300ms delay
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm]);
+
+  //? Edit save -----------------------
+  const handleEditSave = (updatedAnnouncement: AnnouncementTable) => {
+    // TODO: Implement edit API call
+    console.log("Edit announcement:", updatedAnnouncement);
+  };
+
+  //? Delete confirm -----------------------
+  const handleDeleteConfirm = async () => {
+    if (selectedAnnouncement) {
+      try {
+        await deleteAnnouncement({ id: selectedAnnouncement.id }).unwrap();
+        setIsDeleteConfirmationOpen(false);
+        setSelectedAnnouncement(null);
+        setSnackbarMessage("Announcement deleted successfully!");
+        setSnackbarType("success");
+        setShowSnackbar(true);
+      } catch (error) {
+        console.error("Failed to delete announcement:", error);
+        setSnackbarMessage("Failed to delete announcement. Please try again.");
+        setSnackbarType("error");
+        setShowSnackbar(true); // Keep the modal open so the user can try again
+      }
+    }
+  };
+
+  //! Close modals -----------------------
+  const handleCloseModals = () => {
+    setIsEditAnnouncementModalOpen(false);
+    setIsViewAnnouncementModalOpen(false);
+    setSelectedAnnouncement(null);
+  };
+
+  //! Close snackbar -----------------------
+  const handleCloseSnackbar = () => {
+    setShowSnackbar(false);
+  };
+
+  //! Search announcements -----------------------
+  const searchAnnouncements = useCallback(
+    (
+      announcements: AnnouncementTable[],
+      searchTerm: string
+    ): AnnouncementTable[] => {
+      if (!searchTerm.trim()) return announcements;
+
+      const searchLower = searchTerm.toLowerCase().trim();
+
+      return announcements.filter((announcement) => {
+        // Search in specific fields with priority
+        const searchableFields = [
+          announcement.title,
+          announcement.content,
+          announcement.id.toString(),
+          new Date(announcement.created_at).toLocaleDateString(),
+        ];
+
+        return searchableFields.some((field) => {
+          if (field == null) return false;
+          return field.toString().toLowerCase().includes(searchLower);
+        });
+      });
+    },
+    []
+  );
+
+  //! Filter announcements based on search term -----------------------
+  const filteredAnnouncements = useMemo(() => {
+    return searchAnnouncements(announcements, debouncedSearchTerm);
+  }, [announcements, debouncedSearchTerm, searchAnnouncements]);
+
+  //! Calculate pagination -----------------------
+  const totalPages = Math.ceil(filteredAnnouncements.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedAnnouncements = filteredAnnouncements.slice(
+    startIndex,
+    endIndex
+  );
+
+  // Validation function
+  const validateForm = () => {
+    const errors = {
+      title: "",
+      content: "",
+    };
+
+    // Check if title is empty
+    if (!title.trim()) {
+      errors.title = "This field is required";
+    }
+
+    // Check if content is empty
+    if (!content.trim()) {
+      errors.content = "This field is required";
+    }
+
+    setFormErrors(errors);
+
+    // Return true if no errors
+    return !Object.values(errors).some((error) => error !== "");
+  };
 
   const handlePostSubmit = async () => {
-    if (!postText.trim()) return;
+    // Validate form first
+    if (!validateForm()) {
+      setSnackbarMessage("Please fill in all required fields.");
+      setSnackbarType("error");
+      setShowSnackbar(true);
+      return;
+    }
 
     setIsPosting(true);
 
     try {
-      // Simulate post submission process
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Create announcement data
+      const announcementData = {
+        title: title.trim(),
+        content: content.trim(),
+        author_id: 1, // TODO: Get from auth context
+        is_published: true,
+        created_at: new Date().toISOString(), // Set current date automatically
+      };
 
-      // Handle post submission
-      console.log("Post submitted:", postText);
-      setPostText("");
+      await addAnnouncement(announcementData).unwrap();
+
+      setSnackbarMessage("Announcement posted successfully!");
+      setSnackbarType("success");
+      setShowSnackbar(true);
+      setTitle("");
+      setContent("");
     } catch (error) {
       console.error("Post submission failed:", error);
+      setSnackbarMessage("Failed to post announcement. Please try again.");
+      setSnackbarType("error");
+      setShowSnackbar(true);
     } finally {
       setIsPosting(false);
     }
   };
 
-  const handleDeletePost = () => {
-    // Handle delete post
-    console.log("Post deleted");
+  const handleDeletePost = (announcement: AnnouncementTable) => {
+    setSelectedAnnouncement(announcement);
     setIsDeleteConfirmationOpen(true);
+  };
+
+  const handleEditPost = (announcement: AnnouncementTable) => {
+    setSelectedAnnouncement(announcement);
+    setIsEditAnnouncementModalOpen(true);
+  };
+
+  const handleTitleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setTitle(e.target.value);
+    // Clear error when user starts typing
+    if (formErrors.title) {
+      setFormErrors((prev) => ({
+        ...prev,
+        title: "",
+      }));
+    }
+  };
+
+  const handleContentChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setContent(e.target.value);
+    // Clear error when user starts typing
+    if (formErrors.content) {
+      setFormErrors((prev) => ({
+        ...prev,
+        content: "",
+      }));
+    }
   };
 
   const handleFileUpload = (file: File) => {
@@ -53,6 +269,17 @@ const Announcement = () => {
   return (
     <ContainerWrapper>
       <div className="space-y-6">
+        {/* Header with search */}
+        <div className="flex flex-col lg:flex-row items-end md:items-center justify-between gap-3 md:gap-6">
+          <Inputs
+            type="text"
+            placeholder="Search announcements by title, content, etc..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            icon={SearchNormal1}
+          />
+        </div>
+
         {/* View Announcement Section */}
         <div className="space-y-4">
           <div className="flex items-center gap-8">
@@ -60,192 +287,163 @@ const Announcement = () => {
             <Divider className="flex-1 h-full " />
           </div>
 
-          <CardContainer
-            content={
-              <div className="space-y-4">
-                <div className="flex items-center justify-between gap-2 ">
-                  <div>
-                    <h6 className="text-h6 font-montserrat font-bold text-szPrimary900 ">
-                      MONKEYPOX DISEASE OUTBREAK ADVISORY
-                    </h6>
+          {/* Dynamic Announcements */}
+          {paginatedAnnouncements.length > 0 ? (
+            paginatedAnnouncements.map((announcement) => (
+              <CardContainer
+                key={announcement.id}
+                content={
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between gap-2 ">
+                      <div className="flex items-center gap-3">
+                        <h6 className="text-h6 font-montserrat font-bold text-szPrimary900 ">
+                          {announcement.title}
+                        </h6>
+                        <Edit2
+                          onClick={() => handleEditPost(announcement)}
+                          size={16}
+                          className="text-szPrimary700 cursor-pointer hover:text-szPrimary900"
+                        />
+                      </div>
+
+                      <ButtonsIcon
+                        variant="warning"
+                        icon={<Trash />}
+                        size="small"
+                        onClick={() => handleDeletePost(announcement)}
+                      />
+                    </div>
+
+                    <div className="space-y-3 text-body-base-reg text-szBlack700 mt-2">
+                      <div className="whitespace-pre-line">
+                        {announcement.content}
+                      </div>
+
+                      <div className="flex justify-between items-center text-sm text-szBlack500">
+                        <span>
+                          Created:{" "}
+                          {new Date(
+                            announcement.created_at
+                          ).toLocaleDateString()}
+                        </span>
+                        {announcement.updated_at && (
+                          <span>
+                            Updated:{" "}
+                            {new Date(
+                              announcement.updated_at
+                            ).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-
-                  <ButtonsIcon
-                    variant="warning"
-                    icon={<Trash />}
-                    size="small"
-                    onClick={handleDeletePost}
-                  />
-                </div>
-
-                <div className="space-y-3 text-body-base-reg text-szBlack700 mt-2">
-                  <p>
-                    We have received reports of confirmed cases of Monkeypox
-                    within the municipality. Health authorities are currently
-                    monitoring the situation closely and implementing necessary
-                    actions to prevent further transmission.
-                  </p>
-
-                  <p>
-                    <strong>What is Monkeypox?</strong>
-                    <br />
-                    Monkeypox is a contagious viral disease that spreads through
-                    close contact with an infected person, their bodily fluids,
-                    respiratory droplets, or contaminated objects.
-                  </p>
-
-                  <div>
-                    <p className="font-semibold mb-2">
-                      To help protect yourself and the community, please observe
-                      the following precautions:
-                    </p>
-                    <ul className="list-disc list-inside space-y-1 ml-4">
-                      <li>
-                        Avoid close contact with individuals showing symptoms
-                        such as rashes, fever, swollen lymph nodes, and body
-                        aches.
-                      </li>
-                      <li>
-                        Wash hands regularly with soap and water or use
-                        alcohol-based hand sanitizers.
-                      </li>
-                      <li>Wear face masks in crowded or enclosed spaces.</li>
-                      <li>
-                        Do not share personal items like towels, clothing, or
-                        utensils.
-                      </li>
-                      <li>
-                        Report any suspected symptoms immediately for proper
-                        medical guidance.
-                      </li>
-                    </ul>
-                  </div>
-
-                  <p className="mt-4">
-                    The health and safety of every resident remain a top
-                    priority. Stay informed, alert, and cooperative.
-                  </p>
-
-                  <p className="text-left font-semibold text-szPrimary700">
-                    - RHU Jasaan
+                }
+              />
+            ))
+          ) : (
+            <CardContainer
+              content={
+                <div className="text-center py-8">
+                  <p className="text-body-base-reg text-szBlack500">
+                    {debouncedSearchTerm
+                      ? `No announcements found matching "${debouncedSearchTerm}"`
+                      : "No announcements found"}
                   </p>
                 </div>
-              </div>
-            }
-          />
-          <CardContainer
-            content={
-              <div className="space-y-4">
-                <div className="flex items-center justify-between gap-2 ">
-                  <div>
-                    <h6 className="text-h6 font-montserrat font-bold text-szPrimary900 ">
-                      MONKEYPOX DISEASE OUTBREAK ADVISORY
-                    </h6>
-                  </div>
+              }
+            />
+          )}
 
-                  <ButtonsIcon
-                    variant="warning"
-                    icon={<Trash />}
-                    size="small"
-                    onClick={handleDeletePost}
-                  />
-                </div>
-
-                <div className="space-y-3 text-body-base-reg text-szBlack700 mt-2">
-                  <p>
-                    We have received reports of confirmed cases of Monkeypox
-                    within the municipality. Health authorities are currently
-                    monitoring the situation closely and implementing necessary
-                    actions to prevent further transmission.
-                  </p>
-
-                  <p>
-                    <strong>What is Monkeypox?</strong>
-                    <br />
-                    Monkeypox is a contagious viral disease that spreads through
-                    close contact with an infected person, their bodily fluids,
-                    respiratory droplets, or contaminated objects.
-                  </p>
-
-                  <div>
-                    <p className="font-semibold mb-2">
-                      To help protect yourself and the community, please observe
-                      the following precautions:
-                    </p>
-                    <ul className="list-disc list-inside space-y-1 ml-4">
-                      <li>
-                        Avoid close contact with individuals showing symptoms
-                        such as rashes, fever, swollen lymph nodes, and body
-                        aches.
-                      </li>
-                      <li>
-                        Wash hands regularly with soap and water or use
-                        alcohol-based hand sanitizers.
-                      </li>
-                      <li>Wear face masks in crowded or enclosed spaces.</li>
-                      <li>
-                        Do not share personal items like towels, clothing, or
-                        utensils.
-                      </li>
-                      <li>
-                        Report any suspected symptoms immediately for proper
-                        medical guidance.
-                      </li>
-                    </ul>
-                  </div>
-
-                  <p className="mt-4">
-                    The health and safety of every resident remain a top
-                    priority. Stay informed, alert, and cooperative.
-                  </p>
-
-                  <p className="text-left font-semibold text-szPrimary700">
-                    - RHU Jasaan
-                  </p>
-                </div>
-              </div>
-            }
-          />
-          <Pagination currentPage={1} totalPages={3} onChange={() => {}} />
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onChange={handlePageChange}
+            />
+          )}
         </div>
 
         {/* Write Post Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="gap-6">
           <CardContainer
-            title="Write post"
+            title="Create Announcement"
             content={
-              <div className="space-y-4">
-                <Input
-                  isTextarea={true}
-                  placeholder="Share your thoughts, updates, or announcements..."
-                  value={postText}
-                  onChange={(e) => setPostText(e.target.value)}
-                  className="min-h-[200px]"
-                />
-                <div className="flex justify-center">
-                  <Button
-                    label="Post"
-                    variant="primary"
-                    size="large"
-                    onClick={handlePostSubmit}
-                    disabled={!postText.trim()}
-                    loading={isPosting}
-                    fullWidth
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full">
+                <div className="space-y-4">
+                  <Inputs
+                    label="TITLE"
+                    placeholder="Enter Title"
+                    value={title}
+                    onChange={handleTitleChange}
+                    error={!!formErrors.title}
                   />
+                  <Inputs
+                    label="CONTENT"
+                    isTextarea
+                    placeholder="Write your announcement here..."
+                    value={content}
+                    onChange={handleContentChange}
+                    className="min-h-[200px]"
+                    error={!!formErrors.content}
+                  />
+                  <div className="flex justify-center">
+                    <Button
+                      label="Post Announcement"
+                      variant="primary"
+                      size="large"
+                      onClick={handlePostSubmit}
+                      disabled={!title.trim() || !content.trim()}
+                      loading={isPosting}
+                      fullWidth
+                    />
+                  </div>
                 </div>
+                <UploadAnnouncement onUpload={handleFileUpload} />
               </div>
             }
           />
-
-          {/* Upload Section */}
-          <UploadAnnouncement onUpload={handleFileUpload} />
         </div>
       </div>
 
+      {/* Edit Announcement Modal */}
+      <EditAnnouncementModal
+        isOpen={isEditAnnouncementModalOpen}
+        onClose={handleCloseModals}
+        mode="edit"
+        announcement={selectedAnnouncement || undefined}
+        onSave={handleEditSave}
+      />
+
+      {/* View Announcement Modal */}
+      <EditAnnouncementModal
+        isOpen={isViewAnnouncementModalOpen}
+        onClose={handleCloseModals}
+        mode="view"
+        announcement={selectedAnnouncement || undefined}
+      />
+
+      {/* Delete Confirmation Modal */}
       <DeleteConfirmation
         isOpen={isDeleteConfirmationOpen}
-        onClose={() => setIsDeleteConfirmationOpen(false)}
-        onClick={handleDeletePost}
+        onClose={() => {
+          setIsDeleteConfirmationOpen(false);
+          setSelectedAnnouncement(null);
+        }}
+        onClick={handleDeleteConfirm}
+        title="Delete Announcement"
+        description={`Are you sure you want to delete the announcement "${selectedAnnouncement?.title}"? 
+        This action cannot be undone.`}
+        isLoading={isDeleting}
+      />
+
+      {/* Snackbar Alert */}
+      <SnackbarAlert
+        isOpen={showSnackbar}
+        title={snackbarMessage}
+        type={snackbarType}
+        onClose={handleCloseSnackbar}
+        duration={3000}
       />
     </ContainerWrapper>
   );

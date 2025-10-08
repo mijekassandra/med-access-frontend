@@ -32,7 +32,7 @@ const RadioButton: React.FC<RadioButtonProps> = ({
         className={`
     appearance-none w-4 h-4 rounded-full border-2 
     border-szPrimary200 checked:bg-white 
-    checked:border-szPrimary500 focus:ring focus:ring-szPrimary900 
+    checked:border-szPrimary500
     disabled:opacity-50 disabled:border-gray-400 
     before:block before:w-full before:h-full 
     before:rounded-full before:border before:border-white 

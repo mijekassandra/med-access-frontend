@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 
 //icons
 import { Add, SearchNormal1, Edit, Trash } from "iconsax-react";
@@ -13,81 +13,67 @@ import Inputs from "../../global-components/Inputs";
 import Button from "../../global-components/Button";
 import AddHealthReport from "./component/AddHealthReport";
 import DeleteConfirmation from "../../components/DeleteConfirmation";
-import Dropdown, { type Option } from "../../global-components/Dropdown";
+// import Dropdown, { type Option } from "../../global-components/Dropdown";
+import SnackbarAlert from "../../global-components/SnackbarAlert";
 
-// Sample data type
-interface HealthReport {
-  id: string;
-  title: string;
-  type: string;
-  content: string;
-  date: string;
-}
+// types
+import type { HealthReportTable } from "../../types/database";
 
-// Sample data
-const sampleData: HealthReport[] = [
-  {
-    id: "001",
-    title: "Luzbanson dengue cases",
-    type: "Morbidity",
-    content: "30 Flu Cases",
-    date: "2024-06-10",
-  },
-  {
-    id: "002",
-    title: "Community vaccination report",
-    type: "Immunization",
-    content: "150 Vaccinated",
-    date: "2024-06-12",
-  },
-  {
-    id: "003",
-    title: "Maternal health statistics",
-    type: "Maternal Health",
-    content: "25 Prenatal Visits",
-    date: "2024-06-15",
-  },
-  {
-    id: "004",
-    title: "Pediatric consultation data",
-    type: "Pediatric",
-    content: "45 Child Checkups",
-    date: "2024-06-18",
-  },
-  {
-    id: "005",
-    title: "Emergency room statistics",
-    type: "Emergency",
-    content: "12 Emergency Cases",
-    date: "2024-06-20",
-  },
-];
+// integration
+import {
+  useGetHealthReportsQuery,
+  useDeleteHealthReportMutation,
+} from "./api/healthReportsApi";
 
 const Reports: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [reports, setReports] = useState<HealthReport[]>(sampleData);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddReportModalOpen, setIsAddReportModalOpen] = useState(false);
   const [isEditReportModalOpen, setIsEditReportModalOpen] = useState(false);
   const [isViewReportModalOpen, setIsViewReportModalOpen] = useState(false);
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
     useState(false);
-  const [selectedReport, setSelectedReport] = useState<HealthReport | null>(
-    null
+  const [selectedReport, setSelectedReport] =
+    useState<HealthReportTable | null>(null);
+  const [showSnackbar, setShowSnackbar] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarType, setSnackbarType] = useState<"success" | "error">(
+    "success"
   );
+
+  // Pagination constants
+  const ITEMS_PER_PAGE = 10;
+
+  // Search debouncing
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
 
   //sample only
   const user = {
-    role: "doctor",
+    role: "admin",
   };
 
-  // Define columns
-  const columns: TableColumn<HealthReport>[] = [
+  //! rtk query -----------------------
+  const { data: reports = [] } = useGetHealthReportsQuery();
+
+  const [deleteReport, { isLoading: isDeleting }] =
+    useDeleteHealthReportMutation();
+
+  useEffect(() => {
+    console.log("selectedReport: ", selectedReport);
+  }, [selectedReport]);
+
+  //! Define columns -----------------------
+  const columns: TableColumn<HealthReportTable>[] = [
     {
       key: "id",
       header: "Report ID",
       width: "130px",
       sortable: true,
+      render: (value) => (
+        <span className="text-body-small-reg text-szBlack700 font-medium">
+          {value}
+        </span>
+      ),
     },
     {
       key: "title",
@@ -100,24 +86,31 @@ const Reports: React.FC = () => {
       ),
     },
     {
-      key: "type",
+      key: "report_type",
       header: "Type of Report",
       width: "180px",
       sortable: true,
       render: (value) => (
-        <span className="text-body-small-reg text-szBlack700">{value}</span>
+        <span className="text-body-small-reg text-szBlack700 font-medium">
+          {value}
+        </span>
       ),
     },
     {
-      key: "content",
+      key: "data_collected",
       header: "Data/Content",
       sortable: true,
       render: (value) => (
-        <span className="text-body-small-reg text-szBlack700">{value}</span>
+        <span
+          className="text-body-small-reg text-szBlack700 text-ellipsis overflow-hidden whitespace-nowrap block max-w-[200px]"
+          title={value}
+        >
+          {value}
+        </span>
       ),
     },
     {
-      key: "date",
+      key: "report_date",
       header: "Date of Report",
       width: "150px",
       sortable: true,
@@ -133,8 +126,8 @@ const Reports: React.FC = () => {
     },
   ];
 
-  // Define actions
-  const actions: TableAction<HealthReport>[] = [
+  //! Define actions -----------------------
+  const actions: TableAction<HealthReportTable>[] = [
     {
       label: "Edit Report",
       icon: <Edit size={16} />,
@@ -150,35 +143,54 @@ const Reports: React.FC = () => {
         setSelectedReport(record);
         setIsDeleteConfirmationOpen(true);
       },
-      disabled: (record) => record.id === "001",
+      disabled: (record) => record.id === 1,
     },
   ];
 
-  const handleSelectionChange = (selected: Option | Option[]) => {
-    console.log("Selected Filter:", selected);
-  };
-
+  //! Pagination -----------------------
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    console.log("Page changed to:", page);
   };
 
-  const handleEditSave = (updatedReport: HealthReport) => {
-    setReports(
-      reports.map((report) =>
-        report.id === updatedReport.id ? updatedReport : report
-      )
-    );
+  //! Search term -----------------------
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300); // 300ms delay
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchTerm]);
+
+  //? Edit save -----------------------
+  const handleEditSave = (updatedReport: HealthReportTable) => {
+    // TODO: Implement edit API call
+    console.log("Edit report:", updatedReport);
   };
 
-  const handleDeleteConfirm = () => {
+  //? Delete confirm -----------------------
+  const handleDeleteConfirm = async () => {
     if (selectedReport) {
-      setReports(reports.filter((r) => r.id !== selectedReport.id));
-      setIsDeleteConfirmationOpen(false);
-      setSelectedReport(null);
+      try {
+        await deleteReport({ id: selectedReport.id }).unwrap();
+        setIsDeleteConfirmationOpen(false);
+        setSelectedReport(null);
+        setSnackbarMessage("Health report deleted successfully!");
+        setSnackbarType("success");
+        setShowSnackbar(true);
+      } catch (error) {
+        console.error("Failed to delete report:", error);
+        setSnackbarMessage("Failed to delete report. Please try again.");
+        setSnackbarType("error");
+        setShowSnackbar(true); // Keep the modal open so the user can try again
+      }
     }
   };
 
+  //! Close modals -----------------------
   const handleCloseModals = () => {
     setIsAddReportModalOpen(false);
     setIsEditReportModalOpen(false);
@@ -186,11 +198,47 @@ const Reports: React.FC = () => {
     setSelectedReport(null);
   };
 
-  const filteredReports = reports.filter((report) =>
-    Object.values(report).some((value) =>
-      value.toString().toLowerCase().includes(searchTerm.toLowerCase())
-    )
+  //! Close snackbar -----------------------
+  const handleCloseSnackbar = () => {
+    setShowSnackbar(false);
+  };
+
+  //! Search reports -----------------------
+  const searchReports = useCallback(
+    (reports: HealthReportTable[], searchTerm: string): HealthReportTable[] => {
+      if (!searchTerm.trim()) return reports;
+
+      const searchLower = searchTerm.toLowerCase().trim();
+
+      return reports.filter((report) => {
+        // Search in specific fields with priority
+        const searchableFields = [
+          report.title,
+          report.report_type,
+          report.data_collected,
+          report.id.toString(),
+          new Date(report.report_date).toLocaleDateString(),
+        ];
+
+        return searchableFields.some((field) => {
+          if (field == null) return false;
+          return field.toString().toLowerCase().includes(searchLower);
+        });
+      });
+    },
+    []
   );
+
+  //! Filter reports based on search term -----------------------
+  const filteredReports = useMemo(() => {
+    return searchReports(reports, debouncedSearchTerm);
+  }, [reports, debouncedSearchTerm, searchReports]);
+
+  //! Calculate pagination -----------------------
+  const totalPages = Math.ceil(filteredReports.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedReports = filteredReports.slice(startIndex, endIndex);
 
   return (
     <ContainerWrapper>
@@ -199,60 +247,62 @@ const Reports: React.FC = () => {
         <div className="flex flex-col lg:flex-row items-end md:items-center justify-between gap-3 md:gap-6">
           <Inputs
             type="text"
-            placeholder="Search reports..."
+            placeholder="Search reports by title, type, content, ID, etc..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             icon={SearchNormal1}
-            className=""
           />
-
-          {user.role === "admin" ? (
-            <div
-              className={`flex gap-4 items-center justify-end w-full sm:w-fit`}
-            >
-              <Button
-                label="Print Report"
-                className={`w-[45%] sm:w-[180px] truncate ${
-                  user.role === "admin" ? "w-[60%]" : "w-[180px]"
-                }`}
-                size="medium"
-              />
-              <div className="min-w-[55%] sm:min-w-[160px]">
+          <div
+            className={`flex gap-4 items-center ${
+              user.role === "admin" ? "justify-between" : "justify-end"
+            }`}
+          >
+            {/* {user.role === "admin" && (
+              <div className="min-w-[40%] sm:min-w-[160px]">
                 <Dropdown
                   options={[
                     { label: "All", value: "all" },
-                    { label: "Medicine", value: "medicine" },
-                    { label: "Equipment", value: "equipment" },
+                    { label: "Morbidity", value: "morbidity" },
+                    { label: "Immunization", value: "immunization" },
+                    { label: "Maternal Health", value: "maternal" },
+                    { label: "Pediatric", value: "pediatric" },
+                    { label: "Emergency", value: "emergency" },
                   ]}
                   label="Filter by:"
                   placeholder="Filter by"
                   onSelectionChange={handleSelectionChange}
                 />
               </div>
-            </div>
-          ) : (
+            )} */}
+
             <Button
-              label="Add Health Report"
+              label="Add Report "
               leftIcon={<Add />}
-              className="w-fit sm:w-[280px] truncate"
+              className={`w-[60%] sm:w-[180px] truncate ${
+                user.role === "admin" ? "w-[60%]" : "w-[180px]"
+              }`}
               size="medium"
               onClick={() => setIsAddReportModalOpen(true)}
             />
-          )}
+          </div>
         </div>
 
         {/* Table */}
         <Table
-          data={filteredReports}
+          data={paginatedReports}
           columns={columns}
           actions={actions}
           searchable={false} // We're handling search manually
           pagination={{
             currentPage,
-            totalPages: Math.ceil(filteredReports.length / 10), // 10 items per page
+            totalPages,
             onChange: handlePageChange,
           }}
-          emptyMessage="No reports found"
+          emptyMessage={
+            debouncedSearchTerm
+              ? `No reports found matching "${debouncedSearchTerm}"`
+              : "No reports found"
+          }
           onRowClick={(record) => {
             setSelectedReport(record);
             setIsViewReportModalOpen(true);
@@ -294,7 +344,18 @@ const Reports: React.FC = () => {
         }}
         onClick={handleDeleteConfirm}
         title="Delete Health Report"
-        description={`Are you sure you want to delete the report "${selectedReport?.title}"? `}
+        description={`Are you sure you want to delete the report "${selectedReport?.title}"? 
+        This action cannot be undone.`}
+        isLoading={isDeleting}
+      />
+
+      {/* Snackbar Alert */}
+      <SnackbarAlert
+        isOpen={showSnackbar}
+        title={snackbarMessage}
+        type={snackbarType}
+        onClose={handleCloseSnackbar}
+        duration={3000}
       />
     </ContainerWrapper>
   );

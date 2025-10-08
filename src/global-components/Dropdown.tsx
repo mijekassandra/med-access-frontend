@@ -22,6 +22,8 @@ interface DropdownProps {
   disabled?: boolean;
   onSelectionChange: (selected: Option[] | Option) => void;
   onScroll?: (isAtEnd: boolean) => void;
+  error?: boolean;
+  description?: string;
 }
 
 const Dropdown: React.FC<DropdownProps> = ({
@@ -36,6 +38,8 @@ const Dropdown: React.FC<DropdownProps> = ({
   disabled = false,
   onSelectionChange,
   onScroll,
+  error = false,
+  description,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedOptions, setSelectedOptions] = useState<Option[]>(
@@ -240,75 +244,92 @@ const Dropdown: React.FC<DropdownProps> = ({
   );
 
   return (
-    <div className="relative w-full min-w-[40px]">
-      <label
-        className={`absolute text-caption-all-caps font-dmSans tracking-widest
-          top-1 scale-100 -translate-y-2/3 left-3 origin-[0] bg-white px-1 
-          z-0 uppercase ${disabled ? "text-gray-400" : "text-szGrey500"}`}
-        htmlFor={label}
-      >
-        {label}
-      </label>
+    <>
+      <div className="relative w-full min-w-[40px]">
+        <label
+          className={`absolute text-caption-all-caps font-dmSans tracking-widest
+            top-1 scale-100 -translate-y-2/3 left-3 origin-[0] bg-white px-1 
+            z-0 uppercase ${
+              error
+                ? "text-error900"
+                : disabled
+                ? "text-gray-400"
+                : "text-szGrey500"
+            }`}
+          htmlFor={label}
+        >
+          {label}
+        </label>
 
-      <button
-        ref={buttonRef}
-        onClick={(e) => {
-          if (disabled) return;
-          e.stopPropagation();
-          setIsOpen((prev) => !prev);
-        }}
-        className={`px-4 w-full rounded-custom-md flex justify-between items-center outline outline-1 outline-gray-300 ${
-          isOpen ? "outline-szPrimary500 text-szPrimary500" : ""
-        } ${
-          disabled
-            ? "bg-gray-50 text-gray-400 cursor-default py-3"
-            : multiSelect && selectedOptions.length > 0
-            ? "bg-szWhite100 py-2"
-            : "bg-white py-3 text-szBlack700 hover:outline-szPrimary900 hover:text-szPrimary900 active:outline-szBlack700 active:text-szBlack700 group"
-        }`}
-      >
-        <div className="flex items-center space-x-2">
-          {multiSelect && selectedOptions.length > 0 ? (
-            <div className="flex flex-wrap gap-1 my-1">
-              {selectedOptions.map((option) => (
-                <div onClick={(e) => e.stopPropagation()} key={option.value}>
-                  <Chip
-                    label={option.label}
-                    onDelete={() => handleOptionRemove(option.value)}
-                  />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p
-              className={`${getFontSize()} text-left ${
-                disabled
-                  ? "text-gray-400"
-                  : "text-szBlack700 group-hover:text-szPrimary900"
-              }`}
-            >
-              {selectedOptions.length > 0
-                ? selectedOptions[0].label
-                : placeholder}
-            </p>
-          )}
-        </div>
-        <span className="ml-2">
-          {isOpen ? (
-            <ArrowUp2 className="icon icon-sm" />
-          ) : (
-            <ArrowDown2 className="icon icon-sm" />
-          )}
-        </span>
-      </button>
+        <button
+          ref={buttonRef}
+          onClick={(e) => {
+            if (disabled) return;
+            e.stopPropagation();
+            setIsOpen((prev) => !prev);
+          }}
+          className={`px-4 w-full rounded-custom-md flex justify-between items-center outline outline-1 ${
+            error
+              ? "outline-error700"
+              : isOpen
+              ? "outline-szPrimary500 text-szPrimary500"
+              : "outline-gray-300"
+          } ${
+            disabled
+              ? "bg-gray-50 text-gray-400 cursor-default py-3"
+              : multiSelect && selectedOptions.length > 0
+              ? "bg-szWhite100 py-2"
+              : "bg-white py-3 text-szBlack700 hover:outline-szPrimary900 hover:text-szPrimary900 active:outline-szBlack700 active:text-szBlack700 group"
+          }`}
+        >
+          <div className="flex items-center space-x-2">
+            {multiSelect && selectedOptions.length > 0 ? (
+              <div className="flex flex-wrap gap-1 my-1">
+                {selectedOptions.map((option) => (
+                  <div onClick={(e) => e.stopPropagation()} key={option.value}>
+                    <Chip
+                      label={option.label}
+                      onDelete={() => handleOptionRemove(option.value)}
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p
+                className={`${getFontSize()} text-left ${
+                  disabled
+                    ? "text-gray-400"
+                    : "text-szBlack700 group-hover:text-szPrimary900"
+                }`}
+              >
+                {selectedOptions.length > 0
+                  ? selectedOptions[0].label
+                  : placeholder}
+              </p>
+            )}
+          </div>
+          <span className="ml-2">
+            {isOpen ? (
+              <ArrowUp2 className="icon icon-sm" />
+            ) : (
+              <ArrowDown2 className="icon icon-sm" />
+            )}
+          </span>
+        </button>
 
-      {isOpen &&
-        (usePortal && position
-          ? ReactDOM.createPortal(DropdownMenu, document.body)
-          : !usePortal
-          ? DropdownMenu
-          : null)}
-    </div>
+        {isOpen &&
+          (usePortal && position
+            ? ReactDOM.createPortal(DropdownMenu, document.body)
+            : !usePortal
+            ? DropdownMenu
+            : null)}
+      </div>
+      {description && (
+        <p className="mt-1 text-caption-reg text-szDarkGrey600 font-dmSan">
+          {description}
+        </p>
+      )}
+    </>
   );
 };
 

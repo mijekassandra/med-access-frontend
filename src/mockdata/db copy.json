@@ -1,0 +1,270 @@
+{
+  "inventory": [
+    {
+      "id": "1",
+      "name": "Paracetamol",
+      "description": "Analgesic and antipyretic medication for pain relief and fever reduction",
+      "dosage": "500mg",
+      "stock": 250,
+      "expiration_date": "2026-03-15",
+      "batch_no": "PAR2024A"
+    },
+    {
+      "id": "2",
+      "name": "Amoxicillin",
+      "description": "Broad-spectrum antibiotic for bacterial infections",
+      "dosage": "500mg",
+      "stock": 120,
+      "expiration_date": "2025-08-20",
+      "batch_no": "AMX2024B"
+    },
+    {
+      "id": "3",
+      "name": "Ibuprofen",
+      "description": "Nonsteroidal anti-inflammatory drug for pain and inflammation",
+      "dosage": "400mg",
+      "stock": 180,
+      "expiration_date": "2025-12-10",
+      "batch_no": "IBU2024C"
+    },
+    {
+      "id": "4",
+      "name": "Omeprazole",
+      "description": "Proton pump inhibitor for acid reflux and stomach ulcers",
+      "dosage": "20mg",
+      "stock": 95,
+      "expiration_date": "2025-06-25",
+      "batch_no": "OME2024D"
+    },
+    {
+      "id": "5",
+      "name": "Metformin",
+      "description": "Antidiabetic medication for type 2 diabetes management",
+      "dosage": "500mg",
+      "stock": 150,
+      "expiration_date": "2026-01-30",
+      "batch_no": "MET2024E"
+    },
+    {
+      "id": "6",
+      "name": "Lisinopril",
+      "description": "ACE inhibitor for hypertension and heart failure treatment",
+      "dosage": "10mg",
+      "stock": 80,
+      "expiration_date": "2025-09-15",
+      "batch_no": "LIS2024F"
+    },
+    {
+      "id": "7",
+      "name": "Atorvastatin",
+      "description": "Statin medication for cholesterol management and cardiovascular protection",
+      "dosage": "20mg",
+      "stock": 110,
+      "expiration_date": "2025-11-20",
+      "batch_no": "ATO2024G"
+    },
+    {
+      "id": "8",
+      "name": "Levothyroxine",
+      "description": "Thyroid hormone replacement for hypothyroidism",
+      "dosage": "50mcg",
+      "stock": 75,
+      "expiration_date": "2025-07-05",
+      "batch_no": "LEV2024H"
+    },
+    {
+      "id": "9",
+      "name": "Amlodipine",
+      "description": "Calcium channel blocker for hypertension and angina",
+      "dosage": "5mg",
+      "stock": 90,
+      "expiration_date": "2025-10-12",
+      "batch_no": "AML2024I"
+    },
+    {
+      "id": "10",
+      "name": "Ciprofloxacin",
+      "description": "Fluoroquinolone antibiotic for various bacterial infections",
+      "dosage": "500mg",
+      "stock": 65,
+      "expiration_date": "2025-05-18",
+      "batch_no": "CIP2024J"
+    },
+    {
+      "id": "11",
+      "name": "Prednisone",
+      "description": "Corticosteroid for inflammation and immune system suppression",
+      "dosage": "5mg",
+      "stock": 140,
+      "expiration_date": "2026-02-28",
+      "batch_no": "PRE2024K"
+    },
+    {
+      "id": "12",
+      "name": "Warfarin",
+      "description": "Anticoagulant for blood clot prevention and treatment",
+      "dosage": "5mg",
+      "stock": 45,
+      "expiration_date": "2025-04-22",
+      "batch_no": "WAR2024L"
+    },
+    {
+      "id": "13",
+      "name": "Furosemide",
+      "description": "Loop diuretic for fluid retention and hypertension",
+      "dosage": "40mg",
+      "stock": 85,
+      "expiration_date": "2025-08-30",
+      "batch_no": "FUR2024M"
+    },
+    {
+      "id": "14",
+      "name": "Tramadol",
+      "description": "Opioid analgesic for moderate to severe pain management",
+      "dosage": "50mg",
+      "stock": 60,
+      "expiration_date": "2025-12-05",
+      "batch_no": "TRA2024N"
+    },
+    {
+      "id": "15",
+      "name": "Diazepam",
+      "description": "Benzodiazepine for anxiety, muscle spasms, and seizures",
+      "dosage": "5mg",
+      "stock": 35,
+      "expiration_date": "2025-06-15",
+      "batch_no": "DIA2024O"
+    },
+    {
+      "id": "16",
+      "name": "Insulin Glargine",
+      "description": "Long-acting insulin for diabetes management",
+      "dosage": "100 units/ml",
+      "stock": 25,
+      "expiration_date": "2025-03-10",
+      "batch_no": "INS2024P"
+    }
+  ],
+  "health-reports": [
+    {
+      "id": 1,
+      "doctor_id": 1,
+      "title": "Luzbanson Flu Cases Report",
+      "report_type": "Morbidity",
+      "data_collected": "30 Flu Cases reported in Luzbanson community",
+      "report_date": "2024-06-10"
+    },
+    {
+      "id": 2,
+      "doctor_id": 2,
+      "title": "Community Vaccination Program",
+      "report_type": "Immunization",
+      "data_collected": "150 children vaccinated against measles and polio",
+      "report_date": "2024-06-12"
+    },
+    {
+      "id": 3,
+      "doctor_id": 1,
+      "title": "Maternal Health Statistics",
+      "report_type": "Maternal Health",
+      "data_collected": "25 prenatal visits conducted, 3 high-risk pregnancies identified",
+      "report_date": "2024-06-15"
+    },
+    {
+      "id": 4,
+      "doctor_id": 3,
+      "title": "Pediatric Health Checkups",
+      "report_type": "Pediatric",
+      "data_collected": "45 child checkups completed, 12 cases of malnutrition addressed",
+      "report_date": "2024-06-18"
+    },
+    {
+      "id": 5,
+      "doctor_id": 2,
+      "title": "Emergency Room Statistics",
+      "report_type": "Emergency",
+      "data_collected": "12 emergency cases treated, 2 critical cases referred to hospital",
+      "report_date": "2024-06-20"
+    },
+    {
+      "id": 6,
+      "doctor_id": 1,
+      "title": "Dengue Fever Outbreak Report",
+      "report_type": "Morbidity",
+      "data_collected": "18 cases of dengue fever reported, preventive measures implemented",
+      "report_date": "2024-06-22"
+    },
+    {
+      "id": 7,
+      "doctor_id": 3,
+      "title": "COVID-19 Vaccination Drive",
+      "report_type": "Immunization",
+      "data_collected": "85 adults vaccinated against COVID-19, 12 booster shots administered",
+      "report_date": "2024-06-25"
+    },
+    {
+      "id": 8,
+      "doctor_id": 2,
+      "title": "Maternity Ward Deliveries",
+      "report_type": "Maternal Health",
+      "data_collected": "8 successful deliveries, 2 cesarean sections performed",
+      "report_date": "2024-06-28"
+    },
+    {
+      "id": 9,
+      "doctor_id": 1,
+      "title": "Child Development Screening",
+      "report_type": "Pediatric",
+      "data_collected": "32 children screened for developmental delays, 5 referred for therapy",
+      "report_date": "2024-07-01"
+    },
+    {
+      "id": 10,
+      "doctor_id": 3,
+      "title": "Trauma Cases Emergency Report",
+      "report_type": "Emergency",
+      "data_collected": "7 trauma cases treated, 1 patient airlifted to regional hospital",
+      "report_date": "2024-07-03"
+    }
+    {
+      "id": 11,
+      "doctor_id": 2,
+      "title": "Respiratory Infections Report",
+      "report_type": "Morbidity",
+      "data_collected": "22 cases of respiratory infections, 3 cases of pneumonia",
+      "report_date": "2024-07-05"
+    },
+    {
+      "id": 12,
+      "doctor_id": 1,
+      "title": "Infant Vaccination Program",
+      "report_type": "Immunization",
+      "data_collected": "95 infants vaccinated with DPT and BCG, vaccination coverage at 98%",
+      "report_date": "2024-07-08"
+    },
+    {
+      "id": 13,
+      "doctor_id": 3,
+      "title": "Postnatal Care Services",
+      "report_type": "Maternal Health",
+      "data_collected": "15 postnatal visits completed, breastfeeding counseling provided",
+      "report_date": "2024-07-10"
+    },
+    {
+      "id": 14,
+      "doctor_id": 2,
+      "title": "Pediatric Diarrhea Treatment",
+      "report_type": "Pediatric",
+      "data_collected": "28 children treated for diarrhea, oral rehydration therapy administered",
+      "report_date": "2024-07-12"
+    },
+    {
+      "id": 15,
+      "doctor_id": 1,
+      "title": "Food Poisoning Incident Report",
+      "report_type": "Emergency",
+      "data_collected": "5 cases of food poisoning, community health education conducted",
+      "report_date": "2024-07-15"
+    }
+  ]
+}

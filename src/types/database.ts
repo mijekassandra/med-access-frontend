@@ -8,7 +8,7 @@ export interface BaseEntity {
 
 // Users table model
 export interface UsersTable {
-  user_id: number;           // Primary Key, Integer(11)
+  id: number;           // Primary Key, Integer(11)
   username: string;          // Varchar(30), Alphanumeric
   email?: string;            // Varchar(50), Email format (optional)
   password: string;          // Varchar(255), Hashed
@@ -28,7 +28,7 @@ export interface UsersTable {
 
 // Patient table model
 export interface PatientTable {
-  patient_id: number;        // Primary Key, Integer(11)
+  id: number;        // Primary Key, Integer(11)
   user_id: number;           // Foreign Key to User, Integer(11)
   first_name: string;        // Varchar(30), Alphabetic
   last_name: string;         // Varchar(30), Alphabetic
@@ -39,7 +39,7 @@ export interface PatientTable {
 
 // Doctor table model
 export interface DoctorTable {
-  doctor_id: number;         // Primary Key, Integer(11)
+  id: number;         // Primary Key, Integer(11)
   user_id: number;           // Foreign Key to User, Integer(11)
   full_name: string;         // Varchar(60), Alphabetic
   specialization: string;    // Varchar(50), Alphabetic
@@ -49,7 +49,7 @@ export interface DoctorTable {
 
 // Admin table model
 export interface AdminTable {
-  admin_id: number;          // Primary Key, Integer(11)
+  id: number;          // Primary Key, Integer(11)
   user_id: number;           // Foreign Key to User, Integer(11)
   full_name: string;         // Varchar(60), Alphabetic
   office: string;            // Varchar(50), Alphanumeric
@@ -99,8 +99,9 @@ export interface PregnancyRecordTable {
 
 // Health Report table model
 export interface HealthReportTable {
-  report_id: number;         // Primary Key, Integer(11)
+  id: number;         // Primary Key, Integer(11)
   doctor_id: number;         // Foreign Key to Doctor, Integer(11)
+  title: string;             // Varchar(100), Report title
   report_type: string;       // Varchar(30), Alphanumeric
   data_collected: string;    // Text, 1000 chars
   report_date: Date;         // Date, YYYY-MM-DD
@@ -166,21 +167,14 @@ export interface InventoryTable {
 
 // Health Education Content table model
 export interface HealthEducationContentTable {
-  content_id: number;        // Primary Key, Integer(11)
+  id: number;        // Primary Key, Integer(11)
   title: string;             // Varchar(100), Alphanumeric
+  headline: string;             // Varchar(100), Alphanumeric
   content_type: 'article' | 'video'; // Enum, 10 chars
   body: string;              // Text, 2000 chars
   url: string;               // Varchar(200), URL
   created_by: number;        // User ID of creator, Integer(11)
   created_at: Date;          // Datetime, YYYY-MM-DD HH:MM:SS
-}
-
-// Patient Tip table model
-export interface PatientTipTable {
-  tip_id: number;            // Primary Key, Integer(11)
-  patient_id: number;        // Foreign Key to Patient, Integer(11)
-  content_id: number;        // Foreign Key to Content, Integer(11)
-  saved_date: Date;          // Datetime, YYYY-MM-DD HH:MM:SS
 }
 
 // Feedback table model
@@ -209,6 +203,18 @@ export interface AccessLogTable {
   timestamp: Date;           // Datetime, YYYY-MM-DD HH:MM:SS
 }
 
+// Announcement table model
+export interface AnnouncementTable {
+  id: number | string;       // Primary Key, Integer(11)
+  title: string;             // Varchar(200), Announcement title
+  content: string;           // Text, 2000 chars
+  author_id: number;         // Foreign Key to User, Integer(11)
+  created_at: Date;          // Datetime, YYYY-MM-DD HH:MM:SS
+  updated_at?: Date;         // Datetime, YYYY-MM-DD HH:MM:SS (optional)
+  is_published: boolean;     // Boolean, Publication status
+  attachment_url?: string;   // Varchar(255), URL or path (optional)
+}
+
 // Additional extended types for new tables
 export interface InventoryWithMedicine extends InventoryTable {
   medicine: MedicineTable;
@@ -216,11 +222,6 @@ export interface InventoryWithMedicine extends InventoryTable {
 
 export interface HealthEducationContentWithCreator extends HealthEducationContentTable {
   creator: UsersTable;
-}
-
-export interface PatientTipWithDetails extends PatientTipTable {
-  patient: PatientWithUser;
-  content: HealthEducationContentTable;
 }
 
 export interface FeedbackWithPatient extends FeedbackTable {
@@ -235,6 +236,10 @@ export interface AccessLogWithUser extends AccessLogTable {
   user: UsersTable;
 }
 
+export interface AnnouncementWithAuthor extends AnnouncementTable {
+  author: UsersTable;
+}
+
 // Frontend-specific user types for components
 export interface User extends UsersTable {
   // Additional frontend-specific properties can be added here
@@ -243,7 +248,6 @@ export interface User extends UsersTable {
 export interface Patient extends PatientTable {
   user: UsersTable;
   // Additional frontend-specific properties
-  id: string; // For frontend component compatibility
   username: string; // From user table
   email?: string; // From user table
   contactNumber: string; // Maps to contact_no
@@ -253,7 +257,6 @@ export interface Patient extends PatientTable {
 export interface Personnel extends DoctorTable {
   user: UsersTable;
   // Additional frontend-specific properties
-  id: string; // For frontend component compatibility
   fullName: string; // Maps to full_name
   contactNumber: string; // Maps to contact_no
 }
@@ -272,8 +275,8 @@ export interface DatabaseModels {
   medicines: MedicineTable;
   inventory: InventoryTable;
   health_education_content: HealthEducationContentTable;
-  patient_tips: PatientTipTable;
   feedback: FeedbackTable;
   notifications: NotificationsTable;
   access_logs: AccessLogTable;
+  announcements: AnnouncementTable;
 }

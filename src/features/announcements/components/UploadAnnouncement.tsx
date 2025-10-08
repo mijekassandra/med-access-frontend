@@ -77,61 +77,59 @@ const UploadAnnouncement: React.FC<UploadAnnouncementProps> = ({
   };
 
   return (
-    <CardContainer
-      title="Upload Image & Video"
-      content={
-        <div className="space-y-4">
-          <div
-            className={`border-2 border-dashed border-szGrey300 rounded-lg p-8 text-center hover:border-szPrimary700 transition-colors min-h-[200px] ${
-              selectedFile ? "cursor-pointer" : ""
+    <div>
+      <div className="space-y-4">
+        <div
+          className={`border-2 border-dashed border-szGrey300 rounded-lg p-8 text-center hover:border-szPrimary700 transition-colors min-h-[200px] ${
+            selectedFile ? "cursor-pointer" : ""
+          }`}
+          onClick={selectedFile ? handleFileClick : undefined}
+        >
+          <input
+            type="file"
+            accept="image/*,video/*"
+            onChange={handleFileUpload}
+            className="hidden"
+            id="file-upload"
+          />
+          <label
+            htmlFor="file-upload"
+            className={`block ${
+              selectedFile ? "pointer-events-none" : "cursor-pointer"
             }`}
-            onClick={selectedFile ? handleFileClick : undefined}
           >
-            <input
-              type="file"
-              accept="image/*,video/*"
-              onChange={handleFileUpload}
-              className="hidden"
-              id="file-upload"
-            />
-            <label
-              htmlFor="file-upload"
-              className={`block ${
-                selectedFile ? "pointer-events-none" : "cursor-pointer"
-              }`}
-            >
-              <div className="space-y-1">
-                <div className="mx-auto w-12 h-12 bg-szGrey100 rounded-full flex items-center justify-center">
-                  {selectedFile ? (
-                    getFileIcon(selectedFile)
-                  ) : (
-                    <ExportCurve className="icon-md text-szGrey500" />
-                  )}
-                </div>
+            <div className="space-y-1">
+              <div className="mx-auto w-12 h-12 bg-szGrey100 rounded-full flex items-center justify-center">
                 {selectedFile ? (
-                  <div>
-                    <p className="text-body-base-reg text-szBlack700 font-medium">
-                      {selectedFile.name}
-                    </p>
-                    <p className="text-caption-reg text-szGrey500">
-                      Click to view
-                    </p>
-                  </div>
+                  getFileIcon(selectedFile)
                 ) : (
-                  <>
-                    <p className="text-body-base-reg text-szGrey600">
-                      Click to upload
-                    </p>
-                    <p className="text-caption-reg text-szGrey500">
-                      PNG, JPG, MP4 up to 10MB
-                    </p>
-                  </>
+                  <ExportCurve className="icon-md text-szGrey500" />
                 )}
               </div>
-            </label>
-          </div>
+              {selectedFile ? (
+                <div>
+                  <p className="text-body-base-reg text-szBlack700 font-medium">
+                    {selectedFile.name}
+                  </p>
+                  <p className="text-caption-reg text-szGrey500">
+                    Click to view
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <p className="text-body-base-reg text-szGrey600">
+                    Click to upload
+                  </p>
+                  <p className="text-caption-reg text-szGrey500">
+                    PNG, JPG, MP4 up to 10MB
+                  </p>
+                </>
+              )}
+            </div>
+          </label>
+        </div>
 
-          <div className="flex justify-center">
+        {/* <div className="flex justify-center">
             <Button
               label="Upload"
               variant="secondary"
@@ -140,10 +138,9 @@ const UploadAnnouncement: React.FC<UploadAnnouncementProps> = ({
               disabled={!selectedFile}
               loading={isUploading}
             />
-          </div>
-        </div>
-      }
-    />
+          </div> */}
+      </div>
+    </div>
   );
 };
 

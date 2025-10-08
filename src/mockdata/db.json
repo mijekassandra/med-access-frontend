@@ -144,5 +144,205 @@
       "expiration_date": "2025-03-10",
       "batch_no": "INS2024P"
     }
+  ],
+  "health-reports": [
+    {
+      "id": 1,
+      "doctor_id": 1,
+      "title": "Luzbanson Flu Cases Report",
+      "report_type": "Morbidity",
+      "data_collected": "30 Flu Cases reported in Luzbanson community",
+      "report_date": "2024-06-10"
+    },
+    {
+      "id": 2,
+      "doctor_id": 2,
+      "title": "Community Vaccination Program",
+      "report_type": "Immunization",
+      "data_collected": "150 children vaccinated against measles and polio",
+      "report_date": "2024-06-12"
+    },
+    {
+      "id": 3,
+      "doctor_id": 1,
+      "title": "Maternal Health Statistics",
+      "report_type": "Maternal Health",
+      "data_collected": "25 prenatal visits conducted, 3 high-risk pregnancies identified",
+      "report_date": "2024-06-15"
+    },
+    {
+      "id": 4,
+      "doctor_id": 3,
+      "title": "Pediatric Health Checkups",
+      "report_type": "Pediatric",
+      "data_collected": "45 child checkups completed, 12 cases of malnutrition addressed",
+      "report_date": "2024-06-18"
+    },
+    {
+      "id": 5,
+      "doctor_id": 2,
+      "title": "Emergency Room Statistics",
+      "report_type": "Emergency",
+      "data_collected": "12 emergency cases treated, 2 critical cases referred to hospital",
+      "report_date": "2024-06-20"
+    },
+    {
+      "id": 6,
+      "doctor_id": 1,
+      "title": "Dengue Fever Outbreak Report",
+      "report_type": "Morbidity",
+      "data_collected": "18 cases of dengue fever reported, preventive measures implemented",
+      "report_date": "2024-06-22"
+    },
+    {
+      "id": 7,
+      "doctor_id": 3,
+      "title": "COVID-19 Vaccination Drive",
+      "report_type": "Immunization",
+      "data_collected": "85 adults vaccinated against COVID-19, 12 booster shots administered",
+      "report_date": "2024-06-25"
+    },
+    {
+      "id": 8,
+      "doctor_id": 2,
+      "title": "Maternity Ward Deliveries",
+      "report_type": "Maternal Health",
+      "data_collected": "8 successful deliveries, 2 cesarean sections performed",
+      "report_date": "2024-06-28"
+    },
+    {
+      "id": 9,
+      "doctor_id": 1,
+      "title": "Child Development Screening",
+      "report_type": "Pediatric",
+      "data_collected": "32 children screened for developmental delays, 5 referred for therapy",
+      "report_date": "2024-07-01"
+    },
+    {
+      "id": 10,
+      "doctor_id": 3,
+      "title": "Trauma Cases Emergency Report",
+      "report_type": "Emergency",
+      "data_collected": "7 trauma cases treated, 1 patient airlifted to regional hospital",
+      "report_date": "2024-07-03"
+    },
+    {
+      "title": "Sample edited",
+      "report_type": "Pediatric",
+      "data_collected": "sample only!!!! edited ",
+      "report_date": "2025-10-08T00:00:00.000Z",
+      "id": "a51d"
+    }
+  ],
+  "announcements": [
+    {
+      "title": "MONKEYPOX DISEASE OUTBREAK ADVISORY",
+      "content": "We have received reports of confirmed cases of Monkeypox within the municipality. Health authorities are currently monitoring the situation closely and implementing necessary actions to prevent further transmission.\n\nWhat is Monkeypox?\nMonkeypox is a contagious viral disease that spreads through close contact with an infected person, their bodily fluids, respiratory droplets, or contaminated objects.\n\nTo help protect yourself and the community, please observe the following precautions:\n• Avoid close contact with individuals showing symptoms such as rashes, fever, swollen lymph nodes, and body aches.\n• Wash hands regularly with soap and water or use alcohol-based hand sanitizers.\n• Wear face masks in crowded or enclosed spaces.\n• Do not share personal items like towels, clothing, or utensils.\n• Report any suspected symptoms immediately for proper medical guidance.\n\nThe health and safety of every resident remain a top priority. Stay informed, alert, and cooperative.\n\n- RHU Jasaan",
+      "id": "1"
+    },
+    {
+      "id": "2",
+      "title": "COVID-19 Vaccination Drive Update",
+      "content": "We are pleased to announce that our COVID-19 vaccination drive has been extended for another month. All residents aged 12 and above are encouraged to get vaccinated.\n\nVaccination Schedule:\n• Monday to Friday: 8:00 AM - 5:00 PM\n• Saturday: 8:00 AM - 12:00 PM\n• Location: RHU Jasaan Main Building\n\nPlease bring a valid ID and wear a face mask. No appointment necessary, but early arrival is recommended.\n\nFor questions, contact us at (088) 123-4567.\n\n- RHU Jasaan Health Team",
+      "author_id": 2,
+      "created_at": "2024-01-20T10:30:00.000Z",
+      "updated_at": "2024-01-20T10:30:00.000Z",
+      "is_published": true,
+      "attachment_url": null
+    },
+    {
+      "title": "Dengue Prevention Campaign",
+      "content": "With the rainy season approaching, we urge all residents to take preventive measures against dengue fever.\n\nPrevention Tips:\n• Remove standing water from containers, flower pots, and gutters\n• Use mosquito nets and repellents\n• Wear long-sleeved clothing during peak mosquito hours (dawn and dusk)\n• Keep your surroundings clean and dry\n\nSymptoms to watch for:\n• High fever\n• Severe headache\n• Pain behind the eyes\n• Joint and muscle pain\n• Nausea and vomiting\n• Skin rash\n\nIf you experience these symptoms, seek medical attention immediately.\n\n- RHU Jasaan",
+      "id": "3"
+    },
+    {
+      "id": "4",
+      "title": "Maternal Health Program Launch",
+      "content": "We are excited to launch our new Maternal Health Program aimed at supporting expectant mothers in our community.\n\nProgram Benefits:\n• Free prenatal checkups\n• Nutritional supplements\n• Health education sessions\n• 24/7 emergency hotline\n• Postpartum care support\n\nEligibility:\n• Pregnant women residing in Jasaan\n• All trimesters welcome\n• No age restrictions\n\nRegistration is now open. Please visit our clinic or call (088) 123-4567 to register.\n\n- RHU Jasaan Maternal Health Team",
+      "author_id": 3,
+      "created_at": "2024-02-01T09:00:00.000Z",
+      "updated_at": "2024-02-01T09:00:00.000Z",
+      "is_published": true,
+      "attachment_url": null
+    }
+  ],
+  "health-education": [
+    {
+      "id": 1,
+      "title": "Physical Health & Exercise",
+      "headline": "Just 1.5 Minutes of Daily Vigorous Exercise Can Cut Heart Disease Risk, Study Finds",
+      "content_type": "video",
+      "body": "",
+      "url": "https://www.youtube.com/embed/1sISguPDlhY?si=UE7vSazC02d3-FBo",
+      "created_by": 1,
+      "created_at": "2024-01-15T10:30:00.000Z"
+    },
+    {
+      "id": 2,
+      "title": "Mental Health Awareness",
+      "headline": "Understanding Depression: Signs, Symptoms, and Treatment Options",
+      "content_type": "video",
+      "body": "",
+      "url": "https://www.youtube.com/embed/qiTJw9tPomE?si=sTKXFTxp7dNbMNYh",
+      "created_by": 2,
+      "created_at": "2024-01-20T14:15:00.000Z"
+    },
+    {
+      "id": 4,
+      "title": "Cardiovascular Health",
+      "headline": "Breakthrough in Heart Disease Prevention: New Guidelines Released",
+      "content_type": "article",
+      "body": "The American Heart Association has released updated guidelines for cardiovascular health, emphasizing the importance of early prevention and lifestyle modifications to reduce heart disease risk factors. These new recommendations focus on comprehensive risk assessment, personalized treatment approaches, and community-based interventions.\n\nKey highlights include:\n• Enhanced screening protocols for early detection\n• Updated dietary recommendations emphasizing plant-based nutrition\n• Expanded exercise guidelines for all age groups\n• Improved medication management strategies\n• Community health initiatives for underserved populations\n\nThe guidelines also address the growing concern of cardiovascular disease in younger populations, recommending earlier screening and intervention strategies. Healthcare providers are encouraged to implement these evidence-based practices to improve patient outcomes and reduce the overall burden of heart disease in our communities.",
+      "url": "",
+      "created_by": 3,
+      "created_at": "2024-02-01T11:20:00.000Z"
+    },
+    {
+      "id": 5,
+      "title": "Medical Research",
+      "headline": "Revolutionary Cancer Treatment Shows 85% Success Rate in Early Trials",
+      "content_type": "article",
+      "body": "A groundbreaking immunotherapy treatment has demonstrated remarkable results in early clinical trials, offering new hope for patients with previously untreatable forms of cancer. The innovative approach combines targeted therapy with immune system enhancement to create a powerful anti-cancer response.\n\nClinical Trial Results:\n• 85% response rate in Phase II trials\n• Significant tumor reduction in 70% of participants\n• Minimal side effects compared to traditional chemotherapy\n• Improved quality of life for patients\n• Extended progression-free survival rates\n\nThe treatment works by identifying specific cancer cell markers and training the patient's immune system to recognize and attack these cells. This personalized approach represents a major advancement in precision medicine and offers new treatment options for patients who have exhausted conventional therapies.\n\nResearchers are now planning larger Phase III trials to confirm these promising results and work toward FDA approval. The treatment could potentially be available to patients within the next 2-3 years, pending successful completion of additional clinical studies.",
+      "url": "",
+      "created_by": 2,
+      "created_at": "2024-02-05T16:30:00.000Z"
+    },
+    {
+      "id": 6,
+      "title": "Preventive Care",
+      "headline": "Annual Health Screenings: Your Complete Guide to Staying Healthy",
+      "content_type": "article",
+      "body": "Comprehensive guide to essential health screenings by age group, including recommended tests, frequency, and what to expect during each examination. Regular health screenings are crucial for early detection and prevention of various health conditions.\n\nAge-Specific Screening Recommendations:\n\n20s-30s:\n• Blood pressure check (annually)\n• Cholesterol screening (every 5 years)\n• Diabetes screening (if at risk)\n• Skin cancer examination\n• Dental checkups (every 6 months)\n\n40s-50s:\n• Mammography (women, annually)\n• Prostate screening (men, discuss with doctor)\n• Colonoscopy (starting at age 45)\n• Bone density testing (women at menopause)\n• Eye examination (every 2 years)\n\n60s and above:\n• Annual comprehensive physical exam\n• Cognitive assessment\n• Hearing tests\n• Fall risk assessment\n• Medication review\n\nPreparing for Your Screenings:\n• Bring a list of current medications\n• Note any symptoms or concerns\n• Ask questions about results and follow-up care\n• Maintain a health journal between visits\n\nRemember, these are general guidelines. Your healthcare provider may recommend additional or more frequent screenings based on your personal and family medical history, lifestyle factors, and risk factors.",
+      "url": "",
+      "created_by": 1,
+      "created_at": "2024-02-10T13:45:00.000Z"
+    },
+    {
+      "id": "bb77",
+      "title": "I quit sugar",
+      "headline": "sample",
+      "content_type": "video",
+      "body": "",
+      "url": "https://www.youtube.com/embed/HZmJLcYkS-8?si=fF0ZxDj0PLPD6pMT",
+      "created_by": 1
+    },
+    {
+      "id": "0a54",
+      "title": "Sample",
+      "headline": "Sample headline",
+      "content_type": "article",
+      "body": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse egestas imperdiet rhoncus. Phasellus eros est, volutpat quis pretium id, imperdiet a eros. Pellentesque quis gravida ipsum. Phasellus ut lacinia ante. Proin sed iaculis nunc. Interdum et malesuada fames ac ante ipsum primis in faucibus. Suspendisse potenti. Aenean scelerisque venenatis molestie. Suspendisse vel tortor elementum, interdum purus vitae, feugiat sem.\n\nNulla feugiat, odio non volutpat viverra, nibh enim bibendum mau",
+      "url": "",
+      "created_by": 1
+    },
+    {
+      "id": "9668",
+      "title": "sample 2",
+      "headline": "sample headline 2",
+      "content_type": "article",
+      "body": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse egestas imperdiet rhoncus. Phasellus eros est, volutpat quis pretium id, imperdiet a eros. Pellentesque quis gravida ipsum. Phasellus ut lacinia ante. Proin sed iaculis nunc. Interdum et malesuada fames ac ante ipsum primis in faucibus. Suspendisse potenti. Aenean scelerisque venenatis molestie. Suspendisse vel tortor elementum, interdum purus vitae, feugiat sem.\n\nNulla feugiat, odio non volutpat viverra, nibh enim bibendum mauris, at pulvinar augue nulla eu orci. Morbi a efficitur nisi. Aliquam consequat gravida nibh, eu varius tortor pharetra non. Nam ultrices, ipsum ac cursus consectetur, ex quam iaculis ex, pharetra vulputate mi nisi vel eros. Aenean arcu urna, congue vitae elit quis, pellentesque porttitor ipsum. Suspendisse convallis, eros et bibendum consectetur, tortor ante porttitor odio, iaculis cursus nisl est eget nunc. Fusce ligula lectus, semper non ante vel, gravida fermentum tortor. Ut vulputate, mi eget sodales lobortis, nisl metus feugiat nulla, eu convallis nunc orci pretium orci. Ut quis pellentesque nunc.",
+      "url": "",
+      "created_by": 1
+    }
   ]
 }
