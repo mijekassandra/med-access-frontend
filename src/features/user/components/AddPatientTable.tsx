@@ -6,6 +6,8 @@ import SnackbarAlert from "../../../global-components/SnackbarAlert";
 interface Patient {
   id: string;
   username: string;
+  firstname: string;
+  lastname: string;
   address: string;
   email: string;
   contactNumber: string;
@@ -29,6 +31,8 @@ const AddPatientModal = ({
 }: AddPatientModalProps) => {
   const [formData, setFormData] = useState({
     username: "",
+    firstname: "",
+    lastname: "",
     address: "",
     email: "",
     contactNumber: "",
@@ -41,6 +45,8 @@ const AddPatientModal = ({
     if (patient && (mode === "edit" || mode === "view")) {
       setFormData({
         username: patient.username,
+        firstname: patient.firstname,
+        lastname: patient.lastname,
         address: patient.address,
         email: patient.email,
         contactNumber: patient.contactNumber,
@@ -48,6 +54,8 @@ const AddPatientModal = ({
     } else if (mode === "add") {
       setFormData({
         username: "",
+        firstname: "",
+        lastname: "",
         address: "",
         email: "",
         contactNumber: "",
@@ -85,6 +93,8 @@ const AddPatientModal = ({
   const handleCancel = () => {
     setFormData({
       username: "",
+      firstname: "",
+      lastname: "",
       address: "",
       email: "",
       contactNumber: "",
@@ -146,15 +156,32 @@ const AddPatientModal = ({
         footerButtons={getFooterButtons()}
         content={
           <div className="space-y-4 mt-2">
-            {/* Full width inputs */}
             <Inputs
               label="USERNAME"
               placeholder="Enter Username"
               value={formData.username}
               onChange={(e) => handleInputChange("username", e.target.value)}
               disabled={mode === "view"}
-            />
-
+            />{" "}
+            {/* 2-column grid for email and contact number */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">
+              <Inputs
+                label="FIRSTNAME"
+                placeholder="Enter Firstname"
+                type="email"
+                value={formData.firstname}
+                onChange={(e) => handleInputChange("firstname", e.target.value)}
+                disabled={mode === "view"}
+              />
+              <Inputs
+                label="LASTNAME"
+                placeholder="Enter Lastname"
+                type="tel"
+                value={formData.lastname}
+                onChange={(e) => handleInputChange("lastname", e.target.value)}
+                disabled={mode === "view"}
+              />
+            </div>
             {/* Full width address */}
             <Inputs
               label="ADDRESS"
@@ -163,7 +190,6 @@ const AddPatientModal = ({
               onChange={(e) => handleInputChange("address", e.target.value)}
               disabled={mode === "view"}
             />
-
             {/* 2-column grid for email and contact number */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">
               <Inputs

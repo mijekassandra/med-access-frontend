@@ -147,7 +147,7 @@
   ],
   "health-reports": [
     {
-      "id": 1,
+      "id": "1",
       "doctor_id": 1,
       "title": "Luzbanson Flu Cases Report",
       "report_type": "Morbidity",
@@ -155,7 +155,7 @@
       "report_date": "2024-06-10"
     },
     {
-      "id": 2,
+      "id": "2",
       "doctor_id": 2,
       "title": "Community Vaccination Program",
       "report_type": "Immunization",
@@ -163,7 +163,7 @@
       "report_date": "2024-06-12"
     },
     {
-      "id": 3,
+      "id": "3",
       "doctor_id": 1,
       "title": "Maternal Health Statistics",
       "report_type": "Maternal Health",
@@ -171,7 +171,7 @@
       "report_date": "2024-06-15"
     },
     {
-      "id": 4,
+      "id": "4",
       "doctor_id": 3,
       "title": "Pediatric Health Checkups",
       "report_type": "Pediatric",
@@ -179,7 +179,7 @@
       "report_date": "2024-06-18"
     },
     {
-      "id": 5,
+      "id": "5",
       "doctor_id": 2,
       "title": "Emergency Room Statistics",
       "report_type": "Emergency",
@@ -187,7 +187,7 @@
       "report_date": "2024-06-20"
     },
     {
-      "id": 6,
+      "id": "6",
       "doctor_id": 1,
       "title": "Dengue Fever Outbreak Report",
       "report_type": "Morbidity",
@@ -195,7 +195,7 @@
       "report_date": "2024-06-22"
     },
     {
-      "id": 7,
+      "id": "7",
       "doctor_id": 3,
       "title": "COVID-19 Vaccination Drive",
       "report_type": "Immunization",
@@ -203,7 +203,7 @@
       "report_date": "2024-06-25"
     },
     {
-      "id": 8,
+      "id": "8",
       "doctor_id": 2,
       "title": "Maternity Ward Deliveries",
       "report_type": "Maternal Health",
@@ -211,7 +211,7 @@
       "report_date": "2024-06-28"
     },
     {
-      "id": 9,
+      "id": "9",
       "doctor_id": 1,
       "title": "Child Development Screening",
       "report_type": "Pediatric",
@@ -219,7 +219,7 @@
       "report_date": "2024-07-01"
     },
     {
-      "id": 10,
+      "id": "10",
       "doctor_id": 3,
       "title": "Trauma Cases Emergency Report",
       "report_type": "Emergency",
@@ -232,6 +232,14 @@
       "data_collected": "sample only!!!! edited ",
       "report_date": "2025-10-08T00:00:00.000Z",
       "id": "a51d"
+    },
+    {
+      "id": "6653",
+      "doctor_id": 1,
+      "title": "Sample lang",
+      "report_type": "Morbidity",
+      "data_collected": "sample onlyyyyyy",
+      "report_date": "2025-10-15T00:00:00.000Z"
     }
   ],
   "announcements": [
@@ -268,7 +276,7 @@
   ],
   "health-education": [
     {
-      "id": 1,
+      "id": "1",
       "title": "Physical Health & Exercise",
       "headline": "Just 1.5 Minutes of Daily Vigorous Exercise Can Cut Heart Disease Risk, Study Finds",
       "content_type": "video",
@@ -278,7 +286,7 @@
       "created_at": "2024-01-15T10:30:00.000Z"
     },
     {
-      "id": 2,
+      "id": "2",
       "title": "Mental Health Awareness",
       "headline": "Understanding Depression: Signs, Symptoms, and Treatment Options",
       "content_type": "video",
@@ -288,7 +296,7 @@
       "created_at": "2024-01-20T14:15:00.000Z"
     },
     {
-      "id": 4,
+      "id": "4",
       "title": "Cardiovascular Health",
       "headline": "Breakthrough in Heart Disease Prevention: New Guidelines Released",
       "content_type": "article",
@@ -298,7 +306,7 @@
       "created_at": "2024-02-01T11:20:00.000Z"
     },
     {
-      "id": 5,
+      "id": "5",
       "title": "Medical Research",
       "headline": "Revolutionary Cancer Treatment Shows 85% Success Rate in Early Trials",
       "content_type": "article",
@@ -308,7 +316,7 @@
       "created_at": "2024-02-05T16:30:00.000Z"
     },
     {
-      "id": 6,
+      "id": "6",
       "title": "Preventive Care",
       "headline": "Annual Health Screenings: Your Complete Guide to Staying Healthy",
       "content_type": "article",

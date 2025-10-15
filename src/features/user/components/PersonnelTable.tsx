@@ -18,6 +18,8 @@ import Dropdown, { type Option } from "../../../global-components/Dropdown";
 interface Personnel {
   id: string;
   fullName: string;
+  firstname: string;
+  lastname: string;
   specialization: string;
   prcLicenseNumber: string;
   contactNumber: string;
@@ -28,6 +30,8 @@ const sampleData: Personnel[] = [
   {
     id: "001",
     fullName: "Dr. John Smith",
+    firstname: "John",
+    lastname: "Smith",
     specialization: "Cardiology",
     prcLicenseNumber: "PRC123456",
     contactNumber: "09182345678",
@@ -35,6 +39,8 @@ const sampleData: Personnel[] = [
   {
     id: "002",
     fullName: "Dr. Maria Garcia",
+    firstname: "Maria",
+    lastname: "Garcia",
     specialization: "Pediatrics",
     prcLicenseNumber: "PRC234567",
     contactNumber: "09273456789",
@@ -42,6 +48,8 @@ const sampleData: Personnel[] = [
   {
     id: "003",
     fullName: "Dr. Robert Johnson",
+    firstname: "Robert",
+    lastname: "Johnson",
     specialization: "Orthopedics",
     prcLicenseNumber: "PRC345678",
     contactNumber: "09384567890",
@@ -49,6 +57,8 @@ const sampleData: Personnel[] = [
   {
     id: "004",
     fullName: "Dr. Sarah Lee",
+    firstname: "Sarah",
+    lastname: "Lee",
     specialization: "Dermatology",
     prcLicenseNumber: "PRC456789",
     contactNumber: "09495678901",
@@ -56,6 +66,8 @@ const sampleData: Personnel[] = [
   {
     id: "005",
     fullName: "Dr. David Brown",
+    firstname: "David",
+    lastname: "Brown",
     specialization: "Neurology",
     prcLicenseNumber: "PRC567890",
     contactNumber: "09506789012",

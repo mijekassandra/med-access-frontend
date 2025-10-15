@@ -6,6 +6,8 @@ import SnackbarAlert from "../../../global-components/SnackbarAlert";
 interface Personnel {
   id: string;
   fullName: string;
+  firstname: string;
+  lastname: string;
   specialization: string;
   prcLicenseNumber: string;
   contactNumber: string;
@@ -28,6 +30,8 @@ const AddPersonnelModal = ({
 }: AddPersonnelModalProps) => {
   const [formData, setFormData] = useState({
     fullName: "",
+    firstname: "",
+    lastname: "",
     specialization: "",
     prcLicenseNumber: "",
     contactNumber: "",
@@ -40,6 +44,8 @@ const AddPersonnelModal = ({
     if (personnel && (mode === "edit" || mode === "view")) {
       setFormData({
         fullName: personnel.fullName,
+        firstname: personnel.firstname,
+        lastname: personnel.lastname,
         specialization: personnel.specialization,
         prcLicenseNumber: personnel.prcLicenseNumber,
         contactNumber: personnel.contactNumber,
@@ -47,6 +53,8 @@ const AddPersonnelModal = ({
     } else if (mode === "add") {
       setFormData({
         fullName: "",
+        firstname: "",
+        lastname: "",
         specialization: "",
         prcLicenseNumber: "",
         contactNumber: "",
@@ -83,6 +91,8 @@ const AddPersonnelModal = ({
   const handleCancel = () => {
     setFormData({
       fullName: "",
+      firstname: "",
+      lastname: "",
       specialization: "",
       prcLicenseNumber: "",
       contactNumber: "",
@@ -145,13 +155,22 @@ const AddPersonnelModal = ({
         content={
           <div className="space-y-4 mt-2">
             {/* Full width inputs */}
-            <Inputs
-              label="FULL NAME"
-              placeholder="Enter Full Name"
-              value={formData.fullName}
-              onChange={(e) => handleInputChange("fullName", e.target.value)}
-              disabled={mode === "view"}
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">
+              <Inputs
+                label="FIRSTNAME"
+                placeholder="Enter Firstname"
+                value={formData.firstname}
+                onChange={(e) => handleInputChange("firstname", e.target.value)}
+                disabled={mode === "view"}
+              />
+              <Inputs
+                label="LASTNAME"
+                placeholder="Enter Lastname"
+                value={formData.lastname}
+                onChange={(e) => handleInputChange("lastname", e.target.value)}
+                disabled={mode === "view"}
+              />
+            </div>
 
             {/* 2-column grid for other inputs */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">

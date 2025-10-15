@@ -6,6 +6,8 @@ import SnackbarAlert from "../../../global-components/SnackbarAlert";
 interface Patient {
   id: string;
   username: string;
+  firstname: string;
+  lastname: string;
   address: string;
   email: string;
   contactNumber: string;
@@ -29,6 +31,8 @@ const AddPatientModal = ({
 }: AddPatientModalProps) => {
   const [formData, setFormData] = useState({
     username: "",
+    firstname: "",
+    lastname: "",
     address: "",
     email: "",
     contactNumber: "",
@@ -41,6 +45,8 @@ const AddPatientModal = ({
     if (patient && (mode === "edit" || mode === "view")) {
       setFormData({
         username: patient.username,
+        firstname: patient.firstname,
+        lastname: patient.lastname,
         address: patient.address,
         email: patient.email,
         contactNumber: patient.contactNumber,
@@ -48,6 +54,8 @@ const AddPatientModal = ({
     } else if (mode === "add") {
       setFormData({
         username: "",
+        firstname: "",
+        lastname: "",
         address: "",
         email: "",
         contactNumber: "",
@@ -85,6 +93,8 @@ const AddPatientModal = ({
   const handleCancel = () => {
     setFormData({
       username: "",
+      firstname: "",
+      lastname: "",
       address: "",
       email: "",
       contactNumber: "",
