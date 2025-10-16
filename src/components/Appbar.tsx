@@ -6,7 +6,7 @@ import Notification from "../features/notification/Notification";
 interface AppbarProps {
   title: string;
   subheader?: string;
-  userRole?: "admin" | "doctor";
+  userRole?: "admin" | "doctor" | "patient";
 }
 
 const Appbar = ({ title, subheader, userRole = "doctor" }: AppbarProps) => {

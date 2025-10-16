@@ -10,7 +10,7 @@ interface ConfirmationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onClick: () => void;
-  image: string;
+  image?: string;
   description: string;
   content?: React.ReactNode;
   buttonLabel: string;
@@ -60,7 +60,8 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
       ]}
       content={
         <div className="flex flex-col gap-[8px] items-center">
-          <img src={image} alt="confirmation" className="w-[80px]" />
+          {image && <img src={image} alt="confirmation" className="w-[80px]" />}
+
           <p className="text-body-base-strong text-szBlack800 text-center">
             {description}
           </p>

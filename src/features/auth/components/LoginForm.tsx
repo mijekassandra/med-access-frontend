@@ -19,13 +19,17 @@ const LoginForm = () => {
   const [error, setError] = useState("");
 
   // Static role detection based on email
-  const detectUserRole = (email: string): "admin" | "doctor" | null => {
+  const detectUserRole = (
+    email: string
+  ): "admin" | "doctor" | "patient" | null => {
     const emailLower = email.toLowerCase();
 
     if (emailLower === "admin@gmail.com") {
       return "admin";
     } else if (emailLower === "doctor@gmail.com") {
       return "doctor";
+    } else if (emailLower === "patient@gmail.com") {
+      return "patient";
     }
 
     return null;
@@ -45,7 +49,9 @@ const LoginForm = () => {
     const userRole = detectUserRole(email);
 
     if (!userRole) {
-      setError("Invalid credentials. Use admin@gmail.com or doctor@gmail.com");
+      setError(
+        "Invalid credentials. Use admin@gmail.com, doctor@gmail.com, or patient@gmail.com"
+      );
       return;
     }
 
@@ -57,8 +63,12 @@ const LoginForm = () => {
     sessionStorage.setItem("userEmail", email);
     sessionStorage.setItem("showWelcomeSnackbar", "true");
 
-    // Navigate to dashboard immediately
-    navigate("/dashboard");
+    // Navigate based on user role
+    if (userRole === "patient") {
+      navigate("/patient-dashboard");
+    } else {
+      navigate("/dashboard");
+    }
   };
 
   return (

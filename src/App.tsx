@@ -7,20 +7,20 @@ import Body from "./components/Body";
 import PageNotFound from "./components/PageNotFound";
 
 // pages
-import BaseTheme2 from "./design-system/BaseTheme2";
-import KaraDesignSystem from "./design-system/KaraDesignSystem";
-import KassyDesignSystem from "./design-system/KassyDesignSystem";
-import MillborneDesignSystem from "./design-system/MillborneDesignSystem";
 import Login from "./features/auth/pages/Login";
+import PatientMobileApp from "./features/patient-mobile/PatientMobileApp";
 
 // Main app layout component with sidebar
 const AppLayout = () => {
-  const [userRole, setUserRole] = useState<"admin" | "doctor">("doctor");
+  const [userRole, setUserRole] = useState<"admin" | "doctor" | "patient">(
+    "doctor"
+  );
   const [userName, setUserName] = useState("User");
 
   useEffect(() => {
     // Get user role from sessionStorage
     const storedRole = sessionStorage.getItem("userRole") as
+      | "patient"
       | "admin"
       | "doctor"
       | null;
@@ -28,12 +28,23 @@ const AppLayout = () => {
 
     if (storedRole) {
       setUserRole(storedRole);
+
+      // Redirect patients to mobile interface
+      if (storedRole === "patient") {
+        window.location.href = "/patient-dashboard";
+        return;
+      }
     }
 
     if (storedEmail) {
       setUserName(storedEmail.split("@")[0]); // Use email prefix as username
     }
   }, []);
+
+  // Don't render the desktop layout for patients
+  if (userRole === "patient") {
+    return null;
+  }
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -52,6 +63,25 @@ function App() {
       <Routes>
         {/* Login page - standalone without sidebar */}
         <Route path="/" element={<Login />} />
+
+        {/* Patient Mobile App Routes - standalone without sidebar */}
+        <Route path="/patient-dashboard" element={<PatientMobileApp />} />
+        <Route path="/patient-appointment" element={<PatientMobileApp />} />
+        <Route path="/patient-announcement" element={<PatientMobileApp />} />
+        <Route path="/patient-record" element={<PatientMobileApp />} />
+        <Route
+          path="/patient-health-education"
+          element={<PatientMobileApp />}
+        />
+        <Route path="/patient-notification" element={<PatientMobileApp />} />
+        <Route path="/patient-book-in-person" element={<PatientMobileApp />} />
+        <Route path="/patient-telemedicine" element={<PatientMobileApp />} />
+        <Route
+          path="/patient-all-appointments"
+          element={<PatientMobileApp />}
+        />
+        <Route path="/patient-profile" element={<PatientMobileApp />} />
+        <Route path="/patient-settings" element={<PatientMobileApp />} />
 
         {/* Design System Routes - standalone */}
         {/* <Route path="/base-theme" element={<BaseTheme2 />} />

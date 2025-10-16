@@ -171,6 +171,7 @@ export interface HealthEducationContentTable {
   title: string;             // Varchar(100), Alphanumeric
   headline: string;             // Varchar(100), Alphanumeric
   content_type: 'article' | 'video'; // Enum, 10 chars
+  category: string;            // Varchar(100), Alphanumeric
   body: string;              // Text, 2000 chars
   url: string;               // Varchar(200), URL
   created_by: number;        // User ID of creator, Integer(11)

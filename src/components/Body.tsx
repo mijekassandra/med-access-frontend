@@ -17,7 +17,7 @@ import Announcement from "../features/announcements/Announcement";
 
 interface BodyProps {
   children?: React.ReactNode;
-  userRole?: "admin" | "doctor";
+  userRole?: "admin" | "doctor" | "patient";
 }
 
 const Body = ({ children, userRole = "doctor" }: BodyProps) => {
