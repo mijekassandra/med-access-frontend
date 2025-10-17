@@ -86,7 +86,7 @@ const SnackbarAlert: React.FC<SnackbarAlertProps> = ({
       role={ariaRole}
       aria-live="polite"
       style={snackbarStyles}
-      className={`snackbar min-w-[400px] max-w-[400px] sm:max-w-[400px] md:max-w-[500px] lg:max-w-[700px] `}
+      className={`snackbar min-w-[200px] max-w-[400px] sm:max-w-[400px] md:max-w-[500px] lg:max-w-[700px] `}
     >
       <div
         className={`rounded-lg flex justify-between p-4 gap-4 ${typeStyle[type]}`}

@@ -55,7 +55,29 @@ const PatientAppointmentCard: React.FC<PatientAppointmentCardProps> = ({
   };
   return (
     <div className="bg-szWhite100 rounded-xl p-4 shadow-md border border-szGray200 relative">
-      {/* Optional Type and Status Badges */}
+      {/* Type and Status Badges - Floating Half Outside Top Border */}
+      {(type || status) && (
+        <div className="absolute -top-4 left-3 flex gap-2 z-10">
+          {type && (
+            <p
+              className={`px-2 py-1 rounded-full text-caption-reg ${getTypeColor(
+                type
+              )}`}
+            >
+              {getTypeLabel(type)}
+            </p>
+          )}
+          {status && (
+            <p
+              className={`px-2 py-1 rounded-full text-caption-reg ${getStatusColor(
+                status
+              )}`}
+            >
+              {status.charAt(0).toUpperCase() + status.slice(1)}
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="flex items-start gap-4">
         {/* Doctor's Profile Picture */}
@@ -86,31 +108,9 @@ const PatientAppointmentCard: React.FC<PatientAppointmentCardProps> = ({
               {appointment.specialty}
             </p>
             <div className="flex flex-col gap-2">
-              <p className="text-szPrimary900 text-body-small-reg mt-2 font-semibold">
+              <p className="text-szPrimary900 text-body-small-reg font-semibold">
                 {appointment.date} - {appointment.time}
               </p>
-              {(type || status) && (
-                <div className=" top-3 right-3 flex gap-2 z-10">
-                  {type && (
-                    <p
-                      className={`px-2 py-1 rounded-full text-caption-reg ${getTypeColor(
-                        type
-                      )}`}
-                    >
-                      {getTypeLabel(type)}
-                    </p>
-                  )}
-                  {status && (
-                    <p
-                      className={`px-2 py-1 rounded-full text-caption-reg ${getStatusColor(
-                        status
-                      )}`}
-                    >
-                      {status.charAt(0).toUpperCase() + status.slice(1)}
-                    </p>
-                  )}
-                </div>
-              )}
             </div>
           </div>
           {/* Action Buttons */}

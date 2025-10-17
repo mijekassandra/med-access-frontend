@@ -257,7 +257,7 @@ const MobileAllAppointments = () => {
             />
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-6">
             <div className="flex items-center justify-between">
               <p className="text-szDarkGrey600 text-body-base-reg">
                 {filteredAppointments.length} appointment

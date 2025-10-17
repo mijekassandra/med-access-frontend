@@ -115,8 +115,8 @@ const MobileNotification = () => {
       <div className="px-4 pb-6">
         <Button
           label="Load More"
-          variant="secondaryDark"
-          size="large"
+          variant="secondary"
+          size="medium"
           fullWidth
           onClick={() => console.log("Load more notifications")}
         />

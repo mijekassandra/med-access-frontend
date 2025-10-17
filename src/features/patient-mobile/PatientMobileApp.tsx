@@ -215,7 +215,7 @@ const PatientMobileApp: React.FC = () => {
             customColor="szPrimary500"
           />
           {unreadNotificationCount > 0 && (
-            <span className="absolute -top-1 -right-1 bg-szSecondary500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
+            <span className="absolute -top-0 -right-0 bg-szSecondary500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
               {unreadNotificationCount > 9 ? "9+" : unreadNotificationCount}
             </span>
           )}

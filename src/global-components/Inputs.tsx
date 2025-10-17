@@ -92,7 +92,7 @@ const Input: React.FC<InputProps> = ({
               disabled={disabled}
               className="flex-1 bg-transparent border-none outline-none p-0 m-0 text-inherit font-inherit"
             />
-            <div className="text-szLightGrey40 ">
+            <div className="flex items-center text-szLightGrey40 ">
               {Icon && (
                 <button type="button" onClick={iconClick}>
                   <Icon className="w-4 h-4 text-gray-500" />

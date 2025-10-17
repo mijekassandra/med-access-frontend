@@ -72,8 +72,8 @@ const LoginForm = () => {
   };
 
   return (
-    <div className="flex flex-col gap-10 w-[280px] sm:w-[360px]">
-      <section className="flex flex-col gap-4">
+    <div className="flex flex-col gap-10 w-[330px] sm:w-[360px]">
+      <section className="space-y-4">
         <div className="flex flex-col gap-1">
           <p className="text-body-base-reg text-szWhite100">Email:</p>
           <Inputs
@@ -83,7 +83,7 @@ const LoginForm = () => {
             onChange={(e) => setEmail(e.target.value)}
           />
         </div>
-        <div className="flex flex-col gap-1">
+        <div className="space-y-1">
           <p className="text-body-base-reg text-szWhite100">Password:</p>
           <Inputs
             type={showPassword ? "text" : "password"}
@@ -94,22 +94,39 @@ const LoginForm = () => {
             iconClick={() => setShowPassword(!showPassword)}
           />
         </div>
-        <Checkboxes
+        <p
+          className="text-body-small-reg text-szWhite100 text-right cursor-pointer hover:underline transition-colors"
+          onClick={() => navigate("/forgot-password")}
+        >
+          Forgot password?
+        </p>
+        {/* <Checkboxes
           label="Remember me"
           onChange={() => setIsChecked(!isChecked)}
           checked={isChecked}
           textColor="szWhite100"
-        />
+        /> */}
       </section>
 
-      <Button
-        variant="secondaryDark"
-        label="LOGIN"
-        size="medium"
-        type="button"
-        fullWidth
-        onClick={handleLogin}
-      />
+      <div className="space-y-4">
+        <Button
+          variant="secondaryDark"
+          label="LOGIN"
+          size="medium"
+          type="button"
+          fullWidth
+          onClick={handleLogin}
+        />
+        <p className="text-body-small-reg text-szWhite100 text-center">
+          Don't have an account?{" "}
+          <span
+            className="text-szSecondary500 cursor-pointer hover:underline transition-colors"
+            onClick={() => navigate("/create-account")}
+          >
+            Register
+          </span>
+        </p>
+      </div>
     </div>
   );
 };
