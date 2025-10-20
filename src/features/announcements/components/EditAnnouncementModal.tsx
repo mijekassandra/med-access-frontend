@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import Modal from "../../../global-components/Modal";
 import Inputs from "../../../global-components/Inputs";
 import SnackbarAlert from "../../../global-components/SnackbarAlert";
+import Toggle from "../../../global-components/Toggle";
 
 // types
 import type { AnnouncementTable } from "../../../types/database";
@@ -30,8 +31,8 @@ const EditAnnouncementModal = ({
   const [formData, setFormData] = useState({
     title: "",
     content: "",
-    is_published: true,
     attachment_url: "",
+    status: "active" as "active" | "archived",
   });
   const [formErrors, setFormErrors] = useState({
     title: "",
@@ -58,15 +59,15 @@ const EditAnnouncementModal = ({
       setFormData({
         title: announcement.title,
         content: announcement.content,
-        is_published: announcement.is_published,
         attachment_url: announcement.attachment_url || "",
+        status: announcement.status,
       });
     } else if (mode === "add") {
       setFormData({
         title: "",
         content: "",
-        is_published: true,
         attachment_url: "",
+        status: "active",
       });
     }
 
@@ -143,7 +144,7 @@ const EditAnnouncementModal = ({
           title: formData.title,
           content: formData.content,
           author_id: 1, // TODO: Get from auth context
-          is_published: formData.is_published,
+          status: "active" as const,
           attachment_url: formData.attachment_url || undefined,
         };
 
@@ -164,6 +165,7 @@ const EditAnnouncementModal = ({
         const announcementData = {
           title: formData.title,
           content: formData.content,
+          status: formData.status,
         };
 
         await editAnnouncement({
@@ -183,8 +185,7 @@ const EditAnnouncementModal = ({
             author_id: announcement.author_id,
             created_at: announcement.created_at,
             updated_at: new Date(),
-            is_published: announcement.is_published, // Keep original values
-            attachment_url: announcement.attachment_url, // Keep original values
+            attachment_url: announcement.attachment_url,
           });
         }
 
@@ -206,8 +207,8 @@ const EditAnnouncementModal = ({
     setFormData({
       title: "",
       content: "",
-      is_published: true,
       attachment_url: "",
+      status: "active",
     });
     setFormErrors({
       title: "",
@@ -271,6 +272,29 @@ const EditAnnouncementModal = ({
         footerButtons={getFooterButtons()}
         content={
           <div className="space-y-4 mt-2">
+            {(mode === "edit" || mode === "view") && (
+              <div className="space-y-2">
+                <p className="text-body-base-strong text-szBlack700">ARCHIVE</p>
+                <div className="flex items-center gap-2">
+                  <Toggle
+                    isOn={formData.status === "archived"}
+                    onToggle={() =>
+                      handleInputChange(
+                        "status",
+                        formData.status === "archived" ? "active" : "archived"
+                      )
+                    }
+                    disabled={mode === "view"}
+                  />
+                  <p className="text-caption-reg text-szGrey600">
+                    {formData.status === "archived"
+                      ? "Archived (will not be visible to users)"
+                      : "Active (visible to users)"}
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Title input */}
             <Inputs
               label="ANNOUNCEMENT TITLE"
@@ -305,6 +329,8 @@ const EditAnnouncementModal = ({
                 error={!!formErrors.attachment_url}
               />
             )}
+
+            {/* Archive toggle - only show in edit/view to mirror Health Education pattern */}
           </div>
         }
       ></Modal>

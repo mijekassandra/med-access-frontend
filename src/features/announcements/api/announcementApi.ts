@@ -46,7 +46,7 @@ export const announcementApi = createApi({
     editAnnouncement: builder.mutation<void, {id: string | number, announcement: Partial<AnnouncementTable>}>({
       query: ({id, announcement}) => ({
         url: `/announcements/${id}`,
-        method: "PUT",
+        method: "PATCH",
         body: announcement,
       }),
       invalidatesTags: (_result, _error, { id }) => [

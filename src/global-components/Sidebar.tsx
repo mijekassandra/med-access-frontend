@@ -120,12 +120,12 @@ const Sidebar: React.FC<SidebarProps> = ({
           icon: <Monitor />,
           path: "/telemedicine",
         },
-        {
-          id: "medicine-inventory",
-          label: "MEDICINE INVENTORY",
-          icon: <ArchiveBox />,
-          path: "/medicine-inventory",
-        },
+        // {
+        //   id: "medicine-inventory",
+        //   label: "MEDICINE INVENTORY",
+        //   icon: <ArchiveBox />,
+        //   path: "/medicine-inventory",
+        // },
         {
           id: "health-education",
           label: "HEALTH EDUCATION",

@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from "react";
+
+//componetns
 import Modal from "../../../global-components/Modal";
 import Inputs from "../../../global-components/Inputs";
 import RadioButton from "../../../global-components/RadioButton";
 import SnackbarAlert from "../../../global-components/SnackbarAlert";
+import Toggle from "../../../global-components/Toggle";
 
 // types
 import type { HealthEducationContentTable } from "../../../types/database";
@@ -58,6 +61,9 @@ const AddHealthEducationModal: React.FC<AddHealthEducationModalProps> = ({
     "success"
   );
 
+  // Archive toggle state - when true, status should be "archived"; otherwise "active"
+  const [isArchived, setIsArchived] = useState<boolean>(false);
+
   // RTK Query mutations
   const [addHealthEducation, { isLoading: isAdding }] =
     useAddHealthEducationMutation();
@@ -76,6 +82,8 @@ const AddHealthEducationModal: React.FC<AddHealthEducationModalProps> = ({
         body: healthEducation.body,
         url: healthEducation.url,
       });
+      // Initialize archive toggle based on existing status
+      setIsArchived(healthEducation.status === "archived");
     } else if (mode === "add") {
       setFormData({
         title: "",
@@ -84,6 +92,8 @@ const AddHealthEducationModal: React.FC<AddHealthEducationModalProps> = ({
         body: "",
         url: "",
       });
+      // By default when creating, content is expected to be active
+      setIsArchived(false);
     }
 
     // Clear errors when modal opens or mode changes
@@ -174,12 +184,17 @@ const AddHealthEducationModal: React.FC<AddHealthEducationModalProps> = ({
     try {
       if (mode === "add") {
         // Prepare data for API call (exclude id for new content)
-        const healthEducationData = {
+        const healthEducationData: Omit<
+          HealthEducationContentTable,
+          "id" | "created_at"
+        > = {
           title: formData.title,
           headline: formData.headline,
           content_type: formData.content_type,
           body: formData.body,
           url: formData.content_type === "video" ? formData.url : "",
+          category: "",
+          status: isArchived ? "archived" : "active",
           created_by: 1, // Current user ID - in real app, get from auth context
         };
 
@@ -199,12 +214,13 @@ const AddHealthEducationModal: React.FC<AddHealthEducationModalProps> = ({
         onClose();
       } else if (mode === "edit" && healthEducation?.id) {
         // Prepare data for edit API call
-        const healthEducationData = {
+        const healthEducationData: Partial<HealthEducationContentTable> = {
           title: formData.title,
           headline: formData.headline,
           content_type: formData.content_type,
           body: formData.body,
           url: formData.content_type === "video" ? formData.url : "",
+          status: isArchived ? "archived" : "active",
         };
 
         await editHealthEducation({
@@ -220,12 +236,19 @@ const AddHealthEducationModal: React.FC<AddHealthEducationModalProps> = ({
 
         // Call onSave with the updated data if provided
         if (onSave) {
-          onSave({
+          const updated: HealthEducationContentTable = {
             id: healthEducation.id,
-            ...healthEducationData,
+            title: formData.title,
+            headline: formData.headline,
+            content_type: formData.content_type,
+            body: formData.body,
+            url: formData.content_type === "video" ? formData.url : "",
+            status: isArchived ? "archived" : "active",
             created_by: healthEducation.created_by,
             created_at: healthEducation.created_at,
-          });
+            category: healthEducation.category,
+          };
+          onSave(updated);
         }
 
         onClose();
@@ -315,29 +338,50 @@ const AddHealthEducationModal: React.FC<AddHealthEducationModalProps> = ({
         content={
           <div className="space-y-4 mt-2">
             {/* Content Type Selection */}
-            <div className="space-y-3">
-              <p className="text-body-base-strong text-szBlack700">
-                CONTENT TYPE
-              </p>
-              <div className="flex gap-6">
-                <RadioButton
-                  id="article"
-                  name="content_type"
-                  label="Article"
-                  value="article"
-                  checked={formData.content_type === "article"}
-                  onChange={() => handleInputChange("content_type", "article")}
+            {mode !== "edit" && (
+              <div className="space-y-3">
+                <p className="text-body-base-strong text-szBlack700">
+                  CONTENT TYPE
+                </p>
+                <div className="flex gap-6">
+                  <RadioButton
+                    id="article"
+                    name="content_type"
+                    label="Article"
+                    value="article"
+                    checked={formData.content_type === "article"}
+                    onChange={() =>
+                      handleInputChange("content_type", "article")
+                    }
+                    disabled={mode === "view"}
+                  />
+                  <RadioButton
+                    id="video"
+                    name="content_type"
+                    label="Video"
+                    value="video"
+                    checked={formData.content_type === "video"}
+                    onChange={() => handleInputChange("content_type", "video")}
+                    disabled={mode === "view"}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Archive Toggle */}
+            <div className="space-y-2">
+              <p className="text-body-base-strong text-szBlack700">ARCHIVE</p>
+              <div className="flex items-center gap-2">
+                <Toggle
+                  isOn={isArchived}
+                  onToggle={() => setIsArchived((prev) => !prev)}
                   disabled={mode === "view"}
                 />
-                <RadioButton
-                  id="video"
-                  name="content_type"
-                  label="Video"
-                  value="video"
-                  checked={formData.content_type === "video"}
-                  onChange={() => handleInputChange("content_type", "video")}
-                  disabled={mode === "view"}
-                />
+                <p className="text-caption-reg text-szGrey600">
+                  {isArchived
+                    ? "Archived (will not be visible to users)"
+                    : "Active (visible to users)"}
+                </p>
               </div>
             </div>
 
@@ -382,7 +426,7 @@ const AddHealthEducationModal: React.FC<AddHealthEducationModalProps> = ({
                   error={!!formErrors.url}
                 />
                 <p className="text-sm text-szGrey500">
-                  Supported formats: youtube.com/watch?v=, youtu.be/,
+                  Supported formats: (use the embed link) youtu.be/,
                   youtube.com/embed/
                 </p>
               </div>

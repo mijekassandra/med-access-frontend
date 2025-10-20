@@ -1,14 +1,14 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 
 //icons
-import { Edit2, Trash, SearchNormal1 } from "iconsax-react";
+import { Edit2, SearchNormal1 } from "iconsax-react";
 
 //components
 import ContainerWrapper from "../../components/ContainerWrapper";
 import Button from "../../global-components/Button";
 import Inputs from "../../global-components/Inputs";
 import CardContainer from "../../global-components/CardContainer";
-import ButtonsIcon from "../../global-components/ButtonsIcon";
+import Chip from "../../global-components/Chip";
 import Divider from "../../global-components/Divider";
 import Pagination from "../../global-components/Pagination";
 import DeleteConfirmation from "../../components/DeleteConfirmation";
@@ -205,6 +205,7 @@ const Announcement = () => {
         content: content.trim(),
         author_id: 1, // TODO: Get from auth context
         is_published: true,
+        status: "active" as const,
         created_at: new Date().toISOString(), // Set current date automatically
       };
 
@@ -225,10 +226,10 @@ const Announcement = () => {
     }
   };
 
-  const handleDeletePost = (announcement: AnnouncementTable) => {
-    setSelectedAnnouncement(announcement);
-    setIsDeleteConfirmationOpen(true);
-  };
+  // const handleDeletePost = (announcement: AnnouncementTable) => {
+  //   setSelectedAnnouncement(announcement);
+  //   setIsDeleteConfirmationOpen(true);
+  // };
 
   const handleEditPost = (announcement: AnnouncementTable) => {
     setSelectedAnnouncement(announcement);
@@ -305,13 +306,17 @@ const Announcement = () => {
                           className="text-szPrimary700 cursor-pointer hover:text-szPrimary900"
                         />
                       </div>
+                      {announcement.status === "archived" && (
+                        <Chip label="Archived" type="colored" color="blue" />
+                      )}
 
+                      {/* 
                       <ButtonsIcon
                         variant="warning"
                         icon={<Trash />}
                         size="small"
                         onClick={() => handleDeletePost(announcement)}
-                      />
+                      /> */}
                     </div>
 
                     <div className="space-y-3 text-body-base-reg text-szBlack700 mt-2">

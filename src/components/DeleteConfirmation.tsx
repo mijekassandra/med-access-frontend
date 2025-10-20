@@ -15,6 +15,9 @@ interface DeleteConfirmationProps {
   description?: string;
   subDescription?: string;
   isLoading?: boolean;
+  buttonLabel?: string;
+  buttonIcon?: React.ReactNode;
+  iconColor?: string;
 }
 
 const DeleteConfirmation: React.FC<DeleteConfirmationProps> = ({
@@ -26,6 +29,9 @@ const DeleteConfirmation: React.FC<DeleteConfirmationProps> = ({
   description = "Are you sure you want to delete this item? This action cannot be undone.",
   subDescription,
   isLoading = false,
+  buttonLabel = "Delete",
+  buttonIcon = <Trash />,
+  iconColor = "text-error700",
 }) => {
   return (
     <Modal
@@ -33,7 +39,7 @@ const DeleteConfirmation: React.FC<DeleteConfirmationProps> = ({
       onClose={onClose}
       title={
         <div className="flex items-center gap-[24px]">
-          <InfoCircle className="icon-lg text-error700" />
+          <InfoCircle className={`icon-lg ${iconColor}`} />
           <h3 className="text-h3">{title}</h3>
         </div>
       }
@@ -51,11 +57,11 @@ const DeleteConfirmation: React.FC<DeleteConfirmationProps> = ({
           disabled: isLoading,
         },
         {
-          label: isLoading ? "Deleting..." : "Delete",
+          label: isLoading ? `${buttonLabel}...` : buttonLabel,
           variant: "secondaryDark",
           onClick: onClick,
           size: "medium",
-          leftIcon: <Trash />,
+          leftIcon: buttonIcon,
           disabled: isLoading,
           loading: isLoading,
         },

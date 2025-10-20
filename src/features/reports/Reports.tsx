@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 
 //icons
-import { Add, SearchNormal1, Edit, Trash } from "iconsax-react";
+import { Add, SearchNormal1, Edit, Archive, ArchiveBox } from "iconsax-react";
 
 // components
 import Table, {
@@ -22,8 +22,9 @@ import type { HealthReportTable } from "../../types/database";
 // integration
 import {
   useGetHealthReportsQuery,
-  useDeleteHealthReportMutation,
+  useEditHealthReportMutation,
 } from "./api/healthReportsApi";
+import Chip from "../../global-components/Chip";
 
 const Reports: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -55,8 +56,8 @@ const Reports: React.FC = () => {
   //! rtk query -----------------------
   const { data: reports = [] } = useGetHealthReportsQuery();
 
-  const [deleteReport, { isLoading: isDeleting }] =
-    useDeleteHealthReportMutation();
+  const [editReport, { isLoading: isArchiving }] =
+    useEditHealthReportMutation();
 
   useEffect(() => {
     console.log("selectedReport: ", selectedReport);
@@ -124,6 +125,19 @@ const Reports: React.FC = () => {
         </span>
       ),
     },
+    {
+      key: "status",
+      header: "Status",
+      width: "150px",
+      sortable: true,
+      render: (value) => (
+        <Chip
+          label={value}
+          type="colored"
+          color={value === "active" ? "green" : "blue"}
+        />
+      ),
+    },
   ];
 
   //! Define actions -----------------------
@@ -137,8 +151,8 @@ const Reports: React.FC = () => {
       },
     },
     {
-      label: "Delete Report",
-      icon: <Trash size={16} />,
+      label: "Archive Report",
+      icon: <Archive size={16} />,
       onClick: (record) => {
         setSelectedReport(record);
         setIsDeleteConfirmationOpen(true);
@@ -171,19 +185,22 @@ const Reports: React.FC = () => {
     console.log("Edit report:", updatedReport);
   };
 
-  //? Delete confirm -----------------------
+  //? Archive confirm -----------------------
   const handleDeleteConfirm = async () => {
     if (selectedReport) {
       try {
-        await deleteReport({ id: selectedReport.id }).unwrap();
+        await editReport({
+          id: selectedReport.id,
+          report: { status: "archived" },
+        }).unwrap();
         setIsDeleteConfirmationOpen(false);
         setSelectedReport(null);
-        setSnackbarMessage("Health report deleted successfully!");
+        setSnackbarMessage("Health report archived successfully!");
         setSnackbarType("success");
         setShowSnackbar(true);
       } catch (error) {
-        console.error("Failed to delete report:", error);
-        setSnackbarMessage("Failed to delete report. Please try again.");
+        console.error("Failed to archive report:", error);
+        setSnackbarMessage("Failed to archive report. Please try again.");
         setSnackbarType("error");
         setShowSnackbar(true); // Keep the modal open so the user can try again
       }
@@ -342,11 +359,17 @@ const Reports: React.FC = () => {
           setIsDeleteConfirmationOpen(false);
           setSelectedReport(null);
         }}
+        icon={
+          <ArchiveBox size={64} variant="Bulk" className="text-szPrimary700" />
+        }
         onClick={handleDeleteConfirm}
-        title="Delete Health Report"
-        description={`Are you sure you want to delete the report "${selectedReport?.title}"? 
-        This action cannot be undone.`}
-        isLoading={isDeleting}
+        title="Archive Health Report"
+        description={`Are you sure you want to archive the report "${selectedReport?.title}"? 
+        `}
+        isLoading={isArchiving}
+        buttonLabel="Archive"
+        buttonIcon={<Archive size={14} />}
+        iconColor="text-szPrimary00"
       />
 
       {/* Snackbar Alert */}

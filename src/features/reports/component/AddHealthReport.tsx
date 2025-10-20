@@ -148,6 +148,7 @@ AddHealthReportProps) => {
           report_type: formData.report_type,
           data_collected: formData.data_collected,
           report_date: new Date(formData.report_date),
+          status: "active",
         }).unwrap();
 
         setSnackbarMessage("Health report added successfully!");

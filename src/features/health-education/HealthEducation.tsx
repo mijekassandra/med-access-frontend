@@ -13,9 +13,14 @@ import type { HealthEducationContentTable } from "../../types/database";
 
 // rtk query
 import { useGetHealthEducationQuery } from "./api/healthEducationApi";
+// import { useEditHealthEducationMutation } from "./api/healthEducationApi";
 
 const HealthEducation: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<"add" | "edit" | "view">("add");
+  const [selectedItem, setSelectedItem] = useState<
+    HealthEducationContentTable | undefined
+  >(undefined);
   const [healthEducationContent, setHealthEducationContent] = useState<
     HealthEducationContentTable[]
   >([]);
@@ -26,6 +31,7 @@ const HealthEducation: React.FC = () => {
     isLoading,
     error,
   } = useGetHealthEducationQuery();
+  // Archiving is handled inside the edit modal via the Archive toggle
 
   // Update local state when data changes
   useEffect(() => {
@@ -60,6 +66,8 @@ const HealthEducation: React.FC = () => {
   }
 
   const handleOpenModal = () => {
+    setSelectedItem(undefined);
+    setModalMode("add");
     setIsModalOpen(true);
   };
 
@@ -67,10 +75,31 @@ const HealthEducation: React.FC = () => {
     setIsModalOpen(false);
   };
 
-  const handleSaveContent = (newContent: HealthEducationContentTable) => {
-    setHealthEducationContent((prev) => [newContent, ...prev]);
-    console.log("New content added:", newContent);
+  const handleSaveContent = (savedContent: HealthEducationContentTable) => {
+    setHealthEducationContent((previousContent) => {
+      const contentExists = previousContent.some(
+        (content) => content.id === savedContent.id
+      );
+      if (contentExists) {
+        // Update existing item (edit or archive toggle)
+        return previousContent.map((content) =>
+          content.id === savedContent.id ? savedContent : content
+        );
+      }
+      // Prepend new item (add)
+      return [savedContent, ...previousContent];
+    });
   };
+
+  const handleEdit = (id: number | string) => {
+    const item = healthEducationContent.find((c) => c.id === id);
+    if (!item) return;
+    setSelectedItem(item);
+    setModalMode("edit");
+    setIsModalOpen(true);
+  };
+
+  // Archiving is handled via the Archive toggle inside the AddHealthEducationModal when editing
 
   // Sort content: videos first, then articles
   const sortedContent = [...healthEducationContent].sort((a, b) => {
@@ -96,11 +125,14 @@ const HealthEducation: React.FC = () => {
           {sortedContent.map((content) => (
             <HealthEducationCard
               key={content.id}
+              id={content.id}
               title={content.title}
               headline={content.headline}
               content_type={content.content_type}
               body={content.body}
               url={content.url}
+              status={content.status}
+              onEdit={handleEdit}
               // onDownload={() => handleDownload(content.title)}
             />
           ))}
@@ -110,7 +142,8 @@ const HealthEducation: React.FC = () => {
         <AddHealthEducationModal
           isOpen={isModalOpen}
           onClose={handleCloseModal}
-          mode="add"
+          mode={modalMode}
+          healthEducation={selectedItem}
           onSave={handleSaveContent}
         />
       </div>

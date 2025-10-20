@@ -1,32 +1,37 @@
 import React, { useState } from "react";
 import {
-  ExportCurve,
   Video,
   DocumentText,
   ArrowDown2,
   ArrowUp2,
+  Edit2,
 } from "iconsax-react";
+import Chip from "../../../global-components/Chip";
 
 interface HealthEducationCardProps {
   icon?: React.ReactNode;
+  id: number | string;
   title: string;
   headline: string;
   body?: string;
   content_type: "article" | "video";
   url?: string;
-  onDownload?: () => void;
   className?: string;
+  onEdit?: (id: number | string) => void;
+  status?: "active" | "archived";
 }
 
 const HealthEducationCard: React.FC<HealthEducationCardProps> = ({
   icon,
+  id,
   title,
   headline,
   body,
   content_type,
   url,
-  onDownload,
   className = "",
+  onEdit,
+  status,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -47,22 +52,6 @@ const HealthEducationCard: React.FC<HealthEducationCardProps> = ({
   // Check if content is long enough to need truncation (roughly 4 lines)
   const shouldShowExpandButton = body && body.length > 200;
 
-  // For video content, return plain iframe without card styling
-  if (content_type === "video" && url) {
-    return (
-      <div className={`w-full ${className}`}>
-        <iframe
-          className="w-full h-72 rounded-lg"
-          src={url}
-          title={title}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          referrerPolicy="strict-origin-when-cross-origin"
-          allowFullScreen
-        />
-      </div>
-    );
-  }
-
   // For article content, show card with styling
   return (
     <div
@@ -71,10 +60,10 @@ const HealthEducationCard: React.FC<HealthEducationCardProps> = ({
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
           <div
-            className={`w-12 h-12 rounded-full flex items-center justify-center ${variantStyles.secondary.iconBg} text-white`}
+            className={`w-10 h-10 rounded-full flex items-center justify-center ${variantStyles.secondary.iconBg} text-white`}
           >
             {React.cloneElement(displayIcon as React.ReactElement, {
-              className: "w-6 h-6",
+              className: "w-5 h-5",
             })}
           </div>
           <h5
@@ -83,21 +72,29 @@ const HealthEducationCard: React.FC<HealthEducationCardProps> = ({
             {title}
           </h5>
         </div>
-        {onDownload && (
+        <div className="flex items-center gap-2">
+          {status === "archived" && (
+            <Chip label="Archived" type="colored" color="blue" />
+          )}
           <button
-            onClick={onDownload}
-            className="p-2 rounded-full hover:bg-white/50 transition-colors duration-200"
-            aria-label="Download"
+            className="flex justify-center items-center w-10 h-10 group cursor-pointer transition-colors duration-200"
+            aria-label="Edit"
+            onClick={() => onEdit && onEdit(id)}
           >
-            <ExportCurve className="icon-md text-szGrey500" />
+            <Edit2
+              className="h-5 w-5 text-szPrimary700 group-hover:text-szPrimary900"
+              variant="Linear"
+            />
           </button>
-        )}
+        </div>
       </div>
 
       {/* Render article content */}
       <div className="space-y-3">
         <h4
-          className={`text-h5 font-montserrat font-semibold leading-tight ${variantStyles.secondary.headline}`}
+          className={`text-h5 font-montserrat font-semibold leading-tight ${
+            variantStyles.secondary.headline
+          } ${content_type === "video" ? "mb-3" : ""}`}
         >
           {headline}
         </h4>
@@ -137,6 +134,18 @@ const HealthEducationCard: React.FC<HealthEducationCardProps> = ({
           </div>
         )}
       </div>
+      {content_type === "video" && url && (
+        <div className={`w-full ${className}`}>
+          <iframe
+            className="w-full h-72 rounded-lg"
+            src={url}
+            title={title}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allowFullScreen
+          />
+        </div>
+      )}
     </div>
   );
 };

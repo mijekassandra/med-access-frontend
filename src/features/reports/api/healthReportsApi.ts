@@ -46,7 +46,7 @@ export const healthReportsApi = createApi({
       editHealthReport: builder.mutation<void, {id: string | number, report: object}>({
         query: ({id, report}) => ({
           url: `/health-reports/${id}`,
-          method: "PUT",
+          method: "PATCH",
           body: report,
         }),
         invalidatesTags: (_result, _error, { id }) => [
