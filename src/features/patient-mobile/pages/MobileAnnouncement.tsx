@@ -27,7 +27,7 @@ const MobileAnnouncement: React.FC = () => {
   // Transform API data to match component interface
   const transformedAnnouncements: AnnouncementData[] = announcements
     ? announcements
-        .filter((announcement) => announcement.is_published)
+        .filter((announcement) => announcement.isPublished)
         .map((announcement) => ({
           id: announcement.id,
           title: announcement.title,

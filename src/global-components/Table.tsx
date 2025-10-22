@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import PopoverMenu from "./PopoverMenu";
 import Pagination from "./Pagination";
 import { type DropdownMenuItem } from "./DropdownMenu";
+import Loading from "../components/Loading";
 
 export interface TableColumn<T = Record<string, any>> {
   key: string;
@@ -174,10 +175,7 @@ const Table = <T extends Record<string, any>>({
       <div
         className={`bg-white rounded-lg shadow-sm border border-gray-200 ${className}`}
       >
-        <div className="p-6 text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-szPrimary500 mx-auto"></div>
-          <p className="mt-2 text-szBlack700">Loading...</p>
-        </div>
+        <Loading spinnerSize="large" message="Loading..." />
       </div>
     );
   }

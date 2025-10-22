@@ -17,18 +17,20 @@ import EditAnnouncementModal from "./components/EditAnnouncementModal";
 import SnackbarAlert from "../../global-components/SnackbarAlert";
 
 // types
-import type { AnnouncementTable } from "../../types/database";
+import type { Announcement as AnnouncementType } from "./api/announcementApi";
 
 // integration
 import {
   useGetAnnouncementsQuery,
   useDeleteAnnouncementMutation,
-  useAddAnnouncementMutation,
+  useCreateAnnouncementMutation,
 } from "./api/announcementApi";
+import Loading from "../../components/Loading";
 
 const Announcement = () => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isPosting, setIsPosting] = useState(false);
   const [formErrors, setFormErrors] = useState({
     title: "",
@@ -43,7 +45,7 @@ const Announcement = () => {
   const [isViewAnnouncementModalOpen, setIsViewAnnouncementModalOpen] =
     useState(false);
   const [selectedAnnouncement, setSelectedAnnouncement] =
-    useState<AnnouncementTable | null>(null);
+    useState<AnnouncementType | null>(null);
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarType, setSnackbarType] = useState<"success" | "error">(
@@ -57,15 +59,26 @@ const Announcement = () => {
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
 
   //! rtk query -----------------------
-  const { data: announcements = [] } = useGetAnnouncementsQuery();
+  const {
+    data: announcementsResponse,
+    error: fetchError,
+    isLoading: isLoadingAnnouncements,
+  } = useGetAnnouncementsQuery();
+  const announcements = announcementsResponse?.data || [];
 
   const [deleteAnnouncement, { isLoading: isDeleting }] =
     useDeleteAnnouncementMutation();
-  const [addAnnouncement] = useAddAnnouncementMutation();
+  const [createAnnouncement] = useCreateAnnouncementMutation();
 
+  // Handle fetch errors
   useEffect(() => {
-    console.log("selectedAnnouncement: ", selectedAnnouncement);
-  }, [selectedAnnouncement]);
+    if (fetchError) {
+      console.error("Failed to fetch announcements:", fetchError);
+      setSnackbarMessage("Failed to load announcements. Please try again.");
+      setSnackbarType("error");
+      setShowSnackbar(true);
+    }
+  }, [fetchError]);
 
   //! Pagination -----------------------
   const handlePageChange = (page: number) => {
@@ -85,27 +98,23 @@ const Announcement = () => {
     setCurrentPage(1);
   }, [debouncedSearchTerm]);
 
-  //? Edit save -----------------------
-  const handleEditSave = (updatedAnnouncement: AnnouncementTable) => {
-    // TODO: Implement edit API call
-    console.log("Edit announcement:", updatedAnnouncement);
-  };
-
   //? Delete confirm -----------------------
   const handleDeleteConfirm = async () => {
     if (selectedAnnouncement) {
       try {
-        await deleteAnnouncement({ id: selectedAnnouncement.id }).unwrap();
+        await deleteAnnouncement(selectedAnnouncement._id).unwrap();
         setIsDeleteConfirmationOpen(false);
         setSelectedAnnouncement(null);
         setSnackbarMessage("Announcement deleted successfully!");
         setSnackbarType("success");
         setShowSnackbar(true);
-      } catch (error) {
-        console.error("Failed to delete announcement:", error);
-        setSnackbarMessage("Failed to delete announcement. Please try again.");
+      } catch (error: any) {
+        const errorMessage =
+          error?.data?.message ||
+          "Failed to delete announcement. Please try again.";
+        setSnackbarMessage(errorMessage);
         setSnackbarType("error");
-        setShowSnackbar(true); // Keep the modal open so the user can try again
+        setShowSnackbar(true);
       }
     }
   };
@@ -125,9 +134,9 @@ const Announcement = () => {
   //! Search announcements -----------------------
   const searchAnnouncements = useCallback(
     (
-      announcements: AnnouncementTable[],
+      announcements: AnnouncementType[],
       searchTerm: string
-    ): AnnouncementTable[] => {
+    ): AnnouncementType[] => {
       if (!searchTerm.trim()) return announcements;
 
       const searchLower = searchTerm.toLowerCase().trim();
@@ -137,8 +146,10 @@ const Announcement = () => {
         const searchableFields = [
           announcement.title,
           announcement.content,
-          announcement.id.toString(),
-          new Date(announcement.created_at).toLocaleDateString(),
+          announcement._id,
+          new Date(announcement.createdAt).toLocaleDateString(),
+          announcement.author.firstName,
+          announcement.author.lastName,
         ];
 
         return searchableFields.some((field) => {
@@ -199,26 +210,39 @@ const Announcement = () => {
     setIsPosting(true);
 
     try {
-      // Create announcement data
-      const announcementData = {
-        title: title.trim(),
-        content: content.trim(),
-        author_id: 1, // TODO: Get from auth context
-        is_published: true,
-        status: "active" as const,
-        created_at: new Date().toISOString(), // Set current date automatically
-      };
+      let announcementData;
 
-      await addAnnouncement(announcementData).unwrap();
+      if (selectedFile) {
+        // Create FormData for file upload
+        const formData = new FormData();
+        formData.append("title", title.trim());
+        formData.append("content", content.trim());
+        formData.append("isPublished", "true");
+        formData.append("attachment", selectedFile);
+        announcementData = formData;
+      } else {
+        // Create regular object for no file
+        announcementData = {
+          title: title.trim(),
+          content: content.trim(),
+          isPublished: true,
+        };
+      }
+
+      await createAnnouncement(announcementData).unwrap();
 
       setSnackbarMessage("Announcement posted successfully!");
       setSnackbarType("success");
       setShowSnackbar(true);
       setTitle("");
       setContent("");
-    } catch (error) {
+      setSelectedFile(null);
+    } catch (error: any) {
       console.error("Post submission failed:", error);
-      setSnackbarMessage("Failed to post announcement. Please try again.");
+      const errorMessage =
+        error?.data?.message ||
+        "Failed to post announcement. Please try again.";
+      setSnackbarMessage(errorMessage);
       setSnackbarType("error");
       setShowSnackbar(true);
     } finally {
@@ -231,7 +255,7 @@ const Announcement = () => {
   //   setIsDeleteConfirmationOpen(true);
   // };
 
-  const handleEditPost = (announcement: AnnouncementTable) => {
+  const handleEditPost = (announcement: AnnouncementType) => {
     setSelectedAnnouncement(announcement);
     setIsEditAnnouncementModalOpen(true);
   };
@@ -262,9 +286,8 @@ const Announcement = () => {
     }
   };
 
-  const handleFileUpload = (file: File) => {
-    // Handle file upload from the UploadAnnouncement component
-    console.log("File uploaded from component:", file);
+  const handleFileSelect = (file: File | null) => {
+    setSelectedFile(file);
   };
 
   return (
@@ -289,10 +312,19 @@ const Announcement = () => {
           </div>
 
           {/* Dynamic Announcements */}
-          {paginatedAnnouncements.length > 0 ? (
+          {isLoadingAnnouncements ? (
+            <CardContainer
+              content={
+                <Loading
+                  message="Loading announcements..."
+                  spinnerSize="large"
+                />
+              }
+            />
+          ) : paginatedAnnouncements.length > 0 ? (
             paginatedAnnouncements.map((announcement) => (
               <CardContainer
-                key={announcement.id}
+                key={announcement._id}
                 content={
                   <div className="space-y-4">
                     <div className="flex items-center justify-between gap-2 ">
@@ -306,7 +338,7 @@ const Announcement = () => {
                           className="text-szPrimary700 cursor-pointer hover:text-szPrimary900"
                         />
                       </div>
-                      {announcement.status === "archived" && (
+                      {!announcement.isPublished && (
                         <Chip label="Archived" type="colored" color="blue" />
                       )}
 
@@ -318,6 +350,32 @@ const Announcement = () => {
                         onClick={() => handleDeletePost(announcement)}
                       /> */}
                     </div>
+                    {announcement.attachment && (
+                      <div className="mt-3">
+                        <img
+                          src={announcement.attachment}
+                          alt={announcement.title}
+                          className="w-full h-72 object-cover rounded-md"
+                          onError={(e) => {
+                            console.error(
+                              "Image failed to load:",
+                              announcement.attachment
+                            );
+                            e.currentTarget.style.display = "none";
+                          }}
+                        />
+                        <div className="mt-2">
+                          <a
+                            href={announcement.attachment}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-szPrimary700 hover:text-szPrimary900 underline text-sm"
+                          >
+                            View Full Image
+                          </a>
+                        </div>
+                      </div>
+                    )}
 
                     <div className="space-y-3 text-body-base-reg text-szBlack700 mt-2">
                       <div className="whitespace-pre-line">
@@ -328,17 +386,21 @@ const Announcement = () => {
                         <span>
                           Created:{" "}
                           {new Date(
-                            announcement.created_at
+                            announcement.createdAt
                           ).toLocaleDateString()}
                         </span>
-                        {announcement.updated_at && (
+                        {announcement.updatedAt && (
                           <span>
                             Updated:{" "}
                             {new Date(
-                              announcement.updated_at
+                              announcement.updatedAt
                             ).toLocaleDateString()}
                           </span>
                         )}
+                      </div>
+                      <div className="text-xs text-szBlack400">
+                        By: {announcement.author.firstName}{" "}
+                        {announcement.author.lastName}
                       </div>
                     </div>
                   </div>
@@ -404,7 +466,10 @@ const Announcement = () => {
                     />
                   </div>
                 </div>
-                <UploadAnnouncement onUpload={handleFileUpload} />
+                <UploadAnnouncement
+                  onFileSelect={handleFileSelect}
+                  selectedFile={selectedFile}
+                />
               </div>
             }
           />
@@ -417,7 +482,6 @@ const Announcement = () => {
         onClose={handleCloseModals}
         mode="edit"
         announcement={selectedAnnouncement || undefined}
-        onSave={handleEditSave}
       />
 
       {/* View Announcement Modal */}

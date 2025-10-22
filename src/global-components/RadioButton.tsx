@@ -39,6 +39,7 @@ const RadioButton: React.FC<RadioButtonProps> = ({
     before:bg-white before:scale-75 
     checked:before:scale-75 checked:before:bg-szPrimary500 
     disabled:before:bg-szLightGrey400 disabled:before:border-szLightGrey400
+    disabled:checked:before:bg-szPrimary200 disabled:checked:before:border-szPrimary200
   `}
       />
       <label

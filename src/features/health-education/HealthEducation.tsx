@@ -131,7 +131,7 @@ const HealthEducation: React.FC = () => {
               content_type={content.content_type}
               body={content.body}
               url={content.url}
-              status={content.status}
+              isPublished={content.isPublished}
               onEdit={handleEdit}
               // onDownload={() => handleDownload(content.title)}
             />

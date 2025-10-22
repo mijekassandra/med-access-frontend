@@ -1,8 +1,12 @@
 import React from "react";
 import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 
+//auth
+import { useAuth } from "../features/auth/hooks/useAuth";
+
 //component
 import Appbar from "./Appbar";
+import RoleGuard from "../features/auth/components/RoleGuard";
 
 // Feature pages
 import Dashboard from "../features/dashboard/pages/Dashboard";
@@ -17,11 +21,12 @@ import Announcement from "../features/announcements/Announcement";
 
 interface BodyProps {
   children?: React.ReactNode;
-  userRole?: "admin" | "doctor" | "patient";
 }
 
-const Body = ({ children, userRole = "doctor" }: BodyProps) => {
+const Body = ({ children }: BodyProps) => {
   const location = useLocation();
+  const { user } = useAuth();
+  const userRole = user?.role || "doctor";
 
   // Function to get title and subheader based on current path
   const getPageInfo = (pathname: string) => {
@@ -93,16 +98,78 @@ const Body = ({ children, userRole = "doctor" }: BodyProps) => {
       <Appbar title={title} subheader={subheader} userRole={userRole} />
       <div className="flex-1 overflow-y-auto">
         <Routes>
-          {/* Main Application Routes */}
+          {/* Dashboard - accessible to both admin and doctor */}
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/medical-records/*" element={<MedicalRecordsIndex />} />
-          <Route path="/telemedicine" element={<Telemedicine />} />
-          <Route path="/health-education" element={<HealthEducation />} />
-          <Route path="/medicine-inventory" element={<Inventory />} />
-          <Route path="/users/*" element={<User />} />
-          <Route path="/patient-records" element={<PatientRecords />} />
-          <Route path="/announcements" element={<Announcement />} />
-          <Route path="/reports" element={<Reports />} />
+
+          {/* Doctor-only routes */}
+          <Route
+            path="/medical-records/*"
+            element={
+              <RoleGuard allowedRoles={["doctor"]}>
+                <MedicalRecordsIndex />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/telemedicine"
+            element={
+              <RoleGuard allowedRoles={["doctor"]}>
+                <Telemedicine />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/health-education"
+            element={
+              <RoleGuard allowedRoles={["admin", "doctor"]}>
+                <HealthEducation />
+              </RoleGuard>
+            }
+          />
+
+          {/* Admin-only routes */}
+          <Route
+            path="/medicine-inventory"
+            element={
+              <RoleGuard allowedRoles={["admin"]}>
+                <Inventory />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/users/*"
+            element={
+              <RoleGuard allowedRoles={["admin"]}>
+                <User />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/patient-records"
+            element={
+              <RoleGuard allowedRoles={["admin"]}>
+                <PatientRecords />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/announcements"
+            element={
+              <RoleGuard allowedRoles={["admin"]}>
+                <Announcement />
+              </RoleGuard>
+            }
+          />
+
+          {/* Reports - accessible to both admin and doctor */}
+          <Route
+            path="/reports"
+            element={
+              <RoleGuard allowedRoles={["admin", "doctor"]}>
+                <Reports />
+              </RoleGuard>
+            }
+          />
 
           {/* Catch all non-existent routes and redirect to 404 */}
           <Route path="*" element={<Navigate to="/404" replace />} />

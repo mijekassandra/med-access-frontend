@@ -61,7 +61,7 @@ const AddHealthEducationModal: React.FC<AddHealthEducationModalProps> = ({
     "success"
   );
 
-  // Archive toggle state - when true, status should be "archived"; otherwise "active"
+  // Archive toggle state - when true, isPublished should be false; otherwise true
   const [isArchived, setIsArchived] = useState<boolean>(false);
 
   // RTK Query mutations
@@ -82,8 +82,8 @@ const AddHealthEducationModal: React.FC<AddHealthEducationModalProps> = ({
         body: healthEducation.body,
         url: healthEducation.url,
       });
-      // Initialize archive toggle based on existing status
-      setIsArchived(healthEducation.status === "archived");
+      // Initialize archive toggle based on existing isPublished
+      setIsArchived(!healthEducation.isPublished);
     } else if (mode === "add") {
       setFormData({
         title: "",
@@ -194,7 +194,7 @@ const AddHealthEducationModal: React.FC<AddHealthEducationModalProps> = ({
           body: formData.body,
           url: formData.content_type === "video" ? formData.url : "",
           category: "",
-          status: isArchived ? "archived" : "active",
+          isPublished: !isArchived,
           created_by: 1, // Current user ID - in real app, get from auth context
         };
 
@@ -220,7 +220,7 @@ const AddHealthEducationModal: React.FC<AddHealthEducationModalProps> = ({
           content_type: formData.content_type,
           body: formData.body,
           url: formData.content_type === "video" ? formData.url : "",
-          status: isArchived ? "archived" : "active",
+          isPublished: !isArchived,
         };
 
         await editHealthEducation({
@@ -243,7 +243,7 @@ const AddHealthEducationModal: React.FC<AddHealthEducationModalProps> = ({
             content_type: formData.content_type,
             body: formData.body,
             url: formData.content_type === "video" ? formData.url : "",
-            status: isArchived ? "archived" : "active",
+            isPublished: !isArchived,
             created_by: healthEducation.created_by,
             created_at: healthEducation.created_at,
             category: healthEducation.category,

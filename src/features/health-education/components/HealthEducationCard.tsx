@@ -18,7 +18,7 @@ interface HealthEducationCardProps {
   url?: string;
   className?: string;
   onEdit?: (id: number | string) => void;
-  status?: "active" | "archived";
+  isPublished?: boolean;
 }
 
 const HealthEducationCard: React.FC<HealthEducationCardProps> = ({
@@ -31,7 +31,7 @@ const HealthEducationCard: React.FC<HealthEducationCardProps> = ({
   url,
   className = "",
   onEdit,
-  status,
+  isPublished,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -73,7 +73,7 @@ const HealthEducationCard: React.FC<HealthEducationCardProps> = ({
           </h5>
         </div>
         <div className="flex items-center gap-2">
-          {status === "archived" && (
+          {!isPublished && (
             <Chip label="Archived" type="colored" color="blue" />
           )}
           <button

@@ -5,20 +5,30 @@ import { medicineInventoryApi } from './features/inventory/api/medicineInventory
 import { healthReportsApi } from './features/reports/api/healthReportsApi'
 import { announcementApi } from './features/announcements/api/announcementApi'
 import { healthEducationApi } from './features/health-education/api/healthEducationApi'
+import { authApi } from './features/auth/api/authApi'
+import { userApi } from './features/user/api/userApi'
+
+// Slices
+import authReducer from './features/auth/slice/authSlice'
 
 export const store = configureStore({
   reducer: {
+    auth: authReducer,
     [medicineInventoryApi.reducerPath]: medicineInventoryApi.reducer,
     [healthReportsApi.reducerPath]: healthReportsApi.reducer,
     [announcementApi.reducerPath]: announcementApi.reducer,
     [healthEducationApi.reducerPath]: healthEducationApi.reducer,
+    [authApi.reducerPath]: authApi.reducer,
+    [userApi.reducerPath]: userApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
       medicineInventoryApi.middleware,
       healthReportsApi.middleware,
       announcementApi.middleware,
-      healthEducationApi.middleware
+      healthEducationApi.middleware,
+      authApi.middleware,
+      userApi.middleware
     ),
 })
 

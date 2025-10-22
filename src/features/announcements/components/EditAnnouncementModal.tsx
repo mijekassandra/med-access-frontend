@@ -5,20 +5,24 @@ import SnackbarAlert from "../../../global-components/SnackbarAlert";
 import Toggle from "../../../global-components/Toggle";
 
 // types
-import type { AnnouncementTable } from "../../../types/database";
+import type {
+  Announcement,
+  AnnouncementCreate,
+  AnnouncementUpdate,
+} from "../api/announcementApi";
 
 // RTK Query
 import {
-  useAddAnnouncementMutation,
-  useEditAnnouncementMutation,
+  useCreateAnnouncementMutation,
+  useUpdateAnnouncementMutation,
 } from "../api/announcementApi";
 
 interface EditAnnouncementModalProps {
   isOpen: boolean;
   onClose: () => void;
   mode: "add" | "edit" | "view";
-  announcement?: AnnouncementTable;
-  onSave?: (announcement: AnnouncementTable) => void;
+  announcement?: Announcement;
+  onSave?: (announcement: Announcement) => void;
 }
 
 const EditAnnouncementModal = ({
@@ -32,7 +36,7 @@ const EditAnnouncementModal = ({
     title: "",
     content: "",
     attachment_url: "",
-    status: "active" as "active" | "archived",
+    isPublished: true,
   });
   const [formErrors, setFormErrors] = useState({
     title: "",
@@ -46,10 +50,10 @@ const EditAnnouncementModal = ({
   );
 
   // RTK Query mutations
-  const [addAnnouncement, { isLoading: isAdding }] =
-    useAddAnnouncementMutation();
-  const [editAnnouncement, { isLoading: isEditing }] =
-    useEditAnnouncementMutation();
+  const [createAnnouncement, { isLoading: isAdding }] =
+    useCreateAnnouncementMutation();
+  const [updateAnnouncement, { isLoading: isEditing }] =
+    useUpdateAnnouncementMutation();
 
   const isLoading = isAdding || isEditing;
 
@@ -59,15 +63,15 @@ const EditAnnouncementModal = ({
       setFormData({
         title: announcement.title,
         content: announcement.content,
-        attachment_url: announcement.attachment_url || "",
-        status: announcement.status,
+        attachment_url: announcement.attachment || "",
+        isPublished: announcement.isPublished,
       });
     } else if (mode === "add") {
       setFormData({
         title: "",
         content: "",
         attachment_url: "",
-        status: "active",
+        isPublished: true,
       });
     }
 
@@ -139,38 +143,38 @@ const EditAnnouncementModal = ({
 
     try {
       if (mode === "add") {
-        // Prepare data for API call (exclude id for new announcement)
-        const announcementData = {
+        // Prepare data for API call
+        const announcementData: AnnouncementCreate = {
           title: formData.title,
           content: formData.content,
-          author_id: 1, // TODO: Get from auth context
-          status: "active" as const,
-          attachment_url: formData.attachment_url || undefined,
+          isPublished: formData.isPublished,
+          attachment: formData.attachment_url || null,
         };
 
-        const result = await addAnnouncement(announcementData).unwrap();
+        const result = await createAnnouncement(announcementData).unwrap();
 
         setSnackbarMessage("Announcement has been added successfully!");
         setSnackbarType("success");
         setShowSnackbar(true);
 
         // Call onSave with the result if provided
-        if (onSave) {
-          onSave(result);
+        if (onSave && result.data) {
+          onSave(result.data);
         }
 
         onClose();
-      } else if (mode === "edit" && announcement?.id) {
-        // Prepare data for edit API call - only title and content can be edited
-        const announcementData = {
+      } else if (mode === "edit" && announcement?._id) {
+        // Prepare data for edit API call
+        const announcementData: AnnouncementUpdate = {
           title: formData.title,
           content: formData.content,
-          status: formData.status,
+          isPublished: formData.isPublished,
+          attachment: formData.attachment_url || null,
         };
 
-        await editAnnouncement({
-          id: announcement.id,
-          announcement: announcementData,
+        const result = await updateAnnouncement({
+          id: announcement._id,
+          data: announcementData,
         }).unwrap();
 
         setSnackbarMessage("Announcement has been updated successfully!");
@@ -178,26 +182,20 @@ const EditAnnouncementModal = ({
         setShowSnackbar(true);
 
         // Call onSave with the updated data if provided
-        if (onSave) {
-          onSave({
-            id: announcement.id,
-            ...announcementData,
-            author_id: announcement.author_id,
-            created_at: announcement.created_at,
-            updated_at: new Date(),
-            attachment_url: announcement.attachment_url,
-          });
+        if (onSave && result.data) {
+          onSave(result.data);
         }
 
         onClose();
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error saving announcement:", err);
-      setSnackbarMessage(
+      const errorMessage =
+        err?.data?.message ||
         `Failed to ${
           mode === "add" ? "add" : "update"
-        } announcement. Please try again.`
-      );
+        } announcement. Please try again.`;
+      setSnackbarMessage(errorMessage);
       setSnackbarType("error");
       setShowSnackbar(true);
     }
@@ -208,7 +206,7 @@ const EditAnnouncementModal = ({
       title: "",
       content: "",
       attachment_url: "",
-      status: "active",
+      isPublished: true,
     });
     setFormErrors({
       title: "",
@@ -277,17 +275,14 @@ const EditAnnouncementModal = ({
                 <p className="text-body-base-strong text-szBlack700">ARCHIVE</p>
                 <div className="flex items-center gap-2">
                   <Toggle
-                    isOn={formData.status === "archived"}
+                    isOn={!formData.isPublished}
                     onToggle={() =>
-                      handleInputChange(
-                        "status",
-                        formData.status === "archived" ? "active" : "archived"
-                      )
+                      handleInputChange("isPublished", !formData.isPublished)
                     }
                     disabled={mode === "view"}
                   />
                   <p className="text-caption-reg text-szGrey600">
-                    {formData.status === "archived"
+                    {!formData.isPublished
                       ? "Archived (will not be visible to users)"
                       : "Active (visible to users)"}
                   </p>
@@ -314,7 +309,7 @@ const EditAnnouncementModal = ({
               onChange={(e) => handleInputChange("content", e.target.value)}
               disabled={mode === "view"}
               error={!!formErrors.content}
-              className="min-h-[200px]"
+              className="min-h-[170px]"
             />
 
             {/* Attachment URL field - only show in add mode */}

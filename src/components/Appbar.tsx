@@ -1,12 +1,10 @@
-import React from "react";
-
 import Avatar from "../global-components/Avatar";
 import Notification from "../features/notification/Notification";
 
 interface AppbarProps {
   title: string;
   subheader?: string;
-  userRole?: "admin" | "doctor" | "patient";
+  userRole?: "admin" | "doctor" | "user";
 }
 
 const Appbar = ({ title, subheader, userRole = "doctor" }: AppbarProps) => {

@@ -1,55 +1,55 @@
 import React, { useState } from "react";
 import { ExportCurve, Gallery, VideoSquare } from "iconsax-react";
-import CardContainer from "../../../global-components/CardContainer";
-import Button from "../../../global-components/Button";
 
 interface UploadAnnouncementProps {
   onUpload?: (file: File) => void;
+  onFileSelect?: (file: File | null) => void;
+  selectedFile?: File | null;
 }
 
 const UploadAnnouncement: React.FC<UploadAnnouncementProps> = ({
-  onUpload,
+  onFileSelect,
+  selectedFile: externalSelectedFile,
 }) => {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [internalSelectedFile, setInternalSelectedFile] = useState<File | null>(
+    null
+  );
   const [filePreviewUrl, setFilePreviewUrl] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+
+  // Use external file if provided, otherwise use internal state
+  const selectedFile = externalSelectedFile || internalSelectedFile;
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setSelectedFile(file);
+      // Validate file type
+      const allowedTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "application/pdf",
+      ];
+      if (!allowedTypes.includes(file.type)) {
+        alert("Please select a valid file type (JPEG, PNG, GIF, or PDF)");
+        return;
+      }
+
+      // Validate file size (5MB limit)
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      if (file.size > maxSize) {
+        alert("File size must be less than 5MB");
+        return;
+      }
+
+      if (onFileSelect) {
+        onFileSelect(file);
+      } else {
+        setInternalSelectedFile(file);
+      }
+
       // Create preview URL for the file
       const url = URL.createObjectURL(file);
       setFilePreviewUrl(url);
-    }
-  };
-
-  const handleUpload = async () => {
-    if (!selectedFile) return;
-
-    setIsUploading(true);
-
-    try {
-      // Simulate upload process
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Handle file upload
-      console.log("File uploaded:", selectedFile);
-
-      // Call the parent's onUpload callback if provided
-      if (onUpload) {
-        onUpload(selectedFile);
-      }
-
-      setSelectedFile(null);
-      if (filePreviewUrl) {
-        URL.revokeObjectURL(filePreviewUrl);
-        setFilePreviewUrl(null);
-      }
-    } catch (error) {
-      console.error("Upload failed:", error);
-    } finally {
-      setIsUploading(false);
     }
   };
 
@@ -87,7 +87,7 @@ const UploadAnnouncement: React.FC<UploadAnnouncementProps> = ({
         >
           <input
             type="file"
-            accept="image/*,video/*"
+            accept="image/jpeg,image/png,image/gif,application/pdf"
             onChange={handleFileUpload}
             className="hidden"
             id="file-upload"
@@ -121,7 +121,7 @@ const UploadAnnouncement: React.FC<UploadAnnouncementProps> = ({
                     Click to upload
                   </p>
                   <p className="text-caption-reg text-szGrey500">
-                    PNG, JPG, MP4 up to 10MB
+                    PNG, JPG, GIF, PDF up to 5MB
                   </p>
                 </>
               )}

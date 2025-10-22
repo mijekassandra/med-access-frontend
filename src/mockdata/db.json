@@ -251,7 +251,11 @@
       "title": "MONKEYPOX DISEASE OUTBREAK ADVISORY",
       "content": "We have received reports of confirmed cases of Monkeypox within the municipality. Health authorities are currently monitoring the situation closely and implementing necessary actions to prevent further transmission.\n\nWhat is Monkeypox?\nMonkeypox is a contagious viral disease that spreads through close contact with an infected person, their bodily fluids, respiratory droplets, or contaminated objects.\n\nTo help protect yourself and the community, please observe the following precautions:\n• Avoid close contact with individuals showing symptoms such as rashes, fever, swollen lymph nodes, and body aches.\n• Wash hands regularly with soap and water or use alcohol-based hand sanitizers.\n• Wear face masks in crowded or enclosed spaces.\n• Do not share personal items like towels, clothing, or utensils.\n• Report any suspected symptoms immediately for proper medical guidance.\n\nThe health and safety of every resident remain a top priority. Stay informed, alert, and cooperative.\n\n- RHU Jasaan",
       "id": "1",
-      "status": "archived"
+      "author_id": 1,
+      "created_at": "2024-01-15T08:00:00.000Z",
+      "updated_at": "2024-01-15T08:00:00.000Z",
+      "isPublished": false,
+      "attachment_url": null
     },
     {
       "id": "2",
@@ -260,13 +264,18 @@
       "author_id": 2,
       "created_at": "2024-01-20T10:30:00.000Z",
       "updated_at": "2024-01-20T10:30:00.000Z",
-      "is_published": true,
+      "isPublished": true,
       "attachment_url": null
     },
     {
       "title": "Dengue Prevention Campaign",
       "content": "With the rainy season approaching, we urge all residents to take preventive measures against dengue fever.\n\nPrevention Tips:\n• Remove standing water from containers, flower pots, and gutters\n• Use mosquito nets and repellents\n• Wear long-sleeved clothing during peak mosquito hours (dawn and dusk)\n• Keep your surroundings clean and dry\n\nSymptoms to watch for:\n• High fever\n• Severe headache\n• Pain behind the eyes\n• Joint and muscle pain\n• Nausea and vomiting\n• Skin rash\n\nIf you experience these symptoms, seek medical attention immediately.\n\n- RHU Jasaan",
-      "id": "3"
+      "id": "3",
+      "author_id": 1,
+      "created_at": "2024-01-25T14:00:00.000Z",
+      "updated_at": "2024-01-25T14:00:00.000Z",
+      "isPublished": true,
+      "attachment_url": null
     },
     {
       "id": "4",
@@ -275,7 +284,7 @@
       "author_id": 3,
       "created_at": "2024-02-01T09:00:00.000Z",
       "updated_at": "2024-02-01T09:00:00.000Z",
-      "is_published": true,
+      "isPublished": true,
       "attachment_url": null
     },
     {
@@ -283,9 +292,16 @@
       "title": "sample",
       "content": "sample",
       "author_id": 1,
-      "is_published": true,
-      "status": "archived",
+      "isPublished": false,
       "created_at": "2025-10-20T13:34:01.550Z"
+    },
+    {
+      "id": "0e3d",
+      "title": "sample only",
+      "content": "hehehe",
+      "author_id": 1,
+      "isPublished": false,
+      "created_at": "2025-10-21T12:18:12.709Z"
     }
   ],
   "health-education": [
@@ -295,7 +311,10 @@
       "content_type": "video",
       "body": "",
       "url": "https://www.youtube.com/embed/qiTJw9tPomE?si=sTKXFTxp7dNbMNYh",
-      "status": "active",
+      "isPublished": true,
+      "created_by": 1,
+      "created_at": "2024-02-01T10:00:00.000Z",
+      "category": "Mental Health",
       "id": "2"
     },
     {
@@ -304,7 +323,10 @@
       "content_type": "article",
       "body": "The American Heart Association has released updated guidelines for cardiovascular health, emphasizing the importance of early prevention and lifestyle modifications to reduce heart disease risk factors. These new recommendations focus on comprehensive risk assessment, personalized treatment approaches, and community-based interventions.\n\nKey highlights include:\n• Enhanced screening protocols for early detection\n• Updated dietary recommendations emphasizing plant-based nutrition\n• Expanded exercise guidelines for all age groups\n• Improved medication management strategies\n• Community health initiatives for underserved populations\n\nThe guidelines also address the growing concern of cardiovascular disease in younger populations, recommending earlier screening and intervention strategies. Healthcare providers are encouraged to implement these evidence-based practices to improve patient outcomes and reduce the overall burden of heart disease in our communities.",
       "url": "",
-      "status": "archived",
+      "isPublished": false,
+      "created_by": 1,
+      "created_at": "2024-02-02T14:00:00.000Z",
+      "category": "Cardiovascular",
       "id": "4"
     },
     {
@@ -314,8 +336,10 @@
       "content_type": "article",
       "body": "A groundbreaking immunotherapy treatment has demonstrated remarkable results in early clinical trials, offering new hope for patients with previously untreatable forms of cancer. The innovative approach combines targeted therapy with immune system enhancement to create a powerful anti-cancer response.\n\nClinical Trial Results:\n• 85% response rate in Phase II trials\n• Significant tumor reduction in 70% of participants\n• Minimal side effects compared to traditional chemotherapy\n• Improved quality of life for patients\n• Extended progression-free survival rates\n\nThe treatment works by identifying specific cancer cell markers and training the patient's immune system to recognize and attack these cells. This personalized approach represents a major advancement in precision medicine and offers new treatment options for patients who have exhausted conventional therapies.\n\nResearchers are now planning larger Phase III trials to confirm these promising results and work toward FDA approval. The treatment could potentially be available to patients within the next 2-3 years, pending successful completion of additional clinical studies.",
       "url": "",
+      "isPublished": true,
       "created_by": 2,
-      "created_at": "2024-02-05T16:30:00.000Z"
+      "created_at": "2024-02-05T16:30:00.000Z",
+      "category": "Medical Research"
     },
     {
       "title": "SAMPLE LEVI GWAPO AU 2.O",
@@ -323,7 +347,10 @@
       "content_type": "video",
       "body": "",
       "url": "https://www.youtube.com/embed/2mjPRVIYhD4?si=za9dDW-6MAj306aY",
-      "status": "archived",
+      "isPublished": false,
+      "created_by": 1,
+      "created_at": "2024-02-06T09:00:00.000Z",
+      "category": "Sample",
       "id": "bbef"
     }
   ]

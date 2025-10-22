@@ -10,85 +10,96 @@ import Table, {
 } from "../../../global-components/Table";
 import Inputs from "../../../global-components/Inputs";
 import Button from "../../../global-components/Button";
-import AddPatientModal from "./AddPatientTable";
+import AddPatientModal from "./AddPatientModal";
 import DeleteConfirmation from "../../../components/DeleteConfirmation";
 import Dropdown, { type Option } from "../../../global-components/Dropdown";
+import SnackbarAlert from "../../../global-components/SnackbarAlert";
 
-// Sample data type
-interface Patient {
-  id: string;
-  username: string;
-  address: string;
-  email: string;
-  contactNumber: string;
-  dateRegistered: string;
-}
+// API
+import {
+  useGetAllUsersQuery,
+  useDeleteUserMutation,
+  useUpdateUserMutation,
+  type User,
+} from "../api/userApi";
 
-// Sample data
-const sampleData: Patient[] = [
-  {
-    id: "001",
-    username: "johndoe",
-    address: "123 Rizal St.",
-    email: "johndoe@email.com",
-    contactNumber: "09182345678",
-    dateRegistered: "2024-06-01 10:05:23",
-  },
-  {
-    id: "002",
-    username: "janedoe",
-    address: "456 Bonifacio Ave.",
-    email: "janedoe@email.com",
-    contactNumber: "09273456789",
-    dateRegistered: "2024-06-02 14:30:15",
-  },
-  {
-    id: "003",
-    username: "mikebrown",
-    address: "789 Mabini St.",
-    email: "mikebrown@email.com",
-    contactNumber: "09384567890",
-    dateRegistered: "2024-06-03 09:15:42",
-  },
-  {
-    id: "004",
-    username: "sarahlee",
-    address: "321 Quezon Blvd.",
-    email: "sarahlee@email.com",
-    contactNumber: "09495678901",
-    dateRegistered: "2024-06-04 16:45:33",
-  },
-  {
-    id: "005",
-    username: "davidgarcia",
-    address: "654 Luna St.",
-    email: "davidgarcia@email.com",
-    contactNumber: "09506789012",
-    dateRegistered: "2024-06-05 11:20:18",
-  },
-];
+// Convert User to Patient format for display
+const convertUserToPatient = (user: User) => ({
+  id: user.id,
+  username: user.username,
+  address: user.address,
+  email: user.email || "",
+  contactNumber: user.phone,
+  dateRegistered: new Date(user.createdAt).toLocaleString(),
+});
 
 const PatientsTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [patients, setPatients] = useState<Patient[]>(sampleData);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedFilter, setSelectedFilter] = useState<string>("all");
   const [isAddPatientModalOpen, setIsAddPatientModalOpen] = useState(false);
   const [isEditPatientModalOpen, setIsEditPatientModalOpen] = useState(false);
   const [isViewPatientModalOpen, setIsViewPatientModalOpen] = useState(false);
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
     useState(false);
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [selectedPatient, setSelectedPatient] = useState<User | null>(null);
+  const [snackbar, setSnackbar] = useState<{
+    isOpen: boolean;
+    message: string;
+    type: "success" | "error";
+  }>({
+    isOpen: false,
+    message: "",
+    type: "success",
+  });
+
+  // API hooks
+  const { data: usersData, isLoading, error } = useGetAllUsersQuery();
+
+  const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
+  const [updateUser] = useUpdateUserMutation();
+
+  // Convert users to patients for display (only users with role "user")
+  const patients =
+    usersData?.data
+      ?.filter((user) => user.role === "user")
+      ?.map(convertUserToPatient) || [];
 
   const handleSelectionChange = (selected: Option | Option[]) => {
-    console.log("Selected Filter:", selected);
+    const filterValue = Array.isArray(selected)
+      ? selected[0]?.value
+      : selected?.value;
+    setSelectedFilter(filterValue || "all");
+  };
+
+  // Show error snackbar
+  const showError = (message: string) => {
+    setSnackbar({
+      isOpen: true,
+      message,
+      type: "error",
+    });
+  };
+
+  // Show success snackbar
+  const showSuccess = (message: string) => {
+    setSnackbar({
+      isOpen: true,
+      message,
+      type: "success",
+    });
+  };
+
+  // Close snackbar
+  const closeSnackbar = () => {
+    setSnackbar((prev) => ({ ...prev, isOpen: false }));
   };
 
   // Define columns
-  const columns: TableColumn<Patient>[] = [
+  const columns: TableColumn<ReturnType<typeof convertUserToPatient>>[] = [
     {
-      key: "id",
-      header: "ID",
-      width: "80px",
+      key: "fullName",
+      header: "Full Name",
       sortable: true,
       render: (value) => (
         <span className="text-body-small-reg text-szBlack700 font-medium">
@@ -145,23 +156,34 @@ const PatientsTable = () => {
   ];
 
   // Define actions
-  const actions: TableAction<Patient>[] = [
+  const actions: TableAction<ReturnType<typeof convertUserToPatient>>[] = [
     {
       label: "Edit Patient",
       icon: <Edit size={16} />,
       onClick: (record) => {
-        setSelectedPatient(record);
-        setIsEditPatientModalOpen(true);
+        // Find the original user data
+        const originalUser = usersData?.data?.find(
+          (user) => user.id === record.id
+        );
+        if (originalUser) {
+          setSelectedPatient(originalUser);
+          setIsEditPatientModalOpen(true);
+        }
       },
     },
     {
       label: "Delete Patient",
       icon: <Trash size={16} />,
       onClick: (record) => {
-        setSelectedPatient(record);
-        setIsDeleteConfirmationOpen(true);
+        // Find the original user data
+        const originalUser = usersData?.data?.find(
+          (user) => user.id === record.id
+        );
+        if (originalUser) {
+          setSelectedPatient(originalUser);
+          setIsDeleteConfirmationOpen(true);
+        }
       },
-      disabled: (record) => record.id === "001", // Disable for first record as example
     },
   ];
 
@@ -170,19 +192,39 @@ const PatientsTable = () => {
     console.log("Page changed to:", page);
   };
 
-  const handleEditSave = (updatedPatient: Patient) => {
-    setPatients(
-      patients.map((patient) =>
-        patient.id === updatedPatient.id ? updatedPatient : patient
-      )
-    );
+  const handleEditSave = async (updatedPatient: any) => {
+    if (!selectedPatient) return;
+
+    try {
+      await updateUser({
+        id: selectedPatient.id,
+        data: {
+          firstName: updatedPatient.firstname,
+          lastName: updatedPatient.lastname,
+          address: updatedPatient.address,
+          email: updatedPatient.email,
+          phone: updatedPatient.contactNumber,
+        },
+      }).unwrap();
+
+      showSuccess("Patient updated successfully");
+      setIsEditPatientModalOpen(false);
+      setSelectedPatient(null);
+    } catch (error: any) {
+      showError(error?.data?.message || "Failed to update patient");
+    }
   };
 
-  const handleDeleteConfirm = () => {
-    if (selectedPatient) {
-      setPatients(patients.filter((p) => p.id !== selectedPatient.id));
+  const handleDeleteConfirm = async () => {
+    if (!selectedPatient) return;
+
+    try {
+      await deleteUser(selectedPatient.id).unwrap();
+      showSuccess("Patient deleted successfully");
       setIsDeleteConfirmationOpen(false);
       setSelectedPatient(null);
+    } catch (error: any) {
+      showError(error?.data?.message || "Failed to delete patient");
     }
   };
 
@@ -193,16 +235,41 @@ const PatientsTable = () => {
     setSelectedPatient(null);
   };
 
-  const filteredPatients = patients.filter((patient) =>
-    Object.values(patient).some((value) =>
+  const handleRowClick = (record: ReturnType<typeof convertUserToPatient>) => {
+    // Find the original user data
+    const originalUser = usersData?.data?.find((user) => user.id === record.id);
+    if (originalUser) {
+      setSelectedPatient(originalUser);
+      setIsViewPatientModalOpen(true);
+    }
+  };
+
+  const filteredPatients = patients.filter((patient) => {
+    // Search filter
+    const matchesSearch = Object.values(patient).some((value) =>
       value.toString().toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  );
+    );
+
+    // Role filter (since all patients are "user" role, this is mainly for consistency)
+    const matchesFilter =
+      selectedFilter === "all" ||
+      (selectedFilter === "new" && patient.dateRegistered) ||
+      (selectedFilter === "returning" && patient.dateRegistered);
+
+    return matchesSearch && matchesFilter;
+  });
+
+  // Show error if API call fails
+  React.useEffect(() => {
+    if (error) {
+      showError("Failed to load patients data");
+    }
+  }, [error]);
 
   return (
     <div className="grid grid-cols-1 gap-6">
       {/* Header with search and add button */}
-      <div className="flex flex-col lg:flex-row items-end md:items-center justify-between gap-3 md:gap-6">
+      <div className="flex flex-col lg:flex-row items-end justify-between gap-3 md:gap-6">
         <Inputs
           type="text"
           placeholder="Search patients..."
@@ -222,13 +289,22 @@ const PatientsTable = () => {
               label="Filter by:"
               placeholder="Filter by"
               onSelectionChange={handleSelectionChange}
+              value={{
+                label:
+                  selectedFilter === "all"
+                    ? "All"
+                    : selectedFilter === "new"
+                    ? "New"
+                    : "Returning",
+                value: selectedFilter,
+              }}
             />
           </div>
 
           <Button
             label="Add User"
             leftIcon={<Add />}
-            className={`w-fit sm:w-[170px] truncate`}
+            className={`w-fit sm:w-[150px] truncate`}
             size="medium"
             onClick={() => setIsAddPatientModalOpen(true)}
           />
@@ -247,11 +323,9 @@ const PatientsTable = () => {
           onChange: handlePageChange,
         }}
         emptyMessage="No patients found"
-        onRowClick={(record) => {
-          setSelectedPatient(record);
-          setIsViewPatientModalOpen(true);
-        }}
+        onRowClick={handleRowClick}
         className="shadow-sm"
+        loading={isLoading}
       />
 
       {/* Add Patient Modal */}
@@ -266,7 +340,22 @@ const PatientsTable = () => {
         isOpen={isEditPatientModalOpen}
         onClose={handleCloseModals}
         mode="edit"
-        patient={selectedPatient || undefined}
+        patient={
+          selectedPatient
+            ? {
+                id: selectedPatient.id,
+                username: selectedPatient.username,
+                firstname: selectedPatient.firstName,
+                lastname: selectedPatient.lastName,
+                address: selectedPatient.address,
+                email: selectedPatient.email || "",
+                contactNumber: selectedPatient.phone,
+                dateRegistered: new Date(
+                  selectedPatient.createdAt
+                ).toLocaleString(),
+              }
+            : undefined
+        }
         onSave={handleEditSave}
       />
 
@@ -275,7 +364,22 @@ const PatientsTable = () => {
         isOpen={isViewPatientModalOpen}
         onClose={handleCloseModals}
         mode="view"
-        patient={selectedPatient || undefined}
+        patient={
+          selectedPatient
+            ? {
+                id: selectedPatient.id,
+                username: selectedPatient.username,
+                firstname: selectedPatient.firstName,
+                lastname: selectedPatient.lastName,
+                address: selectedPatient.address,
+                email: selectedPatient.email || "",
+                contactNumber: selectedPatient.phone,
+                dateRegistered: new Date(
+                  selectedPatient.createdAt
+                ).toLocaleString(),
+              }
+            : undefined
+        }
       />
 
       {/* Delete Confirmation Modal */}
@@ -288,6 +392,16 @@ const PatientsTable = () => {
         onClick={handleDeleteConfirm}
         title="Delete Patient"
         description={`Are you sure you want to delete the patient "${selectedPatient?.username}"? `}
+        isLoading={isDeleting}
+      />
+
+      {/* Snackbar for notifications */}
+      <SnackbarAlert
+        isOpen={snackbar.isOpen}
+        title={snackbar.message}
+        type={snackbar.type}
+        onClose={closeSnackbar}
+        duration={3000}
       />
     </div>
   );

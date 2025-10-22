@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 // Icons
@@ -15,8 +15,8 @@ import {
 // Assets
 
 // Components
-import SnackbarAlert from "../../global-components/SnackbarAlert";
 import ButtonsIcon from "../../global-components/ButtonsIcon";
+import WelcomeSnackbar from "../../components/WelcomeSnackbar";
 import MobileDashboard from "./components/MobileDashboard";
 import BottomNavigation from "./mobile-global-components/BottomNavigation";
 import MobileAnnouncement from "./pages/MobileAnnouncement";
@@ -33,8 +33,6 @@ import MobilePatientSettings from "./pages/MobilePatientSettings";
 const PatientMobileApp: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [showWelcomeSnackbar, setShowWelcomeSnackbar] = useState(false);
-  const [userName, setUserName] = useState("Patient");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [unreadNotificationCount] = useState(1); // Mock unread count
 
@@ -67,22 +65,6 @@ const PatientMobileApp: React.FC = () => {
   };
 
   const activeBottomNav = getActiveNavItem();
-
-  useEffect(() => {
-    // Check if we should show welcome snackbar
-    const shouldShowWelcome = sessionStorage.getItem("showWelcomeSnackbar");
-    const storedEmail = sessionStorage.getItem("userEmail");
-
-    if (shouldShowWelcome === "true") {
-      setShowWelcomeSnackbar(true);
-      // Remove the flag so it doesn't show again on page refresh
-      sessionStorage.removeItem("showWelcomeSnackbar");
-    }
-
-    if (storedEmail) {
-      setUserName(storedEmail.split("@")[0]);
-    }
-  }, []);
 
   const handleLogout = () => {
     sessionStorage.clear();
@@ -310,14 +292,7 @@ const PatientMobileApp: React.FC = () => {
       )}
 
       {/* Welcome Snackbar */}
-      {showWelcomeSnackbar && (
-        <SnackbarAlert
-          message={`Welcome to MedAccess, ${userName}!`}
-          type="success"
-          isOpen={showWelcomeSnackbar}
-          onClose={() => setShowWelcomeSnackbar(false)}
-        />
-      )}
+      <WelcomeSnackbar />
     </div>
   );
 };

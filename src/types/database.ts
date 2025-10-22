@@ -105,7 +105,7 @@ export interface HealthReportTable {
   report_type: string;       // Varchar(30), Alphanumeric
   data_collected: string;    // Text, 1000 chars
   report_date: Date;         // Date, YYYY-MM-DD
-status: 'active' | 'archived'; // Enum, 10 chars
+  status: 'active' | 'archived'; // Enum, 10 chars
 }
 
 // Extended types with user information
@@ -175,7 +175,7 @@ export interface HealthEducationContentTable {
   category: string;            // Varchar(100), Alphanumeric
   body: string;              // Text, 2000 chars
   url: string;         
-  status: 'active' | 'archived'; // Enum, 10 chars
+  isPublished: boolean; // Boolean, Publication status
   created_by: number;        // User ID of creator, Integer(11)
   created_at: Date;          // Datetime, YYYY-MM-DD HH:MM:SS
 }
@@ -214,7 +214,7 @@ export interface AnnouncementTable {
   author_id: number;         // Foreign Key to User, Integer(11)
   created_at: Date;          // Datetime, YYYY-MM-DD HH:MM:SS
   updated_at?: Date;         // Datetime, YYYY-MM-DD HH:MM:SS (optional)
-  status: "active" | "archived";     // Boolean, Publication status
+  isPublished: boolean;     // Boolean, Publication status
   attachment_url?: string;   // Varchar(255), URL or path (optional)
 }
 

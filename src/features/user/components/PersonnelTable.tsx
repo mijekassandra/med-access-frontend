@@ -13,71 +13,36 @@ import Button from "../../../global-components/Button";
 import AddPersonnelModal from "./AddPersonnelModal";
 import DeleteConfirmation from "../../../components/DeleteConfirmation";
 import Dropdown, { type Option } from "../../../global-components/Dropdown";
+import SnackbarAlert from "../../../global-components/SnackbarAlert";
 
-// Sample data type
-interface Personnel {
-  id: string;
-  fullName: string;
-  firstname: string;
-  lastname: string;
-  specialization: string;
-  prcLicenseNumber: string;
-  contactNumber: string;
-}
+// API
+import {
+  useGetAllUsersQuery,
+  useDeleteUserMutation,
+  useUpdateUserMutation,
+  type User,
+} from "../api/userApi";
 
-// Sample data
-const sampleData: Personnel[] = [
-  {
-    id: "001",
-    fullName: "Dr. John Smith",
-    firstname: "John",
-    lastname: "Smith",
-    specialization: "Cardiology",
-    prcLicenseNumber: "PRC123456",
-    contactNumber: "09182345678",
-  },
-  {
-    id: "002",
-    fullName: "Dr. Maria Garcia",
-    firstname: "Maria",
-    lastname: "Garcia",
-    specialization: "Pediatrics",
-    prcLicenseNumber: "PRC234567",
-    contactNumber: "09273456789",
-  },
-  {
-    id: "003",
-    fullName: "Dr. Robert Johnson",
-    firstname: "Robert",
-    lastname: "Johnson",
-    specialization: "Orthopedics",
-    prcLicenseNumber: "PRC345678",
-    contactNumber: "09384567890",
-  },
-  {
-    id: "004",
-    fullName: "Dr. Sarah Lee",
-    firstname: "Sarah",
-    lastname: "Lee",
-    specialization: "Dermatology",
-    prcLicenseNumber: "PRC456789",
-    contactNumber: "09495678901",
-  },
-  {
-    id: "005",
-    fullName: "Dr. David Brown",
-    firstname: "David",
-    lastname: "Brown",
-    specialization: "Neurology",
-    prcLicenseNumber: "PRC567890",
-    contactNumber: "09506789012",
-  },
-];
+// Convert User to Personnel format for display
+const convertUserToPersonnel = (user: User) => ({
+  id: user.id,
+  fullName: user.fullName,
+  firstname: user.firstName,
+  lastname: user.lastName,
+  specialization:
+    user.role === "doctor" ? "Medical Professional" : "Administrator",
+  prcLicenseNumber:
+    user.role === "doctor"
+      ? "PRC-" + user.id.slice(-6)
+      : "ADMIN-" + user.id.slice(-6),
+  contactNumber: user.phone,
+  role: user.role,
+});
 
 const PersonnelTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [personnel, setPersonnel] = useState<Personnel[]>(sampleData);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedFilter, setSelectedFilter] = useState<string>("all");
   const [isAddPersonnelModalOpen, setIsAddPersonnelModalOpen] = useState(false);
   const [isEditPersonnelModalOpen, setIsEditPersonnelModalOpen] =
     useState(false);
@@ -85,27 +50,60 @@ const PersonnelTable = () => {
     useState(false);
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
     useState(false);
-  const [selectedPersonnel, setSelectedPersonnel] = useState<Personnel | null>(
-    null
-  );
+  const [selectedPersonnel, setSelectedPersonnel] = useState<User | null>(null);
+  const [snackbar, setSnackbar] = useState<{
+    isOpen: boolean;
+    message: string;
+    type: "success" | "error";
+  }>({
+    isOpen: false,
+    message: "",
+    type: "success",
+  });
+
+  // API hooks
+  const { data: usersData, isLoading, error } = useGetAllUsersQuery();
+  const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
+  const [updateUser] = useUpdateUserMutation();
+
+  // Convert users to personnel for display (only users with role "doctor" and "admin")
+  const personnel =
+    usersData?.data
+      ?.filter((user) => user.role === "doctor" || user.role === "admin")
+      ?.map(convertUserToPersonnel) || [];
 
   const handleSelectionChange = (selected: Option | Option[]) => {
-    console.log("Selected Filter:", selected);
+    const filterValue = Array.isArray(selected)
+      ? selected[0]?.value
+      : selected?.value;
+    setSelectedFilter(filterValue || "all");
+  };
+
+  // Show error snackbar
+  const showError = (message: string) => {
+    setSnackbar({
+      isOpen: true,
+      message,
+      type: "error",
+    });
+  };
+
+  // Show success snackbar
+  const showSuccess = (message: string) => {
+    setSnackbar({
+      isOpen: true,
+      message,
+      type: "success",
+    });
+  };
+
+  // Close snackbar
+  const closeSnackbar = () => {
+    setSnackbar((prev) => ({ ...prev, isOpen: false }));
   };
 
   // Define columns
-  const columns: TableColumn<Personnel>[] = [
-    {
-      key: "id",
-      header: "ID",
-      width: "80px",
-      sortable: true,
-      render: (value) => (
-        <span className="text-body-small-reg text-szBlack700 font-medium">
-          {value}
-        </span>
-      ),
-    },
+  const columns: TableColumn<ReturnType<typeof convertUserToPersonnel>>[] = [
     {
       key: "fullName",
       header: "Full Name",
@@ -133,8 +131,24 @@ const PersonnelTable = () => {
       ),
     },
     {
+      key: "gender",
+      header: "Gender",
+      sortable: true,
+      render: (value) => (
+        <span className="text-body-small-reg text-szBlack700">{value}</span>
+      ),
+    },
+    {
       key: "contactNumber",
       header: "Contact No.",
+      sortable: true,
+      render: (value) => (
+        <span className="text-body-small-reg text-szBlack700">{value}</span>
+      ),
+    },
+    {
+      key: "role",
+      header: "Role",
       sortable: true,
       render: (value) => (
         <span className="text-body-small-reg text-szBlack700">{value}</span>
@@ -143,23 +157,34 @@ const PersonnelTable = () => {
   ];
 
   // Define actions
-  const actions: TableAction<Personnel>[] = [
+  const actions: TableAction<ReturnType<typeof convertUserToPersonnel>>[] = [
     {
       label: "Edit Personnel",
       icon: <Edit size={16} />,
       onClick: (record) => {
-        setSelectedPersonnel(record);
-        setIsEditPersonnelModalOpen(true);
+        // Find the original user data
+        const originalUser = usersData?.data?.find(
+          (user) => user.id === record.id
+        );
+        if (originalUser) {
+          setSelectedPersonnel(originalUser);
+          setIsEditPersonnelModalOpen(true);
+        }
       },
     },
     {
       label: "Delete Personnel",
       icon: <Trash size={16} />,
       onClick: (record) => {
-        setSelectedPersonnel(record);
-        setIsDeleteConfirmationOpen(true);
+        // Find the original user data
+        const originalUser = usersData?.data?.find(
+          (user) => user.id === record.id
+        );
+        if (originalUser) {
+          setSelectedPersonnel(originalUser);
+          setIsDeleteConfirmationOpen(true);
+        }
       },
-      disabled: (record) => record.id === "001", // Disable for first record as example
     },
   ];
 
@@ -168,19 +193,39 @@ const PersonnelTable = () => {
     console.log("Page changed to:", page);
   };
 
-  const handleEditSave = (updatedPersonnel: Personnel) => {
-    setPersonnel(
-      personnel.map((p) =>
-        p.id === updatedPersonnel.id ? updatedPersonnel : p
-      )
-    );
+  const handleEditSave = async (updatedPersonnel: any) => {
+    if (!selectedPersonnel) return;
+
+    try {
+      await updateUser({
+        id: selectedPersonnel.id,
+        data: {
+          firstName: updatedPersonnel.firstname,
+          lastName: updatedPersonnel.lastname,
+          address: updatedPersonnel.address,
+          email: updatedPersonnel.email,
+          phone: updatedPersonnel.contactNumber,
+        },
+      }).unwrap();
+
+      showSuccess("Personnel updated successfully");
+      setIsEditPersonnelModalOpen(false);
+      setSelectedPersonnel(null);
+    } catch (error: any) {
+      showError(error?.data?.message || "Failed to update personnel");
+    }
   };
 
-  const handleDeleteConfirm = () => {
-    if (selectedPersonnel) {
-      setPersonnel(personnel.filter((p) => p.id !== selectedPersonnel.id));
+  const handleDeleteConfirm = async () => {
+    if (!selectedPersonnel) return;
+
+    try {
+      await deleteUser(selectedPersonnel.id).unwrap();
+      showSuccess("Personnel deleted successfully");
       setIsDeleteConfirmationOpen(false);
       setSelectedPersonnel(null);
+    } catch (error: any) {
+      showError(error?.data?.message || "Failed to delete personnel");
     }
   };
 
@@ -191,16 +236,43 @@ const PersonnelTable = () => {
     setSelectedPersonnel(null);
   };
 
-  const filteredPersonnel = personnel.filter((record) =>
-    Object.values(record).some((value) =>
+  const handleRowClick = (
+    record: ReturnType<typeof convertUserToPersonnel>
+  ) => {
+    // Find the original user data
+    const originalUser = usersData?.data?.find((user) => user.id === record.id);
+    if (originalUser) {
+      setSelectedPersonnel(originalUser);
+      setIsViewPersonnelModalOpen(true);
+    }
+  };
+
+  const filteredPersonnel = personnel.filter((record) => {
+    // Search filter
+    const matchesSearch = Object.values(record).some((value) =>
       value.toString().toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  );
+    );
+
+    // Role filter
+    const matchesFilter =
+      selectedFilter === "all" ||
+      (selectedFilter === "doctor" && record.role === "doctor") ||
+      (selectedFilter === "admin" && record.role === "admin");
+
+    return matchesSearch && matchesFilter;
+  });
+
+  // Show error if API call fails
+  React.useEffect(() => {
+    if (error) {
+      showError("Failed to load personnel data");
+    }
+  }, [error]);
 
   return (
     <div className="grid grid-cols-1 gap-6">
       {/* Header with search and add button */}
-      <div className="flex flex-col lg:flex-row items-end md:items-center justify-between gap-3 md:gap-6 flex-shrink-0">
+      <div className="flex flex-col lg:flex-row items-end justify-between gap-3 md:gap-6">
         <Inputs
           type="text"
           placeholder="Search personnel..."
@@ -214,20 +286,28 @@ const PersonnelTable = () => {
             <Dropdown
               options={[
                 { label: "All", value: "all" },
-                { label: "Doctors", value: "doctors" },
-                { label: "Nurses", value: "nurses" },
-                { label: "Specialists", value: "specialists" },
+                { label: "Doctor", value: "doctor" },
+                { label: "Admin", value: "admin" },
               ]}
               label="Filter by:"
               placeholder="Filter by"
               onSelectionChange={handleSelectionChange}
+              value={{
+                label:
+                  selectedFilter === "all"
+                    ? "All"
+                    : selectedFilter === "doctor"
+                    ? "Doctor"
+                    : "Admin",
+                value: selectedFilter,
+              }}
             />
           </div>
 
           <Button
             label="Add User"
             leftIcon={<Add />}
-            className={`w-fit sm:w-[170px] truncate`}
+            className={`w-fit sm:w-[150px] truncate`}
             size="medium"
             onClick={() => setIsAddPersonnelModalOpen(true)}
           />
@@ -247,11 +327,9 @@ const PersonnelTable = () => {
             onChange: handlePageChange,
           }}
           emptyMessage="No personnel found"
-          onRowClick={(record) => {
-            setSelectedPersonnel(record);
-            setIsViewPersonnelModalOpen(true);
-          }}
+          onRowClick={handleRowClick}
           className="shadow-sm h-full"
+          loading={isLoading}
         />
       </div>
 
@@ -267,7 +345,29 @@ const PersonnelTable = () => {
         isOpen={isEditPersonnelModalOpen}
         onClose={handleCloseModals}
         mode="edit"
-        personnel={selectedPersonnel || undefined}
+        personnel={
+          selectedPersonnel
+            ? {
+                id: selectedPersonnel.id,
+                fullName: selectedPersonnel.fullName,
+                firstname: selectedPersonnel.firstName,
+                lastname: selectedPersonnel.lastName,
+                specialization:
+                  selectedPersonnel.role === "doctor"
+                    ? "Medical Professional"
+                    : "Administrator",
+                prcLicenseNumber:
+                  selectedPersonnel.role === "doctor"
+                    ? "PRC-" + selectedPersonnel.id.slice(-6)
+                    : "ADMIN-" + selectedPersonnel.id.slice(-6),
+                contactNumber: selectedPersonnel.phone,
+                gender: selectedPersonnel.gender,
+                role: selectedPersonnel.role as "admin" | "doctor",
+                username: selectedPersonnel.username,
+                email: selectedPersonnel.email,
+              }
+            : undefined
+        }
         onSave={handleEditSave}
       />
 
@@ -276,7 +376,29 @@ const PersonnelTable = () => {
         isOpen={isViewPersonnelModalOpen}
         onClose={handleCloseModals}
         mode="view"
-        personnel={selectedPersonnel || undefined}
+        personnel={
+          selectedPersonnel
+            ? {
+                id: selectedPersonnel.id,
+                fullName: selectedPersonnel.fullName,
+                firstname: selectedPersonnel.firstName,
+                lastname: selectedPersonnel.lastName,
+                specialization:
+                  selectedPersonnel.role === "doctor"
+                    ? "Medical Professional"
+                    : "Administrator",
+                prcLicenseNumber:
+                  selectedPersonnel.role === "doctor"
+                    ? "PRC-" + selectedPersonnel.id.slice(-6)
+                    : "ADMIN-" + selectedPersonnel.id.slice(-6),
+                contactNumber: selectedPersonnel.phone,
+                gender: selectedPersonnel.gender,
+                role: selectedPersonnel.role as "admin" | "doctor",
+                username: selectedPersonnel.username,
+                email: selectedPersonnel.email,
+              }
+            : undefined
+        }
       />
 
       {/* Delete Confirmation Modal */}
@@ -289,6 +411,16 @@ const PersonnelTable = () => {
         onClick={handleDeleteConfirm}
         title="Delete Personnel"
         description={`Are you sure you want to delete the personnel "${selectedPersonnel?.fullName}"? `}
+        isLoading={isDeleting}
+      />
+
+      {/* Snackbar for notifications */}
+      <SnackbarAlert
+        isOpen={snackbar.isOpen}
+        title={snackbar.message}
+        type={snackbar.type}
+        onClose={closeSnackbar}
+        duration={3000}
       />
     </div>
   );

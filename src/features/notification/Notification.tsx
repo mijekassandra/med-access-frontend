@@ -23,7 +23,7 @@ export interface NotificationItem {
 
 // Props interface
 interface NotificationProps {
-  userRole?: "admin" | "doctor" | "patient";
+  userRole?: "admin" | "doctor" | "user";
   notifications?: NotificationItem[];
   onNotificationClick?: (notification: NotificationItem) => void;
   onMarkAsRead?: (notificationId: string) => void;

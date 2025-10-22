@@ -1,9 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-//icons
-import { ArrowLeft } from "iconsax-react";
-
 //components
 import Inputs from "../../../global-components/Inputs";
 import Button from "../../../global-components/Button";

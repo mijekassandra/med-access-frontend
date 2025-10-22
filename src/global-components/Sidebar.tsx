@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../features/auth/hooks/useAuth";
 
 //icons
 import {
@@ -30,17 +31,13 @@ export interface MenuItem {
 }
 
 export interface SidebarProps {
-  userRole?: "admin" | "doctor" | "patient";
-  userName?: string;
   className?: string;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({
-  userRole = "doctor",
-  className = "",
-}) => {
+const Sidebar: React.FC<SidebarProps> = ({ className = "" }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, logout, isLoading } = useAuth();
 
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isManualCollapse, setIsManualCollapse] = useState(false);
@@ -76,11 +73,15 @@ const Sidebar: React.FC<SidebarProps> = ({
   }, [isManualCollapse]);
 
   //handle logout
-  const handleLogout = () => {
-    // Clear session storage
-    sessionStorage.removeItem("userRole");
-    sessionStorage.removeItem("userEmail");
-    navigate("/");
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Even if logout API fails, navigate to home
+      // navigate("/");
+    }
   };
 
   // Handle manual collapse toggle
@@ -120,12 +121,6 @@ const Sidebar: React.FC<SidebarProps> = ({
           icon: <Monitor />,
           path: "/telemedicine",
         },
-        // {
-        //   id: "medicine-inventory",
-        //   label: "MEDICINE INVENTORY",
-        //   icon: <ArchiveBox />,
-        //   path: "/medicine-inventory",
-        // },
         {
           id: "health-education",
           label: "HEALTH EDUCATION",
@@ -165,6 +160,12 @@ const Sidebar: React.FC<SidebarProps> = ({
           path: "/announcements",
         },
         {
+          id: "health-education",
+          label: "HEALTH EDUCATION",
+          icon: <Health />,
+          path: "/health-education",
+        },
+        {
           id: "reports",
           label: "REPORTS",
           icon: <ArchiveBook />,
@@ -179,7 +180,9 @@ const Sidebar: React.FC<SidebarProps> = ({
     ];
   };
 
-  const menuItems = getMenuItems(userRole);
+  // Use user role from auth state
+  const currentUserRole = user?.role || "doctor";
+  const menuItems = getMenuItems(currentUserRole);
 
   return (
     <div
@@ -254,16 +257,19 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className="border-t border-szPrimary900 pt-4">
         <button
           onClick={handleLogout}
+          disabled={isLoading}
           className={`group relative flex items-center w-full px-4 py-3 text-szWhite100 hover:bg-szPrimary700 hover:text-white rounded-lg transition-colors duration-200 ${
             isCollapsed ? "justify-center" : "space-x-3"
-          }`}
+          } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
           title={isCollapsed ? "Logout" : undefined}
         >
           <Logout
             className={`flex-shrink-0 ${isCollapsed ? "icon-sm" : "icon-md"}`}
           />
           {!isCollapsed && (
-            <p className="text-szWhite100 text-body-small-strong">Logout</p>
+            <p className="text-szWhite100 text-body-small-strong">
+              {isLoading ? "Logging out..." : "Logout"}
+            </p>
           )}
         </button>
       </div>
