@@ -261,7 +261,7 @@ const Inventory: React.FC = () => {
     <ContainerWrapper>
       <div className="grid grid-cols-1 gap-6">
         {/* Header with search and add button */}
-        <div className="flex flex-col lg:flex-row items-end md:items-center justify-between gap-3 md:gap-6">
+        <div className="flex flex-col lg:flex-row items-end md:items-end justify-between gap-3 md:gap-6">
           <Inputs
             type="text"
             placeholder="Search medicines by name, dosage, batch no., etc..."
@@ -269,11 +269,7 @@ const Inventory: React.FC = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             icon={SearchNormal1}
           />
-          <div
-            className={`flex gap-4 items-center ${
-              user.role === "admin" ? "justify-between" : "justify-end"
-            }`}
-          >
+          <div className="flex flex-col lg:flex-row items-end justify-between gap-3 md:gap-6">
             {/* {user.role === "admin" && (
               <div className="min-w-[40%] sm:min-w-[160px]">
                 <Dropdown
@@ -292,8 +288,8 @@ const Inventory: React.FC = () => {
             <Button
               label="Add Medicine"
               leftIcon={<Add />}
-              className={`w-[60%] sm:w-[180px] truncate ${
-                user.role === "admin" ? "w-[60%]" : "w-[180px]"
+              className={`w-full sm:w-[200px] truncate ${
+                user.role === "admin" ? "w-[60%]" : "w-[200px]"
               }`}
               size="medium"
               onClick={() => setIsAddMedicineModalOpen(true)}

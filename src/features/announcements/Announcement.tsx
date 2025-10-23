@@ -15,6 +15,7 @@ import DeleteConfirmation from "../../components/DeleteConfirmation";
 import UploadAnnouncement from "./components/UploadAnnouncement";
 import EditAnnouncementModal from "./components/EditAnnouncementModal";
 import SnackbarAlert from "../../global-components/SnackbarAlert";
+import Dropdown from "../../global-components/Dropdown";
 
 // types
 import type { Announcement as AnnouncementType } from "./api/announcementApi";
@@ -51,6 +52,7 @@ const Announcement = () => {
   const [snackbarType, setSnackbarType] = useState<"success" | "error">(
     "success"
   );
+  const [selectedFilter, setSelectedFilter] = useState("all");
 
   // Pagination constants
   const ITEMS_PER_PAGE = 3; // Show 3 announcements per page
@@ -94,9 +96,19 @@ const Announcement = () => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
+  //! Filter selection handler -----------------------
+  const handleSelectionChange = (
+    selected:
+      | { label: string; value: string }
+      | { label: string; value: string }[]
+  ) => {
+    const option = Array.isArray(selected) ? selected[0] : selected;
+    setSelectedFilter(option.value);
+  };
+
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearchTerm]);
+  }, [debouncedSearchTerm, selectedFilter]);
 
   //? Delete confirm -----------------------
   const handleDeleteConfirm = async () => {
@@ -161,10 +173,22 @@ const Announcement = () => {
     []
   );
 
-  //! Filter announcements based on search term -----------------------
+  //! Filter announcements based on search term and filter -----------------------
   const filteredAnnouncements = useMemo(() => {
-    return searchAnnouncements(announcements, debouncedSearchTerm);
-  }, [announcements, debouncedSearchTerm, searchAnnouncements]);
+    // First apply search filter
+    let filtered = searchAnnouncements(announcements, debouncedSearchTerm);
+
+    // Then apply status filter
+    if (selectedFilter !== "all") {
+      filtered = filtered.filter((announcement) => {
+        if (selectedFilter === "published") return announcement.isPublished;
+        if (selectedFilter === "archived") return !announcement.isPublished;
+        return true;
+      });
+    }
+
+    return filtered;
+  }, [announcements, debouncedSearchTerm, selectedFilter, searchAnnouncements]);
 
   //! Calculate pagination -----------------------
   const totalPages = Math.ceil(filteredAnnouncements.length / ITEMS_PER_PAGE);
@@ -294,14 +318,37 @@ const Announcement = () => {
     <ContainerWrapper>
       <div className="space-y-6">
         {/* Header with search */}
-        <div className="flex flex-col lg:flex-row items-end md:items-center justify-between gap-3 md:gap-6">
+        <div className="flex gap-3">
           <Inputs
             type="text"
             placeholder="Search announcements by title, content, etc..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             icon={SearchNormal1}
+            className="flex-1"
           />
+          <div className="flex flex-wrap justify-center w-40">
+            <Dropdown
+              options={[
+                { label: "All", value: "all" },
+                { label: "Published", value: "published" },
+                { label: "Archived", value: "archived" },
+              ]}
+              label="Filter by:"
+              placeholder="Filter by"
+              onSelectionChange={handleSelectionChange}
+              value={{
+                label:
+                  selectedFilter === "all"
+                    ? "All"
+                    : selectedFilter === "published"
+                    ? "Published"
+                    : "Archived",
+                value: selectedFilter,
+              }}
+              size="small"
+            />
+          </div>
         </div>
 
         {/* View Announcement Section */}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 //icons
 import { Add, SearchNormal1, Edit, Trash } from "iconsax-react";

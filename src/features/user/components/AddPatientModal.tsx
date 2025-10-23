@@ -225,7 +225,7 @@ const AddPatientModal = ({
       try {
         setIsLoading(true);
 
-        await registerUser({
+        const registrationData = {
           username: formData.username,
           email: formData.email || undefined,
           password: formData.password,
@@ -234,18 +234,25 @@ const AddPatientModal = ({
           address: formData.address,
           phone: formData.contactNumber,
           gender: formData.gender,
-          dateOfBirth: formData.dateOfBirth,
-          role: "user",
-        }).unwrap();
+          dateOfBirth: new Date(formData.dateOfBirth).toISOString(),
+          role: "user" as "user" | "admin" | "doctor",
+        };
+
+        console.log("Sending registration data:", registrationData);
+
+        await registerUser(registrationData).unwrap();
 
         setSnackbarMessage("Patient registered successfully");
         setSnackbarType("success");
         setShowSnackbar(true);
         onClose();
       } catch (error: any) {
-        setSnackbarMessage(
-          error?.data?.message || "Failed to register patient"
-        );
+        console.error("Registration error:", error);
+        const errorMessage =
+          error?.data?.message ||
+          error?.message ||
+          "Failed to register patient";
+        setSnackbarMessage(errorMessage);
         setSnackbarType("error");
         setShowSnackbar(true);
       } finally {
@@ -392,6 +399,52 @@ const AddPatientModal = ({
                 error={!!formErrors.contactNumber}
               />
             </div>
+            {/* Gender and Date of Birth in a 2-column grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">
+              <Dropdown
+                label="GENDER"
+                size="small"
+                placeholder="Select Gender"
+                options={[
+                  { label: "Male", value: "male" },
+                  { label: "Female", value: "female" },
+                  { label: "Other", value: "other" },
+                ]}
+                value={
+                  formData.gender
+                    ? {
+                        label:
+                          formData.gender === "male"
+                            ? "Male"
+                            : formData.gender === "female"
+                            ? "Female"
+                            : "Other",
+                        value: formData.gender,
+                      }
+                    : undefined
+                }
+                onSelectionChange={(selected) => {
+                  const genderValue = Array.isArray(selected)
+                    ? selected[0]?.value
+                    : selected?.value;
+                  handleInputChange("gender", genderValue || "");
+                }}
+                disabled={false}
+                error={!!formErrors.gender}
+                usePortal={true}
+              />
+
+              <Inputs
+                label="DATE OF BIRTH"
+                placeholder="YYYY-MM-DD"
+                type="date"
+                value={formData.dateOfBirth}
+                onChange={(e) =>
+                  handleInputChange("dateOfBirth", e.target.value)
+                }
+                error={!!formErrors.dateOfBirth}
+              />
+            </div>
             <Divider className="my-10" />
             {/* Additional fields for registration */}
             {mode === "add" && (
@@ -416,53 +469,6 @@ const AddPatientModal = ({
                       handleInputChange("password", e.target.value)
                     }
                     error={!!formErrors.password}
-                  />
-                </div>
-
-                {/* Gender and Date of Birth in a 2-column grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">
-                  <Dropdown
-                    label="GENDER"
-                    size="small"
-                    placeholder="Select Gender"
-                    options={[
-                      { label: "Male", value: "male" },
-                      { label: "Female", value: "female" },
-                      { label: "Other", value: "other" },
-                    ]}
-                    value={
-                      formData.gender
-                        ? {
-                            label:
-                              formData.gender === "male"
-                                ? "Male"
-                                : formData.gender === "female"
-                                ? "Female"
-                                : "Other",
-                            value: formData.gender,
-                          }
-                        : undefined
-                    }
-                    onSelectionChange={(selected) => {
-                      const genderValue = Array.isArray(selected)
-                        ? selected[0]?.value
-                        : selected?.value;
-                      handleInputChange("gender", genderValue || "");
-                    }}
-                    disabled={false}
-                    error={!!formErrors.gender}
-                    usePortal={true}
-                  />
-
-                  <Inputs
-                    label="DATE OF BIRTH"
-                    placeholder="YYYY-MM-DD"
-                    type="date"
-                    value={formData.dateOfBirth}
-                    onChange={(e) =>
-                      handleInputChange("dateOfBirth", e.target.value)
-                    }
-                    error={!!formErrors.dateOfBirth}
                   />
                 </div>
               </>

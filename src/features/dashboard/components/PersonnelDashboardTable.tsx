@@ -1,5 +1,3 @@
-import React from "react";
-
 //components
 import PersonnelTable from "../../user/components/PersonnelTable";
 import Divider from "../../../global-components/Divider";

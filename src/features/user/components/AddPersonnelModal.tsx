@@ -53,6 +53,7 @@ const AddPersonnelModal = ({
     email: "",
     password: "",
     dateOfBirth: "",
+    address: "",
   });
   const [formErrors, setFormErrors] = useState({
     fullName: "",
@@ -67,6 +68,7 @@ const AddPersonnelModal = ({
     email: "",
     password: "",
     dateOfBirth: "",
+    address: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [showSnackbar, setShowSnackbar] = useState(false);
@@ -95,6 +97,7 @@ const AddPersonnelModal = ({
         email: personnel.email || "",
         password: "",
         dateOfBirth: "",
+        address: "",
       });
     } else if (mode === "add") {
       setFormData({
@@ -110,6 +113,7 @@ const AddPersonnelModal = ({
         email: "",
         password: "",
         dateOfBirth: "",
+        address: "",
       });
     }
 
@@ -127,6 +131,7 @@ const AddPersonnelModal = ({
       email: "",
       password: "",
       dateOfBirth: "",
+      address: "",
     });
   }, [personnel, mode, isOpen]);
 
@@ -160,6 +165,7 @@ const AddPersonnelModal = ({
       email: "",
       password: "",
       dateOfBirth: "",
+      address: "",
     };
 
     // Check if firstname is empty
@@ -223,12 +229,18 @@ const AddPersonnelModal = ({
       errors.email = "Please enter a valid email address";
     }
 
-    // For add mode, check password
+    // For add mode, check password and address
     if (mode === "add") {
       if (!formData.password.trim()) {
         errors.password = "This field is required";
       } else if (formData.password.length < 6) {
         errors.password = "Password must be at least 6 characters";
+      }
+
+      if (!formData.address.trim()) {
+        errors.address = "This field is required";
+      } else if (formData.address.length < 5) {
+        errors.address = "Address must be at least 5 characters";
       }
     }
 
@@ -271,20 +283,15 @@ const AddPersonnelModal = ({
     try {
       // Prepare data for API call
       const userData = {
-        username:
-          formData.username ||
-          formData.firstname.toLowerCase() + formData.lastname.toLowerCase(),
-        email: formData.email || "",
+        username: formData.username,
+        email: formData.email || undefined,
         firstName: formData.firstname,
         lastName: formData.lastname,
-        fullName: `${formData.firstname} ${formData.lastname}`,
-        address: "", // Not collected in personnel form
+        address: formData.address,
         phone: formData.contactNumber,
         gender: formData.gender as "male" | "female" | "other",
-        dateOfBirth: "", // Not collected in personnel form
-        profilePicture: "", // Not collected in personnel form
+        dateOfBirth: new Date(formData.dateOfBirth).toISOString(),
         role: formData.role,
-        isActive: true,
       };
 
       if (mode === "add") {
@@ -293,6 +300,8 @@ const AddPersonnelModal = ({
           ...userData,
           password: formData.password,
         };
+
+        console.log("Sending personnel registration data:", personnelData);
 
         const result = await registerUser(personnelData).unwrap();
 
@@ -322,14 +331,11 @@ const AddPersonnelModal = ({
           email: userData.email,
           firstName: userData.firstName,
           lastName: userData.lastName,
-          fullName: userData.fullName,
           address: userData.address,
           phone: userData.phone,
           gender: userData.gender,
           dateOfBirth: userData.dateOfBirth,
-          profilePicture: userData.profilePicture,
           role: userData.role,
-          isActive: userData.isActive,
         };
 
         await updateUser({
@@ -345,7 +351,7 @@ const AddPersonnelModal = ({
         if (onSave) {
           onSave({
             id: personnel.id,
-            fullName: updateData.fullName,
+            fullName: `${updateData.firstName} ${updateData.lastName}`,
             firstname: updateData.firstName,
             lastname: updateData.lastName,
             specialization: formData.specialization,
@@ -360,13 +366,15 @@ const AddPersonnelModal = ({
       }
 
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error saving personnel:", err);
-      setSnackbarMessage(
+      const errorMessage =
+        err?.data?.message ||
+        err?.message ||
         `Failed to ${
           mode === "add" ? "add" : "update"
-        } personnel. Please try again.`
-      );
+        } personnel. Please try again.`;
+      setSnackbarMessage(errorMessage);
       setSnackbarType("error");
       setShowSnackbar(true);
     } finally {
@@ -388,6 +396,7 @@ const AddPersonnelModal = ({
       email: "",
       password: "",
       dateOfBirth: "",
+      address: "",
     });
     setFormErrors({
       fullName: "",
@@ -402,6 +411,7 @@ const AddPersonnelModal = ({
       email: "",
       password: "",
       dateOfBirth: "",
+      address: "",
     });
     onClose();
   };
@@ -613,27 +623,39 @@ const AddPersonnelModal = ({
             {mode === "add" && (
               <>
                 <Divider className="my-10" />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">
+                <div className="space-y-4">
                   <Inputs
-                    label="USERNAME"
-                    placeholder="Enter Username"
-                    value={formData.username}
+                    label="ADDRESS"
+                    placeholder="Enter Address"
+                    value={formData.address}
                     onChange={(e) =>
-                      handleInputChange("username", e.target.value)
+                      handleInputChange("address", e.target.value)
                     }
                     disabled={false}
-                    error={!!formErrors.username}
+                    error={!!formErrors.address}
                   />
-                  <Inputs
-                    label="PASSWORD"
-                    placeholder="Enter Password"
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) =>
-                      handleInputChange("password", e.target.value)
-                    }
-                    error={!!formErrors.password}
-                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">
+                    <Inputs
+                      label="USERNAME"
+                      placeholder="Enter Username"
+                      value={formData.username}
+                      onChange={(e) =>
+                        handleInputChange("username", e.target.value)
+                      }
+                      disabled={false}
+                      error={!!formErrors.username}
+                    />
+                    <Inputs
+                      label="PASSWORD"
+                      placeholder="Enter Password"
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) =>
+                        handleInputChange("password", e.target.value)
+                      }
+                      error={!!formErrors.password}
+                    />
+                  </div>
                 </div>
               </>
             )}

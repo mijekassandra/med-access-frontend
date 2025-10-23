@@ -1,7 +1,7 @@
 // import React from "react";
 
 // assets
-import logo from "../../../assets/med_access_logo.png";
+// import logo from "../../../assets/med_access_logo.png";
 
 //components
 import ForgotPassword from "../components/ForgotPassword";

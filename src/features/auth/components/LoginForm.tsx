@@ -74,6 +74,9 @@ const LoginForm = () => {
           })
         );
 
+        // Set welcome snackbar flag
+        sessionStorage.setItem("showWelcomeSnackbar", "true");
+
         // Navigate based on user role
         if (result.data.user.role === "user") {
           navigate("/patient-dashboard");
@@ -153,12 +156,12 @@ const LoginForm = () => {
                 {localError}
               </p>
             )}
-            <p
+            {/* <p
               className="text-body-small-reg text-szWhite100 text-right mt-1 cursor-pointer hover:underline transition-colors"
               onClick={() => navigate("/forgot-password")}
             >
               Forgot password?
-            </p>
+            </p> */}
           </div>
         </div>
       </section>
@@ -173,7 +176,7 @@ const LoginForm = () => {
           onClick={handleLogin}
           disabled={isLoading}
         />
-        <p className="text-body-small-reg text-szWhite100 text-center">
+        {/* <p className="text-body-small-reg text-szWhite100 text-center">
           Don't have an account?{" "}
           <span
             className="text-szSecondary500 cursor-pointer hover:underline transition-colors"
@@ -181,7 +184,7 @@ const LoginForm = () => {
           >
             Register
           </span>
-        </p>
+        </p> */}
       </div>
     </div>
   );

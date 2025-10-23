@@ -261,7 +261,7 @@ const Reports: React.FC = () => {
     <ContainerWrapper>
       <div className="grid grid-cols-1 gap-6">
         {/* Header with search and add button */}
-        <div className="flex flex-col lg:flex-row items-end md:items-center justify-between gap-3 md:gap-6">
+        <div className="flex flex-col lg:flex-row items-end md:items-end justify-between gap-3 md:gap-6">
           <Inputs
             type="text"
             placeholder="Search reports by title, type, content, ID, etc..."
@@ -295,8 +295,8 @@ const Reports: React.FC = () => {
             <Button
               label="Add Report "
               leftIcon={<Add />}
-              className={`w-[60%] sm:w-[180px] truncate ${
-                user.role === "admin" ? "w-[60%]" : "w-[180px]"
+              className={`w-full sm:w-[200px] truncate ${
+                user.role === "admin" ? "w-[60%]" : "w-[200px]"
               }`}
               size="medium"
               onClick={() => setIsAddReportModalOpen(true)}

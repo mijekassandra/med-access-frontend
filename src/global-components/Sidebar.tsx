@@ -51,7 +51,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className = "" }) => {
       setIsSmallScreen(isSmall);
 
       // Check if screen width is medium (768px) or below
-      if (window.innerWidth <= 768) {
+      if (window.innerWidth <= 960) {
         setIsCollapsed(true);
         setIsManualCollapse(false); // Reset manual flag on small screens
       } else {
