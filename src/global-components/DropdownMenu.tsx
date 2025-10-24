@@ -11,6 +11,7 @@ interface DropdownMenuProps {
   className?: string;
   position?: "left" | "right";
   width?: string;
+  direction?: "up" | "down";
 }
 
 const DropdownMenu: React.FC<DropdownMenuProps> = ({
@@ -18,11 +19,12 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({
   className = "",
   position = "right",
   width = "w-fit",
+  direction = "down",
 }) => (
   <div
-    className={`absolute mt-1 bg-white border rounded-lg z-10 ${width} ${className} ${
+    className={`absolute bg-white border rounded-lg z-10 ${width} ${className} ${
       position === "left" ? "right-0" : "left-0"
-    }`}
+    } ${direction === "up" ? "mb-1 bottom-full" : "mt-1 top-full"}`}
     style={{
       boxShadow: "0px 4px 15px 0px rgba(9, 18, 39, 0.2)",
     }}

@@ -20,7 +20,23 @@ const PopoverMenu: React.FC<PopoverMenuProps> = ({
   width = "w-fit",
 }) => {
   const [open, setOpen] = useState(false);
+  const [direction, setDirection] = useState<"up" | "down">("down");
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // Function to determine if dropdown should open upward
+  const determineDirection = () => {
+    if (!menuRef.current) return "down";
+
+    const rect = menuRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const dropdownHeight = 200; // Approximate height of dropdown menu
+
+    // If there's not enough space below, open upward
+    if (rect.bottom + dropdownHeight > viewportHeight - 20) {
+      return "up";
+    }
+    return "down";
+  };
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -51,7 +67,11 @@ const PopoverMenu: React.FC<PopoverMenuProps> = ({
             } cursor-pointer`}
           />
         }
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() => {
+          const newDirection = determineDirection();
+          setDirection(newDirection);
+          setOpen((prev) => !prev);
+        }}
         size={size}
         variant="ghost"
         customColor={color}
@@ -67,6 +87,7 @@ const PopoverMenu: React.FC<PopoverMenuProps> = ({
           }))}
           position={position}
           width={width}
+          direction={direction}
         />
       )}
     </div>

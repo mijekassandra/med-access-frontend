@@ -332,6 +332,7 @@ const PersonnelTable = () => {
           onRowClick={handleRowClick}
           className="shadow-sm h-full"
           loading={isLoading}
+          dropdownWidth="w-44"
         />
       </div>
 

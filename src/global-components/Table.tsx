@@ -37,6 +37,7 @@ export interface TableProps<T = Record<string, any>> {
   className?: string;
   rowClassName?: string | ((record: T, index: number) => string);
   onRowClick?: (record: T) => void;
+  dropdownWidth?: string;
 }
 
 const Table = <T extends Record<string, any>>({
@@ -50,6 +51,7 @@ const Table = <T extends Record<string, any>>({
   className = "",
   rowClassName,
   onRowClick,
+  dropdownWidth = "w-36",
 }: TableProps<T>) => {
   const [searchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState<{
@@ -256,7 +258,7 @@ const Table = <T extends Record<string, any>>({
                         size="small"
                         color="text-szBlack700"
                         position="left"
-                        width="w-36"
+                        width={dropdownWidth}
                       />
                     </td>
                   )}
