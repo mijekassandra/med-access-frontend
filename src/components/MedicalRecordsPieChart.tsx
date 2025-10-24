@@ -95,11 +95,9 @@ const MedicalRecordsPieChart: React.FC<MedicalRecordsPieChartProps> = ({
       className={`bg-white rounded-lg shadow-sm p-6 border border-gray-200 ${className}`}
     >
       <div className="flex justify-between items-center gap-3 mb-3">
-        <h5 className="text-h5 text-szBlack700">
-          Medical Records Distribution
-        </h5>
+        <h5 className="text-h5 text-szBlack700">Medical Records</h5>
         <div className="text-right">
-          <p className="text-caption-reg text-szGrey500">Total Records</p>
+          <p className="text-caption-reg text-szGrey500">Total</p>
           <p className="text-h4 text-szBlack900 font-bold">
             {total.toLocaleString()}
           </p>

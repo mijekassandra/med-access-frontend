@@ -7,8 +7,18 @@ import SnackbarAlert from "../../../global-components/SnackbarAlert";
 import Dropdown from "../../../global-components/Dropdown";
 import Divider from "../../../global-components/Divider";
 
+//icons
+import { Eye, EyeSlash } from "iconsax-react";
+
 //rtk
 import { useRegisterUserMutation } from "../api/userApi";
+
+//utils
+import { convertIsoToDateInput } from "../../../utils/dateUtils";
+import {
+  getPhoneValidationError,
+  handlePhilippinePhoneNumberChange,
+} from "../../../utils/phoneValidation";
 
 interface Patient {
   id: string;
@@ -18,6 +28,8 @@ interface Patient {
   address: string;
   email: string;
   contactNumber: string;
+  gender: "male" | "female" | "other" | "";
+  dateOfBirth: string;
   dateRegistered: string;
 }
 
@@ -42,9 +54,9 @@ const AddPatientModal = ({
     lastname: "",
     address: "",
     email: "",
-    contactNumber: "",
+    contactNumber: "+639",
     password: "",
-    gender: "male" as "male" | "female" | "other",
+    gender: "" as "male" | "female" | "other" | "",
     dateOfBirth: "",
   });
   const [formErrors, setFormErrors] = useState({
@@ -64,6 +76,7 @@ const AddPatientModal = ({
   const [snackbarType, setSnackbarType] = useState<"success" | "error">(
     "success"
   );
+  const [showPassword, setShowPassword] = useState(false);
 
   // API hooks
   const [registerUser] = useRegisterUserMutation();
@@ -79,8 +92,8 @@ const AddPatientModal = ({
         email: patient.email,
         contactNumber: patient.contactNumber,
         password: "",
-        gender: "male",
-        dateOfBirth: "",
+        gender: patient.gender || "",
+        dateOfBirth: convertIsoToDateInput(patient.dateOfBirth),
       });
     } else if (mode === "add") {
       setFormData({
@@ -89,9 +102,9 @@ const AddPatientModal = ({
         lastname: "",
         address: "",
         email: "",
-        contactNumber: "",
+        contactNumber: "+639",
         password: "",
-        gender: "male",
+        gender: "",
         dateOfBirth: "",
       });
     }
@@ -108,6 +121,9 @@ const AddPatientModal = ({
       gender: "",
       dateOfBirth: "",
     });
+
+    // Reset password visibility
+    setShowPassword(false);
   }, [patient, mode, isOpen]);
 
   const handleInputChange = (field: string, value: string) => {
@@ -167,16 +183,17 @@ const AddPatientModal = ({
       errors.address = "Address must be at least 5 characters";
     }
 
-    // Check if email is valid (optional but if provided, must be valid)
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    // Check if email is provided and valid
+    if (!formData.email.trim()) {
+      errors.email = "This field is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       errors.email = "Please enter a valid email address";
     }
 
-    // Check if contact number is empty
-    if (!formData.contactNumber.trim()) {
-      errors.contactNumber = "This field is required";
-    } else if (!/^[\+]?[0-9\s\-\(\)]{10,15}$/.test(formData.contactNumber)) {
-      errors.contactNumber = "Please enter a valid phone number";
+    // Check if contact number is valid using strict validation
+    const phoneError = getPhoneValidationError(formData.contactNumber);
+    if (phoneError) {
+      errors.contactNumber = phoneError;
     }
 
     // For add mode, check password
@@ -189,7 +206,7 @@ const AddPatientModal = ({
     }
 
     // Check if gender is selected
-    if (!formData.gender.trim()) {
+    if (!formData.gender || formData.gender.trim() === "") {
       errors.gender = "This field is required";
     }
 
@@ -233,12 +250,10 @@ const AddPatientModal = ({
           lastName: formData.lastname,
           address: formData.address,
           phone: formData.contactNumber,
-          gender: formData.gender,
+          gender: formData.gender as "male" | "female" | "other",
           dateOfBirth: new Date(formData.dateOfBirth).toISOString(),
           role: "user" as "user" | "admin" | "doctor",
         };
-
-        console.log("Sending registration data:", registrationData);
 
         await registerUser(registrationData).unwrap();
 
@@ -275,9 +290,9 @@ const AddPatientModal = ({
       lastname: "",
       address: "",
       email: "",
-      contactNumber: "",
+      contactNumber: "+639",
       password: "",
-      gender: "male",
+      gender: "",
       dateOfBirth: "",
     });
     setFormErrors({
@@ -296,6 +311,10 @@ const AddPatientModal = ({
 
   const handleCloseSnackbar = () => {
     setShowSnackbar(false);
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   const getModalTitle = () => {
@@ -322,6 +341,7 @@ const AddPatientModal = ({
         variant: "ghost" as const,
         onClick: handleCancel,
         size: "medium" as const,
+        disabled: isLoading,
       },
       {
         label: mode === "edit" ? "Save Changes" : "Submit",
@@ -341,7 +361,7 @@ const AddPatientModal = ({
         showButton={false}
         title={getModalTitle()}
         modalWidth="w-[640px]"
-        contentHeight="h-[55vh]"
+        contentHeight="h-[60vh]"
         headerOptions="left"
         showFooter={mode === "view" ? false : true}
         footerOptions={mode === "view" ? "left" : "stacked-left"}
@@ -389,11 +409,14 @@ const AddPatientModal = ({
               />
               <Inputs
                 label="CONTACT NUMBER"
-                placeholder="Enter Contact Number"
+                placeholder="Enter Contact Number (e.g., +639123456789)"
                 type="tel"
                 value={formData.contactNumber}
                 onChange={(e) =>
-                  handleInputChange("contactNumber", e.target.value)
+                  handlePhilippinePhoneNumberChange(
+                    e.target.value,
+                    (value: string) => handleInputChange("contactNumber", value)
+                  )
                 }
                 disabled={mode === "view"}
                 error={!!formErrors.contactNumber}
@@ -429,26 +452,32 @@ const AddPatientModal = ({
                     : selected?.value;
                   handleInputChange("gender", genderValue || "");
                 }}
-                disabled={false}
+                disabled={mode === "view"}
                 error={!!formErrors.gender}
                 usePortal={true}
               />
 
               <Inputs
-                label="DATE OF BIRTH"
-                placeholder="YYYY-MM-DD"
+                label="DATE OF BIRTH (dd/mm/yyyy)"
+                placeholder="dd/mm/yyyy"
                 type="date"
                 value={formData.dateOfBirth}
                 onChange={(e) =>
                   handleInputChange("dateOfBirth", e.target.value)
                 }
+                disabled={mode === "view"}
                 error={!!formErrors.dateOfBirth}
               />
             </div>
-            <Divider className="my-10" />
             {/* Additional fields for registration */}
             {mode === "add" && (
               <>
+                <div className="flex items-center gap-2 pt-2 pb-1">
+                  <h6 className="text-h6 text-szBlack700 w-[220px]">
+                    ACCOUNT ACCESS
+                  </h6>
+                  <Divider className="w-full" />
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">
                   <Inputs
                     label="USERNAME"
@@ -461,14 +490,16 @@ const AddPatientModal = ({
                     error={!!formErrors.username}
                   />
                   <Inputs
-                    label="PASSWORD"
+                    label="PASSWORD (min 6 characters)"
                     placeholder="Enter Password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     value={formData.password}
                     onChange={(e) =>
                       handleInputChange("password", e.target.value)
                     }
                     error={!!formErrors.password}
+                    icon={showPassword ? EyeSlash : Eye}
+                    iconClick={togglePasswordVisibility}
                   />
                 </div>
               </>

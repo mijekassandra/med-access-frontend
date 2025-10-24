@@ -14,9 +14,12 @@ export interface User {
   dateOfBirth: string;
   profilePicture: string;
   role: "user" | "admin" | "doctor";
+  prcLicenseNumber?: string;
+  specialization?: string;
   isActive: boolean;
   lastLogin?: string;
   createdAt: string;
+  
 }
 
 export interface UserRegistration {
@@ -27,6 +30,8 @@ export interface UserRegistration {
   lastName: string;
   address: string;
   phone: string;
+  prcLicenseNumber?: string;
+  specialization?: string;
   gender: "male" | "female" | "other";
   dateOfBirth: string;
   role?: "user" | "admin" | "doctor";

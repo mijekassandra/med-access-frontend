@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../auth/hooks/useAuth";
 
 // Icons
 import {
@@ -33,6 +34,7 @@ import MobilePatientSettings from "./pages/MobilePatientSettings";
 const PatientMobileApp: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { logout, isLoading } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [unreadNotificationCount] = useState(1); // Mock unread count
 
@@ -66,9 +68,16 @@ const PatientMobileApp: React.FC = () => {
 
   const activeBottomNav = getActiveNavItem();
 
-  const handleLogout = () => {
-    sessionStorage.clear();
-    navigate("/");
+  //handle logout
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Even if logout API fails, navigate to home
+      // navigate("/");
+    }
   };
 
   const handleBottomNavClick = (itemId: string) => {
@@ -268,11 +277,14 @@ const PatientMobileApp: React.FC = () => {
             <div className="pt-4 border-t border-szGray200 m-4">
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-3 p-3 rounded-lg text-h4 transition-colors text-szWhite100 hover:bg-szPrimary700 w-full"
+                disabled={isLoading}
+                className={`flex items-center gap-3 p-3 rounded-lg text-h4 transition-colors text-szWhite100 hover:bg-szPrimary700 w-full ${
+                  isLoading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
                 <Logout size={20} variant="Outline" />
                 <h6 className="text-h6 text-szWhite100 font-medium tracking-wide">
-                  Logout
+                  {isLoading ? "Logging out..." : "Logout"}
                 </h6>
               </button>
             </div>

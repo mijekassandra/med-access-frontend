@@ -244,6 +244,7 @@ const EditAnnouncementModal = ({
         variant: "ghost" as const,
         onClick: handleCancel,
         size: "medium" as const,
+        disabled: isLoading,
       },
       {
         label: mode === "edit" ? "Save Changes" : "Submit",

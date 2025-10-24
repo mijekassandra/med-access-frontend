@@ -484,7 +484,7 @@ const Announcement = () => {
             title="Create Announcement"
             content={
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full">
-                <div className="space-y-4">
+                <div className="flex-1 flex flex-col gap-4">
                   <Inputs
                     label="TITLE"
                     placeholder="Enter Title"
@@ -498,25 +498,27 @@ const Announcement = () => {
                     placeholder="Write your announcement here..."
                     value={content}
                     onChange={handleContentChange}
-                    className="min-h-[200px]"
+                    className="min-h-[180px]"
                     error={!!formErrors.content}
                   />
-                  <div className="flex justify-center">
-                    <Button
-                      label="Post Announcement"
-                      variant="primary"
-                      size="large"
-                      onClick={handlePostSubmit}
-                      disabled={!title.trim() || !content.trim()}
-                      loading={isPosting}
-                      fullWidth
-                    />
-                  </div>
                 </div>
-                <UploadAnnouncement
-                  onFileSelect={handleFileSelect}
-                  selectedFile={selectedFile}
-                />
+                <div className="h-full ">
+                  <UploadAnnouncement
+                    onFileSelect={handleFileSelect}
+                    selectedFile={selectedFile}
+                  />
+                </div>
+                <div className="flex justify-center">
+                  <Button
+                    label="Post Announcement"
+                    variant="primary"
+                    size="large"
+                    onClick={handlePostSubmit}
+                    disabled={!title.trim() || !content.trim()}
+                    loading={isPosting}
+                    fullWidth
+                  />
+                </div>
               </div>
             }
           />

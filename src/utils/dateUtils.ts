@@ -148,3 +148,24 @@ export const getTodayDate = (): Date => {
   today.setHours(0, 0, 0, 0);
   return today;
 };
+
+/**
+ * Converts ISO date string to YYYY-MM-DD format for HTML date input
+ * @param isoDateString - ISO date string (e.g., "2023-12-25T00:00:00.000Z")
+ * @returns Formatted date string (YYYY-MM-DD) or empty string if invalid
+ */
+export const convertIsoToDateInput = (isoDateString: string | null | undefined): string => {
+  if (!isoDateString) return "";
+  
+  try {
+    const date = new Date(isoDateString);
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) return "";
+    
+    return formatDateForInput(date);
+  } catch (error) {
+    console.error('Error converting ISO date to input format:', error);
+    return "";
+  }
+};

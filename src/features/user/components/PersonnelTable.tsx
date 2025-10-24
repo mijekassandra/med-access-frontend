@@ -30,13 +30,15 @@ const convertUserToPersonnel = (user: User) => ({
   firstname: user.firstName,
   lastname: user.lastName,
   specialization:
-    user.role === "doctor" ? "Medical Professional" : "Administrator",
-  prcLicenseNumber:
-    user.role === "doctor"
-      ? "PRC-" + user.id.slice(-6)
-      : "ADMIN-" + user.id.slice(-6),
+    user.role === "doctor" ? `${user.specialization}` : "Administrator",
+  prcLicenseNumber: user.prcLicenseNumber,
+  gender: user.gender,
   contactNumber: user.phone,
   role: user.role,
+  username: user.username,
+  email: user.email,
+  address: user.address,
+  dateOfBirth: user.dateOfBirth,
 });
 
 const PersonnelTable = () => {
@@ -250,7 +252,7 @@ const PersonnelTable = () => {
   const filteredPersonnel = personnel.filter((record) => {
     // Search filter
     const matchesSearch = Object.values(record).some((value) =>
-      value.toString().toLowerCase().includes(searchTerm.toLowerCase())
+      value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     // Role filter
@@ -352,19 +354,19 @@ const PersonnelTable = () => {
                 fullName: selectedPersonnel.fullName,
                 firstname: selectedPersonnel.firstName,
                 lastname: selectedPersonnel.lastName,
-                specialization:
-                  selectedPersonnel.role === "doctor"
-                    ? "Medical Professional"
-                    : "Administrator",
-                prcLicenseNumber:
-                  selectedPersonnel.role === "doctor"
-                    ? "PRC-" + selectedPersonnel.id.slice(-6)
-                    : "ADMIN-" + selectedPersonnel.id.slice(-6),
+                specialization: selectedPersonnel.specialization
+                  ? `${selectedPersonnel.specialization}`
+                  : "",
+                prcLicenseNumber: selectedPersonnel.prcLicenseNumber
+                  ? `${selectedPersonnel.prcLicenseNumber}`
+                  : "",
                 contactNumber: selectedPersonnel.phone,
                 gender: selectedPersonnel.gender,
                 role: selectedPersonnel.role as "admin" | "doctor",
                 username: selectedPersonnel.username,
                 email: selectedPersonnel.email,
+                address: selectedPersonnel.address,
+                dateOfBirth: selectedPersonnel.dateOfBirth,
               }
             : undefined
         }
@@ -383,19 +385,19 @@ const PersonnelTable = () => {
                 fullName: selectedPersonnel.fullName,
                 firstname: selectedPersonnel.firstName,
                 lastname: selectedPersonnel.lastName,
-                specialization:
-                  selectedPersonnel.role === "doctor"
-                    ? "Medical Professional"
-                    : "Administrator",
-                prcLicenseNumber:
-                  selectedPersonnel.role === "doctor"
-                    ? "PRC-" + selectedPersonnel.id.slice(-6)
-                    : "ADMIN-" + selectedPersonnel.id.slice(-6),
+                specialization: selectedPersonnel.specialization
+                  ? `${selectedPersonnel.specialization}`
+                  : "",
+                prcLicenseNumber: selectedPersonnel.prcLicenseNumber
+                  ? `${selectedPersonnel.prcLicenseNumber}`
+                  : "",
                 contactNumber: selectedPersonnel.phone,
                 gender: selectedPersonnel.gender,
                 role: selectedPersonnel.role as "admin" | "doctor",
                 username: selectedPersonnel.username,
                 email: selectedPersonnel.email,
+                address: selectedPersonnel.address,
+                dateOfBirth: selectedPersonnel.dateOfBirth,
               }
             : undefined
         }

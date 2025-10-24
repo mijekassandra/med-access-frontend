@@ -26,6 +26,11 @@ import {
 // Convert User to Patient format for display
 const convertUserToPatient = (user: User) => ({
   id: user.id,
+  fullName: user.fullName,
+  firstname: user.firstName,
+  lastname: user.lastName,
+  gender: user.gender,
+  dateOfBirth: user.dateOfBirth,
   username: user.username,
   address: user.address,
   email: user.email || "",
@@ -279,7 +284,7 @@ const PatientsTable = () => {
           className=""
         />
         <div className={`flex gap-4 items-center `}>
-          <div className="min-w-[40%] sm:min-w-[160px]">
+          {/* <div className="min-w-[40%] sm:min-w-[160px]">
             <Dropdown
               options={[
                 { label: "All", value: "all" },
@@ -299,7 +304,7 @@ const PatientsTable = () => {
                 value: selectedFilter,
               }}
             />
-          </div>
+          </div> */}
 
           <Button
             label="Add User"
@@ -350,6 +355,8 @@ const PatientsTable = () => {
                 address: selectedPatient.address,
                 email: selectedPatient.email || "",
                 contactNumber: selectedPatient.phone,
+                gender: selectedPatient.gender,
+                dateOfBirth: selectedPatient.dateOfBirth,
                 dateRegistered: new Date(
                   selectedPatient.createdAt
                 ).toLocaleString(),
@@ -374,6 +381,8 @@ const PatientsTable = () => {
                 address: selectedPatient.address,
                 email: selectedPatient.email || "",
                 contactNumber: selectedPatient.phone,
+                gender: selectedPatient.gender,
+                dateOfBirth: selectedPatient.dateOfBirth,
                 dateRegistered: new Date(
                   selectedPatient.createdAt
                 ).toLocaleString(),

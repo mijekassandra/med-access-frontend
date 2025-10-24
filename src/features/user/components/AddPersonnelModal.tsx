@@ -8,8 +8,18 @@ import Dropdown from "../../../global-components/Dropdown";
 import RadioButton from "../../../global-components/RadioButton";
 import Divider from "../../../global-components/Divider";
 
+//icons
+import { Eye, EyeSlash } from "iconsax-react";
+
 //rtk
 import { useRegisterUserMutation, useUpdateUserMutation } from "../api/userApi";
+
+//utils
+import { convertIsoToDateInput } from "../../../utils/dateUtils";
+import {
+  getPhoneValidationError,
+  handlePhilippinePhoneNumberChange,
+} from "../../../utils/phoneValidation";
 
 interface Personnel {
   id: string;
@@ -19,10 +29,12 @@ interface Personnel {
   specialization: string;
   prcLicenseNumber: string;
   contactNumber: string;
-  gender: string;
+  gender: "male" | "female" | "other" | "";
   role: "admin" | "doctor";
   username?: string;
   email?: string;
+  address?: string;
+  dateOfBirth?: string;
 }
 
 interface AddPersonnelModalProps {
@@ -46,8 +58,8 @@ const AddPersonnelModal = ({
     lastname: "",
     specialization: "",
     prcLicenseNumber: "",
-    contactNumber: "",
-    gender: "",
+    contactNumber: "+639",
+    gender: "" as "male" | "female" | "other" | "",
     role: "doctor" as "admin" | "doctor",
     username: "",
     email: "",
@@ -76,6 +88,7 @@ const AddPersonnelModal = ({
   const [snackbarType, setSnackbarType] = useState<"success" | "error">(
     "success"
   );
+  const [showPassword, setShowPassword] = useState(false);
 
   // RTK Query mutations
   const [registerUser] = useRegisterUserMutation();
@@ -91,13 +104,15 @@ const AddPersonnelModal = ({
         specialization: personnel.specialization,
         prcLicenseNumber: personnel.prcLicenseNumber,
         contactNumber: personnel.contactNumber,
-        gender: personnel.gender,
+        gender: personnel.gender || "",
         role: personnel.role || "doctor",
         username: personnel.username || "",
         email: personnel.email || "",
         password: "",
-        dateOfBirth: "",
-        address: "",
+        dateOfBirth: personnel.dateOfBirth
+          ? convertIsoToDateInput(personnel.dateOfBirth)
+          : "",
+        address: personnel.address || "",
       });
     } else if (mode === "add") {
       setFormData({
@@ -106,7 +121,7 @@ const AddPersonnelModal = ({
         lastname: "",
         specialization: "",
         prcLicenseNumber: "",
-        contactNumber: "",
+        contactNumber: "+639",
         gender: "",
         role: "doctor",
         username: "",
@@ -133,6 +148,9 @@ const AddPersonnelModal = ({
       dateOfBirth: "",
       address: "",
     });
+
+    // Reset password visibility
+    setShowPassword(false);
   }, [personnel, mode, isOpen]);
 
   const handleInputChange = (field: string, value: string) => {
@@ -168,6 +186,13 @@ const AddPersonnelModal = ({
       address: "",
     };
 
+    // Check if username is empty
+    if (!formData.username.trim()) {
+      errors.username = "This field is required";
+    } else if (formData.username.length < 3) {
+      errors.username = "Username must be at least 3 characters";
+    }
+
     // Check if firstname is empty
     if (!formData.firstname.trim()) {
       errors.firstname = "This field is required";
@@ -180,6 +205,58 @@ const AddPersonnelModal = ({
       errors.lastname = "This field is required";
     } else if (formData.lastname.length < 2) {
       errors.lastname = "Last name must be at least 2 characters";
+    }
+
+    // Check if address is empty
+    if (!formData.address.trim()) {
+      errors.address = "This field is required";
+    } else if (formData.address.length < 5) {
+      errors.address = "Address must be at least 5 characters";
+    }
+
+    // Check if email is provided and valid
+    if (!formData.email.trim()) {
+      errors.email = "This field is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errors.email = "Please enter a valid email address";
+    }
+
+    // Check if contact number is valid using strict validation
+    const phoneError = getPhoneValidationError(formData.contactNumber);
+    if (phoneError) {
+      errors.contactNumber = phoneError;
+    }
+
+    // For add mode, check password
+    if (mode === "add") {
+      if (!formData.password.trim()) {
+        errors.password = "This field is required";
+      } else if (formData.password.length < 6) {
+        errors.password = "Password must be at least 6 characters";
+      }
+    }
+
+    // Check if gender is selected
+    if (!formData.gender || formData.gender.trim() === "") {
+      errors.gender = "This field is required";
+    }
+
+    // Check if date of birth is provided
+    if (!formData.dateOfBirth) {
+      errors.dateOfBirth = "This field is required";
+    } else {
+      const birthDate = new Date(formData.dateOfBirth);
+      const today = new Date();
+      const age = today.getFullYear() - birthDate.getFullYear();
+
+      if (age < 0 || age > 120) {
+        errors.dateOfBirth = "Please enter a valid date of birth";
+      }
+    }
+
+    // Check if role is selected
+    if (!formData.role.trim()) {
+      errors.role = "This field is required";
     }
 
     // Check if specialization is empty (only for doctor role)
@@ -196,64 +273,6 @@ const AddPersonnelModal = ({
       } else if (formData.prcLicenseNumber.length < 5) {
         errors.prcLicenseNumber =
           "License number must be at least 5 characters";
-      }
-    }
-
-    // Check if contact number is empty
-    if (!formData.contactNumber.trim()) {
-      errors.contactNumber = "This field is required";
-    } else if (!/^[\+]?[0-9\s\-\(\)]{10,15}$/.test(formData.contactNumber)) {
-      errors.contactNumber = "Please enter a valid phone number";
-    }
-
-    // Check if gender is selected
-    if (!formData.gender.trim()) {
-      errors.gender = "This field is required";
-    }
-
-    // Check if role is selected
-    if (!formData.role.trim()) {
-      errors.role = "This field is required";
-    }
-
-    // Validate username and email for both roles
-    if (!formData.username.trim()) {
-      errors.username = "This field is required";
-    } else if (formData.username.length < 3) {
-      errors.username = "Username must be at least 3 characters";
-    }
-
-    if (!formData.email.trim()) {
-      errors.email = "This field is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      errors.email = "Please enter a valid email address";
-    }
-
-    // For add mode, check password and address
-    if (mode === "add") {
-      if (!formData.password.trim()) {
-        errors.password = "This field is required";
-      } else if (formData.password.length < 6) {
-        errors.password = "Password must be at least 6 characters";
-      }
-
-      if (!formData.address.trim()) {
-        errors.address = "This field is required";
-      } else if (formData.address.length < 5) {
-        errors.address = "Address must be at least 5 characters";
-      }
-    }
-
-    // Check if date of birth is provided
-    if (!formData.dateOfBirth) {
-      errors.dateOfBirth = "This field is required";
-    } else {
-      const birthDate = new Date(formData.dateOfBirth);
-      const today = new Date();
-      const age = today.getFullYear() - birthDate.getFullYear();
-
-      if (age < 0 || age > 120) {
-        errors.dateOfBirth = "Please enter a valid date of birth";
       }
     }
 
@@ -292,6 +311,10 @@ const AddPersonnelModal = ({
         gender: formData.gender as "male" | "female" | "other",
         dateOfBirth: new Date(formData.dateOfBirth).toISOString(),
         role: formData.role,
+        ...(formData.role === "doctor" && {
+          specialization: formData.specialization,
+          prcLicenseNumber: formData.prcLicenseNumber,
+        }),
       };
 
       if (mode === "add") {
@@ -323,6 +346,8 @@ const AddPersonnelModal = ({
             role: result.data.role as "admin" | "doctor",
             username: result.data.username,
             email: result.data.email,
+            address: result.data.address,
+            dateOfBirth: result.data.dateOfBirth,
           });
         }
       } else if (mode === "edit" && personnel?.id) {
@@ -336,6 +361,10 @@ const AddPersonnelModal = ({
           gender: userData.gender,
           dateOfBirth: userData.dateOfBirth,
           role: userData.role,
+          ...(userData.role === "doctor" && {
+            specialization: userData.specialization,
+            prcLicenseNumber: userData.prcLicenseNumber,
+          }),
         };
 
         await updateUser({
@@ -361,6 +390,8 @@ const AddPersonnelModal = ({
             role: updateData.role,
             username: formData.username,
             email: updateData.email,
+            address: updateData.address,
+            dateOfBirth: updateData.dateOfBirth,
           });
         }
       }
@@ -389,7 +420,7 @@ const AddPersonnelModal = ({
       lastname: "",
       specialization: "",
       prcLicenseNumber: "",
-      contactNumber: "",
+      contactNumber: "+639",
       gender: "",
       role: "doctor",
       username: "",
@@ -420,6 +451,10 @@ const AddPersonnelModal = ({
     setShowSnackbar(false);
   };
 
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
   const getModalTitle = () => {
     switch (mode) {
       case "add":
@@ -444,6 +479,7 @@ const AddPersonnelModal = ({
         variant: "ghost" as const,
         onClick: handleCancel,
         size: "medium" as const,
+        disabled: isLoading,
       },
       {
         label: mode === "edit" ? "Save Changes" : "Submit",
@@ -463,13 +499,13 @@ const AddPersonnelModal = ({
         showButton={false}
         title={getModalTitle()}
         modalWidth="w-[640px]"
-        contentHeight="h-[50vh]"
+        contentHeight="h-[60vh]"
         headerOptions="left"
         showFooter={mode === "view" ? false : true}
         footerOptions={mode === "view" ? "left" : "stacked-left"}
         footerButtons={getFooterButtons()}
         content={
-          <div className="space-y-4 mt-2">
+          <div className="space-y-4 mt-2 mb-6">
             {/* Full width inputs */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">
               <Inputs
@@ -490,39 +526,17 @@ const AddPersonnelModal = ({
               />
             </div>
 
-            {/* Role Selection */}
-            <div className="space-y-2">
-              <label className="text-body-small-reg text-szBlack700 font-medium">
-                ROLE
-              </label>
-              <div className="flex gap-6">
-                <RadioButton
-                  id="role-doctor"
-                  name="role"
-                  label="Doctor"
-                  value="doctor"
-                  checked={formData.role === "doctor"}
-                  onChange={(value) => handleInputChange("role", value)}
-                  disabled={mode === "view"}
-                />
-                <RadioButton
-                  id="role-admin"
-                  name="role"
-                  label="Admin"
-                  value="admin"
-                  checked={formData.role === "admin"}
-                  onChange={(value) => handleInputChange("role", value)}
-                  disabled={mode === "view"}
-                />
-              </div>
-              {formErrors.role && (
-                <p className="text-body-small-reg text-red-500">
-                  {formErrors.role}
-                </p>
-              )}
-            </div>
+            {/* Full width address */}
+            <Inputs
+              label="ADDRESS"
+              placeholder="Enter Address"
+              value={formData.address}
+              onChange={(e) => handleInputChange("address", e.target.value)}
+              disabled={mode === "view"}
+              error={!!formErrors.address}
+            />
 
-            {/* Email and Date of Birth fields */}
+            {/* 2-column grid for email and contact number */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">
               <Inputs
                 label="EMAIL"
@@ -534,57 +548,23 @@ const AddPersonnelModal = ({
                 error={!!formErrors.email}
               />
               <Inputs
-                label="DATE OF BIRTH"
-                placeholder="YYYY-MM-DD"
-                type="date"
-                value={formData.dateOfBirth}
-                onChange={(e) =>
-                  handleInputChange("dateOfBirth", e.target.value)
-                }
-                disabled={mode === "view"}
-                error={!!formErrors.dateOfBirth}
-              />
-            </div>
-
-            {/* Doctor-specific fields */}
-            {formData.role === "doctor" && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">
-                <Inputs
-                  label="SPECIALIZATION"
-                  placeholder="Enter Specialization"
-                  value={formData.specialization}
-                  onChange={(e) =>
-                    handleInputChange("specialization", e.target.value)
-                  }
-                  disabled={mode === "view"}
-                  error={!!formErrors.specialization}
-                />
-                <Inputs
-                  label="PRC LICENSE NUMBER"
-                  placeholder="Enter PRC License Number"
-                  value={formData.prcLicenseNumber}
-                  onChange={(e) =>
-                    handleInputChange("prcLicenseNumber", e.target.value)
-                  }
-                  disabled={mode === "view"}
-                  error={!!formErrors.prcLicenseNumber}
-                />
-              </div>
-            )}
-
-            {/* Common fields for both roles */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">
-              <Inputs
                 label="CONTACT NUMBER"
-                placeholder="Enter Contact Number"
+                placeholder="Enter # No. (e.g., +639123456789)"
                 type="tel"
                 value={formData.contactNumber}
                 onChange={(e) =>
-                  handleInputChange("contactNumber", e.target.value)
+                  handlePhilippinePhoneNumberChange(
+                    e.target.value,
+                    (value: string) => handleInputChange("contactNumber", value)
+                  )
                 }
                 disabled={mode === "view"}
                 error={!!formErrors.contactNumber}
               />
+            </div>
+
+            {/* Gender and Date of Birth in a 2-column grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">
               <Dropdown
                 label="GENDER"
                 size="small"
@@ -617,45 +597,114 @@ const AddPersonnelModal = ({
                 error={!!formErrors.gender}
                 usePortal={true}
               />
+
+              <Inputs
+                label="DATE OF BIRTH (dd/mm/yyyy)"
+                placeholder="dd/mm/yyyy"
+                type="date"
+                value={formData.dateOfBirth}
+                onChange={(e) =>
+                  handleInputChange("dateOfBirth", e.target.value)
+                }
+                disabled={mode === "view"}
+                error={!!formErrors.dateOfBirth}
+              />
             </div>
+
+            {/* Role Selection */}
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 pt-2 pb-1">
+                <h6 className="text-h6 text-szBlack700 w-[270px]">
+                  ROLE ASSIGNMENT
+                </h6>
+                <Divider className="w-full" />
+              </div>
+              <div className="flex gap-6">
+                <RadioButton
+                  id="role-doctor"
+                  name="role"
+                  label="Doctor"
+                  value="doctor"
+                  checked={formData.role === "doctor"}
+                  onChange={(value) => handleInputChange("role", value)}
+                  disabled={mode === "view" || mode === "edit"}
+                />
+                <RadioButton
+                  id="role-admin"
+                  name="role"
+                  label="Admin"
+                  value="admin"
+                  checked={formData.role === "admin"}
+                  onChange={(value) => handleInputChange("role", value)}
+                  disabled={mode === "view" || mode === "edit"}
+                />
+              </div>
+              {formErrors.role && (
+                <p className="text-body-small-reg text-red-500">
+                  {formErrors.role}
+                </p>
+              )}
+            </div>
+
+            {/* Doctor-specific fields */}
+            {formData.role === "doctor" && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">
+                <Inputs
+                  label="SPECIALIZATION"
+                  placeholder="Enter Specialization"
+                  value={formData.specialization}
+                  onChange={(e) =>
+                    handleInputChange("specialization", e.target.value)
+                  }
+                  disabled={mode === "view"}
+                  error={!!formErrors.specialization}
+                />
+                <Inputs
+                  label="PRC LICENSE NUMBER"
+                  placeholder="Enter PRC License Number"
+                  value={formData.prcLicenseNumber}
+                  onChange={(e) =>
+                    handleInputChange("prcLicenseNumber", e.target.value)
+                  }
+                  disabled={mode === "view"}
+                  error={!!formErrors.prcLicenseNumber}
+                />
+              </div>
+            )}
 
             {/* Additional fields for registration */}
             {mode === "add" && (
               <>
-                <Divider className="my-10" />
-                <div className="space-y-4">
+                <div className="flex items-center gap-2 pt-2 pb-1">
+                  <h6 className="text-h6 text-szBlack700 w-[220px]">
+                    ACCOUNT ACCESS
+                  </h6>
+                  <Divider className="w-full" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">
                   <Inputs
-                    label="ADDRESS"
-                    placeholder="Enter Address"
-                    value={formData.address}
+                    label="USERNAME"
+                    placeholder="Enter Username"
+                    value={formData.username}
                     onChange={(e) =>
-                      handleInputChange("address", e.target.value)
+                      handleInputChange("username", e.target.value)
                     }
                     disabled={false}
-                    error={!!formErrors.address}
+                    error={!!formErrors.username}
                   />
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">
-                    <Inputs
-                      label="USERNAME"
-                      placeholder="Enter Username"
-                      value={formData.username}
-                      onChange={(e) =>
-                        handleInputChange("username", e.target.value)
-                      }
-                      disabled={false}
-                      error={!!formErrors.username}
-                    />
-                    <Inputs
-                      label="PASSWORD"
-                      placeholder="Enter Password"
-                      type="password"
-                      value={formData.password}
-                      onChange={(e) =>
-                        handleInputChange("password", e.target.value)
-                      }
-                      error={!!formErrors.password}
-                    />
-                  </div>
+                  <Inputs
+                    label="PASSWORD (min 6 characters)"
+                    placeholder="Enter Password"
+                    type={showPassword ? "text" : "password"}
+                    value={formData.password}
+                    onChange={(e) =>
+                      handleInputChange("password", e.target.value)
+                    }
+                    error={!!formErrors.password}
+                    icon={showPassword ? EyeSlash : Eye}
+                    iconClick={togglePasswordVisibility}
+                  />
                 </div>
               </>
             )}

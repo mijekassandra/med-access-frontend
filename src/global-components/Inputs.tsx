@@ -69,7 +69,7 @@ const Input: React.FC<InputProps> = ({
               maxLength={maxCharacter}
               onChange={onChange}
               disabled={disabled}
-              className={`${sharedStyles} min-h-[100px] min-w-[300px] resize-none disabled:bg-gray-50 disabled:cursor-not-allowed `}
+              className={`${sharedStyles} w-[100%] resize-none disabled:bg-gray-50 disabled:cursor-not-allowed `}
             />
             {maxCharacter && (
               <p className="flex justify-end mt-1 pr-1 text-caption-all-caps text-szLightGrey400">
