@@ -86,7 +86,7 @@ export const announcementApi = createApi({
           : [{ type: "Announcement", id: "LIST" }],
     }),
 
-    // Get announcement by ID
+    // Get announcement by ID ------------------------------------------------
     getAnnouncementById: builder.query<ApiResponse<Announcement>, string>({
       query: (id) => `/announcements/${id}`,
       providesTags: (_result, _error, id) => [{ type: "Announcement", id }],

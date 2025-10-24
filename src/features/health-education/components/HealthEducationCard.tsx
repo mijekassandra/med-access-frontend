@@ -1,10 +1,12 @@
 import React, { useState } from "react";
+import { useAuth } from "../../auth/hooks/useAuth";
 import {
   Video,
   DocumentText,
   ArrowDown2,
   ArrowUp2,
   Edit2,
+  Trash,
 } from "iconsax-react";
 import Chip from "../../../global-components/Chip";
 
@@ -18,6 +20,7 @@ interface HealthEducationCardProps {
   url?: string;
   className?: string;
   onEdit?: (id: number | string) => void;
+  onDelete?: (id: number | string) => void;
   isPublished?: boolean;
 }
 
@@ -31,9 +34,39 @@ const HealthEducationCard: React.FC<HealthEducationCardProps> = ({
   url,
   className = "",
   onEdit,
+  onDelete,
   isPublished,
 }) => {
+  const { user } = useAuth();
+
   const [isExpanded, setIsExpanded] = useState(false);
+
+  // Convert YouTube URL to embed format if needed
+  const getEmbedUrl = (videoUrl: string): string => {
+    // If it's already an embed URL, return as is
+    if (videoUrl.includes("youtube.com/embed/")) {
+      return videoUrl;
+    }
+
+    // Extract video ID from various YouTube URL formats
+    let videoId = "";
+
+    // Handle youtube.com/watch?v= format
+    const watchMatch = videoUrl.match(
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/
+    );
+    if (watchMatch) {
+      videoId = watchMatch[1];
+    }
+
+    // If we found a video ID, return the embed URL
+    if (videoId) {
+      return `https://www.youtube.com/embed/${videoId}`;
+    }
+
+    // If we can't convert it, return the original URL
+    return videoUrl;
+  };
 
   const variantStyles = {
     secondary: {
@@ -72,21 +105,33 @@ const HealthEducationCard: React.FC<HealthEducationCardProps> = ({
             {title}
           </h5>
         </div>
-        <div className="flex items-center gap-2">
-          {!isPublished && (
-            <Chip label="Archived" type="colored" color="blue" />
-          )}
-          <button
-            className="flex justify-center items-center w-10 h-10 group cursor-pointer transition-colors duration-200"
-            aria-label="Edit"
-            onClick={() => onEdit && onEdit(id)}
-          >
-            <Edit2
-              className="h-5 w-5 text-szPrimary700 group-hover:text-szPrimary900"
-              variant="Linear"
-            />
-          </button>
-        </div>
+        {user?.role === "admin" && (
+          <div className="flex items-center gap-2">
+            {!isPublished && (
+              <Chip label="Archived" type="colored" color="blue" />
+            )}
+            <button
+              className="flex justify-center items-center w-10 h-10 group cursor-pointer transition-colors duration-200"
+              aria-label="Edit"
+              onClick={() => onEdit && onEdit(id)}
+            >
+              <Edit2
+                className="h-5 w-5 text-szPrimary700 group-hover:text-szPrimary900"
+                variant="Linear"
+              />
+            </button>
+            <button
+              className="flex justify-center items-center w-10 h-10 group cursor-pointer transition-colors duration-200"
+              aria-label="Delete"
+              onClick={() => onDelete && onDelete(id)}
+            >
+              <Trash
+                className="h-5 w-5 text-red-600 group-hover:text-red-800"
+                variant="Linear"
+              />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Render article content */}
@@ -98,6 +143,18 @@ const HealthEducationCard: React.FC<HealthEducationCardProps> = ({
         >
           {headline}
         </h4>
+        {content_type === "video" && url && (
+          <div className={`w-full ${className}`}>
+            <iframe
+              className="w-full h-72 rounded-lg"
+              src={getEmbedUrl(url)}
+              title={title}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
+            />
+          </div>
+        )}
         {body && (
           <div className="space-y-3">
             <div
@@ -134,18 +191,6 @@ const HealthEducationCard: React.FC<HealthEducationCardProps> = ({
           </div>
         )}
       </div>
-      {content_type === "video" && url && (
-        <div className={`w-full ${className}`}>
-          <iframe
-            className="w-full h-72 rounded-lg"
-            src={url}
-            title={title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            referrerPolicy="strict-origin-when-cross-origin"
-            allowFullScreen
-          />
-        </div>
-      )}
     </div>
   );
 };

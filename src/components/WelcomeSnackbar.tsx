@@ -13,7 +13,7 @@ const WelcomeSnackbar: React.FC = () => {
       setShowWelcome(true);
       setHasShownWelcome(true);
     }
-    
+
     // Reset the welcome state when user logs out
     if (!isAuthenticated) {
       setHasShownWelcome(false);
@@ -36,7 +36,7 @@ const WelcomeSnackbar: React.FC = () => {
 
   const getWelcomeMessage = () => {
     if (!user) return "";
-    
+
     const roleDisplay = getRoleDisplayName(user.role);
     return `Welcome back, ${user.firstName}! You are logged in as ${roleDisplay}.`;
   };
@@ -48,7 +48,7 @@ const WelcomeSnackbar: React.FC = () => {
       message={getWelcomeMessage()}
       type="success"
       onClose={() => setShowWelcome(false)}
-      duration={3000}
+      duration={5000}
       position={{ vertical: "top", horizontal: "center" }}
       showCloseButton={true}
       autoHide={true}

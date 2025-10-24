@@ -5,29 +5,32 @@ import Modal from "../../../global-components/Modal";
 import Inputs from "../../../global-components/Inputs";
 import RadioButton from "../../../global-components/RadioButton";
 import SnackbarAlert from "../../../global-components/SnackbarAlert";
-import Toggle from "../../../global-components/Toggle";
 
 // types
-import type { HealthEducationContentTable } from "../../../types/database";
+import type {
+  HealthEducationItem,
+  HealthEducationCreate,
+  HealthEducationUpdate,
+} from "../api/healthEducationApi";
 
 // RTK Query
 import {
-  useAddHealthEducationMutation,
-  useEditHealthEducationMutation,
+  useCreateHealthEducationMutation,
+  useUpdateHealthEducationMutation,
 } from "../api/healthEducationApi";
 
 interface AddHealthEducationModalProps {
   isOpen: boolean;
   onClose: () => void;
   mode: "add" | "edit" | "view";
-  healthEducation?: HealthEducationContentTable;
-  onSave?: (healthEducation: HealthEducationContentTable) => void;
+  healthEducation?: HealthEducationItem;
+  onSave?: (healthEducation: HealthEducationItem) => void;
 }
 
 export interface HealthEducationFormData {
   title: string;
   headline: string;
-  content_type: "article" | "video";
+  contentType: "article" | "video";
   body: string;
   url: string;
 }
@@ -42,7 +45,7 @@ const AddHealthEducationModal: React.FC<AddHealthEducationModalProps> = ({
   const [formData, setFormData] = useState<HealthEducationFormData>({
     title: "",
     headline: "",
-    content_type: "article",
+    contentType: "article",
     body: "",
     url: "",
   });
@@ -50,7 +53,7 @@ const AddHealthEducationModal: React.FC<AddHealthEducationModalProps> = ({
   const [formErrors, setFormErrors] = useState({
     title: "",
     headline: "",
-    content_type: "",
+    contentType: "",
     body: "",
     url: "",
   });
@@ -61,16 +64,13 @@ const AddHealthEducationModal: React.FC<AddHealthEducationModalProps> = ({
     "success"
   );
 
-  // Archive toggle state - when true, isPublished should be false; otherwise true
-  const [isArchived, setIsArchived] = useState<boolean>(false);
-
   // RTK Query mutations
-  const [addHealthEducation, { isLoading: isAdding }] =
-    useAddHealthEducationMutation();
-  const [editHealthEducation, { isLoading: isEditing }] =
-    useEditHealthEducationMutation();
+  const [createHealthEducation, { isLoading: isCreating }] =
+    useCreateHealthEducationMutation();
+  const [updateHealthEducation, { isLoading: isUpdating }] =
+    useUpdateHealthEducationMutation();
 
-  const isLoading = isAdding || isEditing;
+  const isLoading = isCreating || isUpdating;
 
   // Initialize form data when editing or viewing
   useEffect(() => {
@@ -78,29 +78,25 @@ const AddHealthEducationModal: React.FC<AddHealthEducationModalProps> = ({
       setFormData({
         title: healthEducation.title,
         headline: healthEducation.headline,
-        content_type: healthEducation.content_type,
+        contentType: healthEducation.contentType,
         body: healthEducation.body,
-        url: healthEducation.url,
+        url: healthEducation.url || "",
       });
-      // Initialize archive toggle based on existing isPublished
-      setIsArchived(!healthEducation.isPublished);
     } else if (mode === "add") {
       setFormData({
         title: "",
         headline: "",
-        content_type: "article",
+        contentType: "article",
         body: "",
         url: "",
       });
-      // By default when creating, content is expected to be active
-      setIsArchived(false);
     }
 
     // Clear errors when modal opens or mode changes
     setFormErrors({
       title: "",
       headline: "",
-      content_type: "",
+      contentType: "",
       body: "",
       url: "",
     });
@@ -126,7 +122,7 @@ const AddHealthEducationModal: React.FC<AddHealthEducationModalProps> = ({
     const errors = {
       title: "",
       headline: "",
-      content_type: "",
+      contentType: "",
       body: "",
       url: "",
     };
@@ -142,16 +138,16 @@ const AddHealthEducationModal: React.FC<AddHealthEducationModalProps> = ({
     }
 
     // Check if content type is selected
-    if (!formData.content_type) {
-      errors.content_type = "This field is required";
+    if (!formData.contentType) {
+      errors.contentType = "This field is required";
     }
 
     // Check content-specific fields
-    if (formData.content_type === "article") {
+    if (formData.contentType === "article") {
       if (!formData.body.trim()) {
         errors.body = "This field is required";
       }
-    } else if (formData.content_type === "video") {
+    } else if (formData.contentType === "video") {
       if (!formData.url.trim()) {
         errors.url = "This field is required";
       } else if (!isValidYouTubeUrl(formData.url)) {
@@ -171,6 +167,32 @@ const AddHealthEducationModal: React.FC<AddHealthEducationModalProps> = ({
     return youtubeRegex.test(url);
   };
 
+  const convertToEmbedUrl = (url: string): string => {
+    // Extract video ID from various YouTube URL formats
+    let videoId = "";
+
+    // Handle youtube.com/watch?v= format
+    const watchMatch = url.match(
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/
+    );
+    if (watchMatch) {
+      videoId = watchMatch[1];
+    }
+
+    // If we found a video ID, return the embed URL
+    if (videoId) {
+      return `https://www.youtube.com/embed/${videoId}`;
+    }
+
+    // If it's already an embed URL, return as is
+    if (url.includes("youtube.com/embed/")) {
+      return url;
+    }
+
+    // If we can't convert it, return the original URL
+    return url;
+  };
+
   // FOR ADD AND EDIT
   const handleSubmit = async () => {
     // Validate form first
@@ -183,83 +205,87 @@ const AddHealthEducationModal: React.FC<AddHealthEducationModalProps> = ({
 
     try {
       if (mode === "add") {
-        // Prepare data for API call (exclude id for new content)
-        const healthEducationData: Omit<
-          HealthEducationContentTable,
-          "id" | "created_at"
-        > = {
+        // Prepare data for API call
+        const healthEducationData: HealthEducationCreate = {
           title: formData.title,
           headline: formData.headline,
-          content_type: formData.content_type,
+          contentType: formData.contentType,
           body: formData.body,
-          url: formData.content_type === "video" ? formData.url : "",
-          category: "",
-          isPublished: !isArchived,
-          created_by: 1, // Current user ID - in real app, get from auth context
+          url:
+            formData.contentType === "video"
+              ? convertToEmbedUrl(formData.url)
+              : null,
         };
 
-        const result = await addHealthEducation(healthEducationData).unwrap();
+        const result = await createHealthEducation(
+          healthEducationData
+        ).unwrap();
 
-        setSnackbarMessage(
-          "Health education content has been added successfully!"
-        );
-        setSnackbarType("success");
-        setShowSnackbar(true);
+        if (result.success && result.data) {
+          setSnackbarMessage(
+            "Health education content has been added successfully!"
+          );
+          setSnackbarType("success");
+          setShowSnackbar(true);
 
-        // Call onSave with the result if provided
-        if (onSave) {
-          onSave(result);
+          // Call onSave with the result if provided
+          if (onSave) {
+            onSave(result.data);
+          }
+
+          onClose();
+        } else {
+          throw new Error(
+            result.message || "Failed to create health education content"
+          );
         }
-
-        onClose();
-      } else if (mode === "edit" && healthEducation?.id) {
+      } else if (mode === "edit" && healthEducation?._id) {
         // Prepare data for edit API call
-        const healthEducationData: Partial<HealthEducationContentTable> = {
+        const healthEducationData: HealthEducationUpdate = {
           title: formData.title,
           headline: formData.headline,
-          content_type: formData.content_type,
+          contentType: formData.contentType,
           body: formData.body,
-          url: formData.content_type === "video" ? formData.url : "",
-          isPublished: !isArchived,
+          url:
+            formData.contentType === "video"
+              ? convertToEmbedUrl(formData.url)
+              : null,
         };
 
-        await editHealthEducation({
-          id: healthEducation.id,
-          healthEducation: healthEducationData,
+        const result = await updateHealthEducation({
+          id: healthEducation._id,
+          data: healthEducationData,
         }).unwrap();
 
-        setSnackbarMessage(
-          "Health education content has been updated successfully!"
-        );
-        setSnackbarType("success");
-        setShowSnackbar(true);
+        if (result.success && result.data) {
+          setSnackbarMessage(
+            "Health education content has been updated successfully!"
+          );
+          setSnackbarType("success");
+          setShowSnackbar(true);
 
-        // Call onSave with the updated data if provided
-        if (onSave) {
-          const updated: HealthEducationContentTable = {
-            id: healthEducation.id,
-            title: formData.title,
-            headline: formData.headline,
-            content_type: formData.content_type,
-            body: formData.body,
-            url: formData.content_type === "video" ? formData.url : "",
-            isPublished: !isArchived,
-            created_by: healthEducation.created_by,
-            created_at: healthEducation.created_at,
-            category: healthEducation.category,
-          };
-          onSave(updated);
+          // Call onSave with the updated data if provided
+          if (onSave) {
+            onSave(result.data);
+          }
+
+          onClose();
+        } else {
+          throw new Error(
+            result.message || "Failed to update health education content"
+          );
         }
-
-        onClose();
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error saving health education content:", err);
-      setSnackbarMessage(
+      const errorMessage =
+        err?.data?.message ||
+        err?.message ||
         `Failed to ${
           mode === "add" ? "add" : "update"
-        } health education content. Please try again.`
-      );
+        } health education content. Please try again.`;
+
+      setSnackbarMessage(errorMessage);
       setSnackbarType("error");
       setShowSnackbar(true);
     }
@@ -269,14 +295,14 @@ const AddHealthEducationModal: React.FC<AddHealthEducationModalProps> = ({
     setFormData({
       title: "",
       headline: "",
-      content_type: "article",
+      contentType: "article",
       body: "",
       url: "",
     });
     setFormErrors({
       title: "",
       headline: "",
-      content_type: "",
+      contentType: "",
       body: "",
       url: "",
     });
@@ -311,6 +337,7 @@ const AddHealthEducationModal: React.FC<AddHealthEducationModalProps> = ({
         variant: "ghost" as const,
         onClick: handleCancel,
         size: "medium" as const,
+        disabled: isLoading,
       },
       {
         label: mode === "edit" ? "Save Changes" : "Submit",
@@ -330,58 +357,36 @@ const AddHealthEducationModal: React.FC<AddHealthEducationModalProps> = ({
         showButton={false}
         title={getModalTitle()}
         modalWidth="w-[640px]"
-        contentHeight="h-[60vh]"
+        contentHeight="h-[55vh]"
         headerOptions="left"
         showFooter={mode === "view" ? false : true}
         footerOptions={mode === "view" ? "left" : "stacked-left"}
         footerButtons={getFooterButtons()}
         content={
           <div className="space-y-4 mt-2">
-            {/* Content Type Selection */}
-            {mode !== "edit" && (
-              <div className="space-y-3">
-                <p className="text-body-base-strong text-szBlack700">
-                  CONTENT TYPE
-                </p>
-                <div className="flex gap-6">
-                  <RadioButton
-                    id="article"
-                    name="content_type"
-                    label="Article"
-                    value="article"
-                    checked={formData.content_type === "article"}
-                    onChange={() =>
-                      handleInputChange("content_type", "article")
-                    }
-                    disabled={mode === "view"}
-                  />
-                  <RadioButton
-                    id="video"
-                    name="content_type"
-                    label="Video"
-                    value="video"
-                    checked={formData.content_type === "video"}
-                    onChange={() => handleInputChange("content_type", "video")}
-                    disabled={mode === "view"}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Archive Toggle */}
             <div className="space-y-2">
-              <p className="text-body-base-strong text-szBlack700">ARCHIVE</p>
-              <div className="flex items-center gap-2">
-                <Toggle
-                  isOn={isArchived}
-                  onToggle={() => setIsArchived((prev) => !prev)}
+              <p className="text-body-base-strong text-szBlack700">
+                CONTENT TYPE
+              </p>
+              <div className="flex gap-6">
+                <RadioButton
+                  id="article"
+                  name="contentType"
+                  label="Article"
+                  value="article"
+                  checked={formData.contentType === "article"}
+                  onChange={() => handleInputChange("contentType", "article")}
                   disabled={mode === "view"}
                 />
-                <p className="text-caption-reg text-szGrey600">
-                  {isArchived
-                    ? "Archived (will not be visible to users)"
-                    : "Active (visible to users)"}
-                </p>
+                <RadioButton
+                  id="video"
+                  name="contentType"
+                  label="Video"
+                  value="video"
+                  checked={formData.contentType === "video"}
+                  onChange={() => handleInputChange("contentType", "video")}
+                  disabled={mode === "view"}
+                />
               </div>
             </div>
 
@@ -403,20 +408,9 @@ const AddHealthEducationModal: React.FC<AddHealthEducationModalProps> = ({
               disabled={mode === "view"}
               error={!!formErrors.headline}
             />
-
             {/* Conditional Fields */}
-            {formData.content_type === "article" ? (
-              <Inputs
-                label="ARTICLE CONTENT"
-                placeholder="Enter article content..."
-                isTextarea
-                value={formData.body}
-                onChange={(e) => handleInputChange("body", e.target.value)}
-                disabled={mode === "view"}
-                error={!!formErrors.body}
-              />
-            ) : (
-              <div className="space-y-2">
+            {formData.contentType === "video" && (
+              <div className="flex flex-col">
                 <Inputs
                   label="VIDEO URL"
                   placeholder="Enter YouTube URL (e.g., https://www.youtube.com/watch?v=...)"
@@ -425,12 +419,23 @@ const AddHealthEducationModal: React.FC<AddHealthEducationModalProps> = ({
                   disabled={mode === "view"}
                   error={!!formErrors.url}
                 />
-                <p className="text-sm text-szGrey500">
-                  Supported formats: (use the embed link) youtu.be/,
-                  youtube.com/embed/
+                <p className="text-caption-reg text-szGrey500 ml-1">
+                  Supported formats: youtube.com/watch?v=..., youtu.be/...,
+                  youtube.com/embed/...
                 </p>
               </div>
             )}
+
+            <Inputs
+              label="ARTICLE CONTENT"
+              placeholder="Enter article content..."
+              isTextarea
+              value={formData.body}
+              onChange={(e) => handleInputChange("body", e.target.value)}
+              disabled={mode === "view"}
+              error={!!formErrors.body}
+              className="min-h-[170px]"
+            />
           </div>
         }
       />

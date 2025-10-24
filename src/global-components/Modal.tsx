@@ -111,8 +111,8 @@ const Modal: React.FC<ModalProps> = ({
       onClick={handleOverlayClick}
     >
       <div
-        className={`rounded-2xl bg-white transform transition-transform duration-200 mx-[34px] ${
-          visible ? "scale-100 opacity-100" : "scale-90 opacity-0"
+        className={`rounded-2xl bg-white transform transition-transform duration-200 mx-[4px] ${
+          visible ? "scale-100 opacity-100" : "scale-0 opacity-0"
         } ${modalWidth}`}
         style={{ boxShadow: "0 16px 24px 0 rgba(0, 0, 0, 0.12)" }}
         onClick={(e) => e.stopPropagation()}

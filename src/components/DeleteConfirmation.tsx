@@ -26,7 +26,7 @@ const DeleteConfirmation: React.FC<DeleteConfirmationProps> = ({
   onClick,
   icon,
   title = "Confirmation",
-  description = "Are you sure you want to delete this item? This action cannot be undone.",
+  description = "Are you sure you want to delete this item?",
   subDescription,
   isLoading = false,
   buttonLabel = "Delete",
@@ -67,19 +67,19 @@ const DeleteConfirmation: React.FC<DeleteConfirmationProps> = ({
         },
       ]}
       content={
-        <div className="flex flex-col items-center gap-4 text-center py-[20px]">
+        <div className="flex flex-col items-center gap-2 text-center py-[20px]">
           <>
             {icon ? (
               icon
             ) : (
-              <Trash size="50" variant="Bulk" className="text-error700" />
+              <Trash size="56" variant="Bulk" className="text-error700 my-2" />
             )}
           </>
-          <h4 className="text-h4 ">{description}</h4>
+          <h6 className="text-h6 ">
+            {description} This action cannot be undone.
+          </h6>
           {subDescription && (
-            <p className="text-body-base-strong text-szGrey600">
-              {subDescription}
-            </p>
+            <p className="text-sm text-szGrey600">{subDescription}</p>
           )}
         </div>
       }
