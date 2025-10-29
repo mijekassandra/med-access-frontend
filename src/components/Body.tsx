@@ -15,10 +15,11 @@ import Appointment from "../features/telemedicine/pages/Appointment";
 import AllAppointment from "../features/telemedicine/pages/AllAppointment";
 import Inventory from "../features/inventory/Inventory";
 import HealthEducation from "../features/health-education/HealthEducation";
-import Reports from "../features/reports/Reports";
 import User from "../features/user/User";
-import PatientRecords from "../features/patient-records/PatientRecords";
 import Announcement from "../features/announcements/Announcement";
+import Services from "../features/services/Services";
+// import Reports from "../features/reports/Reports";
+// import PatientRecords from "../features/patient-records/PatientRecords";
 
 interface BodyProps {
   children?: React.ReactNode;
@@ -89,6 +90,11 @@ const Body = ({ children }: BodyProps) => {
           title: "Announcements",
           subheader: "Manage announcements",
         };
+      case "/services":
+        return {
+          title: "Services",
+          subheader: "Manage offered services",
+        };
       default:
         return {
           title: "Dashboard",
@@ -111,7 +117,7 @@ const Body = ({ children }: BodyProps) => {
           <Route
             path="/medical-records/*"
             element={
-              <RoleGuard allowedRoles={["doctor"]}>
+              <RoleGuard allowedRoles={["admin", "doctor"]}>
                 <MedicalRecordsIndex />
               </RoleGuard>
             }
@@ -119,7 +125,7 @@ const Body = ({ children }: BodyProps) => {
           <Route
             path="/appointments"
             element={
-              <RoleGuard allowedRoles={["admin"]}>
+              <RoleGuard allowedRoles={["admin", "doctor"]}>
                 <Appointment />
               </RoleGuard>
             }
@@ -127,7 +133,7 @@ const Body = ({ children }: BodyProps) => {
           <Route
             path="/appointments/all-appointments"
             element={
-              <RoleGuard allowedRoles={["admin"]}>
+              <RoleGuard allowedRoles={["admin", "doctor"]}>
                 <AllAppointment />
               </RoleGuard>
             }
@@ -153,19 +159,19 @@ const Body = ({ children }: BodyProps) => {
           <Route
             path="/users/*"
             element={
-              <RoleGuard allowedRoles={["admin"]}>
+              <RoleGuard allowedRoles={["admin", "doctor"]}>
                 <User />
               </RoleGuard>
             }
           />
-          <Route
+          {/* <Route
             path="/patient-records"
             element={
               <RoleGuard allowedRoles={["admin"]}>
                 <PatientRecords />
               </RoleGuard>
             }
-          />
+          /> */}
           <Route
             path="/announcements"
             element={
@@ -174,16 +180,24 @@ const Body = ({ children }: BodyProps) => {
               </RoleGuard>
             }
           />
+          <Route
+            path="/services"
+            element={
+              <RoleGuard allowedRoles={["admin"]}>
+                <Services />
+              </RoleGuard>
+            }
+          />
 
           {/* Reports - accessible to both admin and doctor */}
-          <Route
+          {/* <Route
             path="/reports"
             element={
               <RoleGuard allowedRoles={["admin", "doctor"]}>
                 <Reports />
               </RoleGuard>
             }
-          />
+          /> */}
 
           {/* Catch all non-existent routes and redirect to 404 */}
           <Route path="*" element={<Navigate to="/404" replace />} />

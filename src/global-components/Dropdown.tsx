@@ -20,6 +20,7 @@ interface DropdownProps {
   value?: Option | Option[];
   usePortal?: boolean;
   disabled?: boolean;
+  searchable?: boolean;
   onSelectionChange: (selected: Option[] | Option) => void;
   onScroll?: (isAtEnd: boolean) => void;
   error?: boolean;
@@ -36,6 +37,7 @@ const Dropdown: React.FC<DropdownProps> = ({
   value,
   usePortal = false,
   disabled = false,
+  searchable = false,
   onSelectionChange,
   onScroll,
   error = false,
@@ -88,6 +90,8 @@ const Dropdown: React.FC<DropdownProps> = ({
           return;
         }
         setIsOpen(false);
+        // Clear search query when closing dropdown via scroll
+        setSearchQuery("");
       };
       window.addEventListener("scroll", handleScroll, true);
       window.addEventListener("resize", updateDropdownPosition);
@@ -110,6 +114,8 @@ const Dropdown: React.FC<DropdownProps> = ({
         !dropdownRef.current?.contains(target)
       ) {
         setIsOpen(false);
+        // Clear search query when closing dropdown
+        setSearchQuery("");
       }
     };
 
@@ -145,6 +151,8 @@ const Dropdown: React.FC<DropdownProps> = ({
     } else {
       updatedSelection = [option];
       setIsOpen(false);
+      // Clear search query when selecting in single-select mode
+      setSearchQuery("");
     }
 
     setSelectedOptions(updatedSelection);
@@ -197,7 +205,7 @@ const Dropdown: React.FC<DropdownProps> = ({
       }
       onClick={(e) => e.stopPropagation()}
     >
-      {multiSelect && (
+      {searchable && (
         <div className="flex items-center px-4 py-2 border-b border-gray-200">
           <SearchNormal className="text-szPrimary500 mr-2" variant="Bulk" />
           <input
@@ -206,6 +214,16 @@ const Dropdown: React.FC<DropdownProps> = ({
             placeholder="Search here"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              e.stopPropagation();
+              // Close dropdown on Escape key
+              if (e.key === "Escape") {
+                setIsOpen(false);
+                setSearchQuery("");
+              }
+            }}
+            autoFocus
           />
         </div>
       )}

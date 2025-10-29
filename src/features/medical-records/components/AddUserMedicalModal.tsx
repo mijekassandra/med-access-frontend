@@ -46,12 +46,14 @@ const AddUserMedicalModal = ({
     skip: !isOpen, // Only fetch when modal is open
   });
 
-  // Transform users data into dropdown options
+  // Transform users data into dropdown options (only users with role "user")
   const userOptions: Option[] =
-    usersData?.data?.map((user) => ({
-      label: user.fullName,
-      value: user.fullName,
-    })) || [];
+    usersData?.data
+      ?.filter((user) => user.role === "user")
+      ?.map((user) => ({
+        label: user.fullName,
+        value: user.fullName,
+      })) || [];
 
   // Initialize form data when editing or viewing
   useEffect(() => {
@@ -136,6 +138,7 @@ const AddUserMedicalModal = ({
         variant: "ghost" as const,
         onClick: handleCancel,
         size: "medium" as const,
+        disabled: isLoading,
       },
       {
         label: mode === "edit" ? "Save Changes" : "Submit",
@@ -155,7 +158,7 @@ const AddUserMedicalModal = ({
         showButton={false}
         title={getModalTitle()}
         modalWidth="w-[640px]"
-        contentHeight="h-[50vh]"
+        contentHeight="h-[55vh]"
         headerOptions="left"
         showFooter={mode === "view" ? false : true}
         footerOptions={mode === "view" ? "left" : "stacked-left"}
@@ -166,6 +169,7 @@ const AddUserMedicalModal = ({
             <Dropdown
               label="FULL NAME"
               size="small"
+              searchable={true}
               placeholder={
                 usersLoading
                   ? "Loading users..."
@@ -197,9 +201,9 @@ const AddUserMedicalModal = ({
                 disabled={mode === "view"}
               />
               <Inputs
-                label="DATE OF RECORD"
+                label="DATE OF RECORD (dd/mm/yyyy)"
                 placeholder="Enter Date of Record"
-                type="datetime-local"
+                type="date"
                 value={formData.dateOfRecord}
                 onChange={(e) =>
                   handleInputChange("dateOfRecord", e.target.value)
@@ -208,21 +212,18 @@ const AddUserMedicalModal = ({
               />
             </div>
 
-            {/* Full width treatment plan */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">
-              <Inputs
-                label="TREATMENT PLAN"
-                placeholder="Enter Treatment Plan"
-                isTextarea
-                maxCharacter={500}
-                value={formData.treatmentPlan}
-                onChange={(e) =>
-                  handleInputChange("treatmentPlan", e.target.value)
-                }
-                disabled={mode === "view"}
-                className="h-[140px]"
-              />
-            </div>
+            <Inputs
+              label="TREATMENT PLAN"
+              placeholder="Enter Treatment Plan"
+              isTextarea
+              maxCharacter={500}
+              value={formData.treatmentPlan}
+              onChange={(e) =>
+                handleInputChange("treatmentPlan", e.target.value)
+              }
+              disabled={mode === "view"}
+              className="h-[140px]"
+            />
           </div>
         }
       ></Modal>

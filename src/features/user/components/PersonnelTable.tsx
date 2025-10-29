@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 //icons
-import { Add, SearchNormal1, Edit, Trash } from "iconsax-react";
+import { Add, SearchNormal1, Edit, Trash, ExportCurve } from "iconsax-react";
 
 // components
 import Table, {
@@ -14,6 +14,10 @@ import AddPersonnelModal from "./AddPersonnelModal";
 import DeleteConfirmation from "../../../components/DeleteConfirmation";
 import Dropdown, { type Option } from "../../../global-components/Dropdown";
 import SnackbarAlert from "../../../global-components/SnackbarAlert";
+import ButtonsIcon from "../../../global-components/ButtonsIcon";
+import ExportModal from "../../../components/ExportModal";
+import { type ExportColumn } from "../../../types/export";
+import { useExport } from "../../../hooks/useExport";
 
 // API
 import {
@@ -39,6 +43,7 @@ const convertUserToPersonnel = (user: User) => ({
   email: user.email,
   address: user.address,
   dateOfBirth: user.dateOfBirth,
+  dateRegistered: new Date(user.createdAt).toLocaleString(),
 });
 
 const PersonnelTable = () => {
@@ -73,6 +78,31 @@ const PersonnelTable = () => {
     usersData?.data
       ?.filter((user) => user.role === "doctor" || user.role === "admin")
       ?.map(convertUserToPersonnel) || [];
+
+  // Export functionality
+  const exportColumns: ExportColumn[] = [
+    { key: "fullName", header: "Full Name" },
+    { key: "specialization", header: "Specialization" },
+    { key: "prcLicenseNumber", header: "PRC License No." },
+    { key: "gender", header: "Gender" },
+    { key: "contactNumber", header: "Contact No." },
+    { key: "role", header: "Role" },
+    { key: "email", header: "Email" },
+    { key: "address", header: "Address" },
+    { key: "dateRegistered", header: "Date Registered" },
+  ];
+
+  const { openExportModal, exportProps } = useExport({
+    data: personnel,
+    columns: exportColumns,
+    title: "Export Personnel",
+    filename: "personnel",
+    dateConfig: {
+      columnKey: "dateRegistered",
+      label: "Date Registered",
+      dateFormat: "iso",
+    },
+  });
 
   const handleSelectionChange = (selected: Option | Option[]) => {
     const filterValue = Array.isArray(selected)
@@ -110,10 +140,19 @@ const PersonnelTable = () => {
       key: "fullName",
       header: "Full Name",
       sortable: true,
+      width: "160px",
       render: (value) => (
         <span className="text-body-small-reg text-szBlack700 font-medium">
           {value}
         </span>
+      ),
+    },
+    {
+      key: "role",
+      header: "Role",
+      sortable: true,
+      render: (value) => (
+        <span className="text-body-small-reg text-szBlack700">{value}</span>
       ),
     },
     {
@@ -133,24 +172,8 @@ const PersonnelTable = () => {
       ),
     },
     {
-      key: "gender",
-      header: "Gender",
-      sortable: true,
-      render: (value) => (
-        <span className="text-body-small-reg text-szBlack700">{value}</span>
-      ),
-    },
-    {
-      key: "contactNumber",
-      header: "Contact No.",
-      sortable: true,
-      render: (value) => (
-        <span className="text-body-small-reg text-szBlack700">{value}</span>
-      ),
-    },
-    {
-      key: "role",
-      header: "Role",
+      key: "dateRegistered",
+      header: "Date Registered",
       sortable: true,
       render: (value) => (
         <span className="text-body-small-reg text-szBlack700">{value}</span>
@@ -313,6 +336,12 @@ const PersonnelTable = () => {
             size="medium"
             onClick={() => setIsAddPersonnelModalOpen(true)}
           />
+          <ButtonsIcon
+            icon={<ExportCurve size={24} />}
+            variant="secondary"
+            size="large"
+            onClick={openExportModal}
+          />
         </div>
       </div>
 
@@ -425,6 +454,9 @@ const PersonnelTable = () => {
         onClose={closeSnackbar}
         duration={3000}
       />
+
+      {/* Export Modal */}
+      <ExportModal {...exportProps} />
     </div>
   );
 };

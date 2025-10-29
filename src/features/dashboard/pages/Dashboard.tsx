@@ -14,12 +14,12 @@ import {
 import DashboardCard from "../../../global-components/DashboardCard";
 import ContainerWrapper from "../../../components/ContainerWrapper";
 import SnackbarAlert from "../../../global-components/SnackbarAlert";
-import GenericFilteredChart from "../../../components/GenericFilteredChart";
 import MedicalRecordsPieChart from "../../../components/MedicalRecordsPieChart";
 import LatestAnnouncement from "../components/LatestAnnouncement";
+import UpcomingAppointments from "../components/UpcomingAppointments";
+// import GenericFilteredChart from "../../../components/GenericFilteredChart";
 // import UserMedicalRecordTable from "../components/UserMedicalRecordTable";
 // import PersonnelDashboardTable from "../components/PersonnelDashboardTable";
-import UpcomingAppointments from "../components/UpcomingAppointments";
 
 // Redux types
 import type { RootState } from "../../../store";

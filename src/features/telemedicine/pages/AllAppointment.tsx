@@ -52,7 +52,7 @@ const sampleAppointments: Appointment[] = [
     doctorName: "Dr. Smith, John",
     doctorId: "D001",
     appointmentType: "telemedicine",
-    status: "serving",
+    status: "completed",
     scheduledDate: today, // Today's date
     scheduledTime: "09:00",
     reason: "Follow-up consultation",
@@ -66,7 +66,7 @@ const sampleAppointments: Appointment[] = [
     doctorName: "Dr. Johnson, Sarah",
     doctorId: "D002",
     appointmentType: "in-person",
-    status: "accepted",
+    status: "completed",
     scheduledDate: today, // Today's date
     scheduledTime: "10:30",
     reason: "Initial consultation",
@@ -94,7 +94,7 @@ const sampleAppointments: Appointment[] = [
     doctorName: "Dr. Wilson, Emily",
     doctorId: "D004",
     appointmentType: "in-person",
-    status: "cancelled",
+    status: "serving",
     scheduledDate: "2024-06-13",
     scheduledTime: "11:15",
     reason: "Routine check-up",
@@ -122,7 +122,7 @@ const sampleAppointments: Appointment[] = [
     doctorName: "Dr. Miller, Lisa",
     doctorId: "D006",
     appointmentType: "in-person",
-    status: "pending",
+    status: "accepted",
     scheduledDate: "2024-06-17",
     scheduledTime: "08:45",
     reason: "Vaccination",
@@ -136,7 +136,7 @@ const sampleAppointments: Appointment[] = [
     doctorName: "Dr. Smith, John",
     doctorId: "D001",
     appointmentType: "telemedicine",
-    status: "completed",
+    status: "accepted",
     scheduledDate: "2024-06-12",
     scheduledTime: "16:00",
     reason: "Post-surgery follow-up",
@@ -283,7 +283,7 @@ const AllAppointment: React.FC = () => {
     {
       key: "queueNumber",
       header: "Queue No.",
-      width: "140px",
+      width: "80px",
       sortable: true,
     },
     {
@@ -291,13 +291,13 @@ const AllAppointment: React.FC = () => {
       header: "Patient Name",
       width: "180px",
       sortable: true,
+      render: (value) => (
+        <span className="text-body-small-reg text-szBlack700 font-medium">
+          {value}
+        </span>
+      ),
     },
-    {
-      key: "doctorName",
-      header: "Doctor Name",
-      width: "180px",
-      sortable: true,
-    },
+
     {
       key: "appointmentType",
       header: "Type",
@@ -378,15 +378,6 @@ const AllAppointment: React.FC = () => {
             day: "2-digit",
           })}
         </span>
-      ),
-    },
-    {
-      key: "scheduledTime",
-      header: "Time",
-      width: "100px",
-      sortable: true,
-      render: (value) => (
-        <span className="text-body-small-reg text-szBlack700">{value}</span>
       ),
     },
     {

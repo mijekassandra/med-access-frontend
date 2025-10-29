@@ -54,12 +54,14 @@ const AddPregnancyRecordModal = ({
     skip: !isOpen, // Only fetch when modal is open
   });
 
-  // Transform users data into dropdown options
+  // Transform users data into dropdown options (only users with role "user")
   const userOptions: Option[] =
-    usersData?.data?.map((user) => ({
-      label: user.fullName,
-      value: user.fullName,
-    })) || [];
+    usersData?.data
+      ?.filter((user) => user.role === "user")
+      ?.map((user) => ({
+        label: user.fullName,
+        value: user.fullName,
+      })) || [];
 
   // Initialize form data when editing or viewing
   useEffect(() => {
@@ -147,6 +149,7 @@ const AddPregnancyRecordModal = ({
         variant: "ghost" as const,
         onClick: handleCancel,
         size: "medium" as const,
+        disabled: isLoading,
       },
       {
         label: mode === "edit" ? "Save Changes" : "Submit",
@@ -166,7 +169,7 @@ const AddPregnancyRecordModal = ({
         showButton={false}
         title={getModalTitle()}
         modalWidth="w-[640px]"
-        contentHeight="h-[50vh]"
+        contentHeight="h-[55vh]"
         headerOptions="left"
         showFooter={mode === "view" ? false : true}
         footerOptions={mode === "view" ? "left" : "stacked-left"}
@@ -177,6 +180,7 @@ const AddPregnancyRecordModal = ({
             <Dropdown
               label="FULL NAME"
               size="small"
+              searchable={true}
               placeholder={
                 usersLoading
                   ? "Loading users..."

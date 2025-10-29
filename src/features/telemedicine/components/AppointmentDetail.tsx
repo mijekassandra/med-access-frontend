@@ -95,7 +95,7 @@ const AppointmentDetail: React.FC<AppointmentDetailProps> = ({
                 </div>
                 <div>
                   <p className="appointment-card-label-style">Queue Number</p>
-                  <p className="mt-1 appointment-card-value-style bold">
+                  <p className="mt-1 appointment-card-value-style bold text-success700">
                     # 20{" "}
                   </p>
                 </div>
@@ -107,7 +107,7 @@ const AppointmentDetail: React.FC<AppointmentDetailProps> = ({
                     Appointment Type
                   </p>
                   <p className="mt-1 appointment-card-value-style">
-                    Telemedicine Consultation
+                    Telemedicine
                   </p>
                 </div>
                 <div>

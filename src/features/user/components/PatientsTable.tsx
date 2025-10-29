@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 //icons
-import { Add, SearchNormal1, Edit, Trash } from "iconsax-react";
+import { Add, SearchNormal1, Edit, Trash, ExportCurve } from "iconsax-react";
 
 // components
 import Table, {
@@ -12,8 +12,13 @@ import Inputs from "../../../global-components/Inputs";
 import Button from "../../../global-components/Button";
 import AddPatientModal from "./AddPatientModal";
 import DeleteConfirmation from "../../../components/DeleteConfirmation";
-import Dropdown, { type Option } from "../../../global-components/Dropdown";
 import SnackbarAlert from "../../../global-components/SnackbarAlert";
+import ButtonsIcon from "../../../global-components/ButtonsIcon";
+
+// Expprt
+import ExportModal from "../../../components/ExportModal";
+import { type ExportColumn } from "../../../types/export";
+import { useExport } from "../../../hooks/useExport";
 
 // API
 import {
@@ -41,7 +46,6 @@ const convertUserToPatient = (user: User) => ({
 const PatientsTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedFilter, setSelectedFilter] = useState<string>("all");
   const [isAddPatientModalOpen, setIsAddPatientModalOpen] = useState(false);
   const [isEditPatientModalOpen, setIsEditPatientModalOpen] = useState(false);
   const [isViewPatientModalOpen, setIsViewPatientModalOpen] = useState(false);
@@ -70,12 +74,27 @@ const PatientsTable = () => {
       ?.filter((user) => user.role === "user")
       ?.map(convertUserToPatient) || [];
 
-  const handleSelectionChange = (selected: Option | Option[]) => {
-    const filterValue = Array.isArray(selected)
-      ? selected[0]?.value
-      : selected?.value;
-    setSelectedFilter(filterValue || "all");
-  };
+  // Export functionality
+  const exportColumns: ExportColumn[] = [
+    { key: "fullName", header: "Full Name" },
+    { key: "username", header: "Username" },
+    { key: "address", header: "Address" },
+    { key: "email", header: "Email" },
+    { key: "contactNumber", header: "Contact No." },
+    { key: "dateRegistered", header: "Date Registered" },
+  ];
+
+  const { openExportModal, exportProps } = useExport({
+    data: patients,
+    columns: exportColumns,
+    title: "Export Patients",
+    filename: "patients",
+    dateConfig: {
+      columnKey: "dateRegistered",
+      label: "Date Registered",
+      dateFormat: "iso",
+    },
+  });
 
   // Show error snackbar
   const showError = (message: string) => {
@@ -106,6 +125,7 @@ const PatientsTable = () => {
       key: "fullName",
       header: "Full Name",
       sortable: true,
+      width: "160px",
       render: (value) => (
         <span className="text-body-small-reg text-szBlack700 font-medium">
           {value}
@@ -141,6 +161,14 @@ const PatientsTable = () => {
     {
       key: "contactNumber",
       header: "Contact No.",
+      sortable: true,
+      render: (value) => (
+        <span className="text-body-small-reg text-szBlack700">{value}</span>
+      ),
+    },
+    {
+      key: "gender",
+      header: "Gender",
       sortable: true,
       render: (value) => (
         <span className="text-body-small-reg text-szBlack700">{value}</span>
@@ -255,13 +283,7 @@ const PatientsTable = () => {
       value.toString().toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    // Role filter (since all patients are "user" role, this is mainly for consistency)
-    const matchesFilter =
-      selectedFilter === "all" ||
-      (selectedFilter === "new" && patient.dateRegistered) ||
-      (selectedFilter === "returning" && patient.dateRegistered);
-
-    return matchesSearch && matchesFilter;
+    return matchesSearch;
   });
 
   // Show error if API call fails
@@ -312,6 +334,12 @@ const PatientsTable = () => {
             className={`w-fit sm:w-[150px] truncate`}
             size="medium"
             onClick={() => setIsAddPatientModalOpen(true)}
+          />
+          <ButtonsIcon
+            icon={<ExportCurve size={24} />}
+            variant="secondary"
+            size="large"
+            onClick={openExportModal}
           />
         </div>
       </div>
@@ -412,6 +440,9 @@ const PatientsTable = () => {
         onClose={closeSnackbar}
         duration={3000}
       />
+
+      {/* Export Modal */}
+      <ExportModal {...exportProps} />
     </div>
   );
 };

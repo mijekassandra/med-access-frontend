@@ -37,6 +37,7 @@ const AddMedicineModal = ({
 }: AddMedicineModalProps) => {
   const [formData, setFormData] = useState({
     name: "",
+    brand: "",
     description: "",
     dosage: "",
     stock: 0,
@@ -45,6 +46,7 @@ const AddMedicineModal = ({
   });
   const [formErrors, setFormErrors] = useState({
     name: "",
+    brand: "",
     description: "",
     dosage: "",
     stock: "",
@@ -70,6 +72,7 @@ const AddMedicineModal = ({
     if (medicine && (mode === "edit" || mode === "view")) {
       setFormData({
         name: medicine.name,
+        brand: medicine.brand,
         description: medicine.description,
         dosage: medicine.dosage,
         stock: medicine.stock,
@@ -79,6 +82,7 @@ const AddMedicineModal = ({
     } else if (mode === "add") {
       setFormData({
         name: "",
+        brand: "",
         description: "",
         dosage: "",
         stock: 0,
@@ -90,6 +94,7 @@ const AddMedicineModal = ({
     // Clear errors when modal opens or mode changes
     setFormErrors({
       name: "",
+      brand: "",
       description: "",
       dosage: "",
       stock: "",
@@ -122,6 +127,7 @@ const AddMedicineModal = ({
   const validateForm = () => {
     const errors = {
       name: "",
+      brand: "",
       description: "",
       dosage: "",
       stock: "",
@@ -183,6 +189,7 @@ const AddMedicineModal = ({
         // Prepare data for API call (exclude id for new medicine)
         const medicineData = {
           name: formData.name,
+          brand: formData.brand,
           description: formData.description,
           dosage: formData.dosage,
           stock: formData.stock,
@@ -226,6 +233,7 @@ const AddMedicineModal = ({
         if (onSave) {
           onSave({
             id: medicine.id,
+            brand: formData.brand,
             ...medicineData,
           });
         }
@@ -247,6 +255,7 @@ const AddMedicineModal = ({
   const handleCancel = () => {
     setFormData({
       name: "",
+      brand: "",
       description: "",
       dosage: "",
       stock: 0,
@@ -255,6 +264,7 @@ const AddMedicineModal = ({
     });
     setFormErrors({
       name: "",
+      brand: "",
       description: "",
       dosage: "",
       stock: "",
@@ -318,15 +328,24 @@ const AddMedicineModal = ({
         footerButtons={getFooterButtons()}
         content={
           <div className="space-y-4 mt-2">
-            {/* Full width inputs */}
-            <Inputs
-              label="MEDICINE NAME"
-              placeholder="Enter Medicine Name"
-              value={formData.name}
-              onChange={(e) => handleInputChange("name", e.target.value)}
-              disabled={mode === "view"}
-              error={!!formErrors.name}
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">
+              <Inputs
+                label="MEDICINE NAME"
+                placeholder="Enter Medicine Name"
+                value={formData.name}
+                onChange={(e) => handleInputChange("name", e.target.value)}
+                disabled={mode === "view"}
+                error={!!formErrors.name}
+              />
+              <Inputs
+                label="BRAND"
+                placeholder="Enter Brand Name"
+                value={formData.brand}
+                onChange={(e) => handleInputChange("name", e.target.value)}
+                disabled={mode === "view"}
+                error={!!formErrors.name}
+              />
+            </div>
 
             {/* 2-column grid for other inputs */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">
@@ -373,7 +392,8 @@ const AddMedicineModal = ({
               label="DESCRIPTION"
               placeholder="Enter Description"
               isTextarea
-              maxCharacter={150}
+              className="h-[110px]"
+              maxCharacter={200}
               value={formData.description}
               onChange={(e) => handleInputChange("description", e.target.value)}
               disabled={mode === "view"}

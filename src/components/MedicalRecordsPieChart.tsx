@@ -95,7 +95,7 @@ const MedicalRecordsPieChart: React.FC<MedicalRecordsPieChartProps> = ({
       className={`bg-white rounded-lg shadow-sm px-3 py-3 border border-gray-200 ${className}`}
     >
       <div className="flex justify-between items-center gap-3 mb-3">
-        <h5 className="text-h5 text-szBlack700">Medical Records</h5>
+        <h5 className="text-h5 text-szBlack700">Medicine Inventory</h5>
         <div className="text-right">
           <p className="text-caption-reg text-szGrey500">Total</p>
           <p className="text-h4 text-szBlack900 font-bold">

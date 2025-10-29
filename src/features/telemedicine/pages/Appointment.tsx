@@ -289,7 +289,7 @@ const Telemedicine = () => {
         <div className="flex flex-col lg:flex-row items-end justify-between gap-3 md:gap-6">
           <div className="w-full">
             <Inputs
-              placeholder="Search appointments..."
+              placeholder="Search appointments today by name..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               icon={SearchNormal1}

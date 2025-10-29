@@ -12,7 +12,7 @@ import {
   Element4,
   ArrowLeft2,
   ArrowRight2,
-  ArchiveBook,
+  BoxAdd,
   Profile2User,
   NotificationBing,
 } from "iconsax-react";
@@ -115,7 +115,12 @@ const Sidebar: React.FC<SidebarProps> = ({ className = "" }) => {
           icon: <DocumentText />,
           path: "/medical-records",
         },
-
+        {
+          id: "appointments",
+          label: "APPOINTMENTS",
+          icon: <Calendar />,
+          path: "/appointments",
+        },
         {
           id: "health-education",
           label: "HEALTH EDUCATION",
@@ -123,11 +128,17 @@ const Sidebar: React.FC<SidebarProps> = ({ className = "" }) => {
           path: "/health-education",
         },
         {
-          id: "reports",
-          label: "REPORTS",
-          icon: <ArchiveBook />,
-          path: "/reports",
+          id: "users",
+          label: "USERS",
+          icon: <Profile2User />,
+          path: "/users",
         },
+        // {
+        //   id: "reports",
+        //   label: "REPORTS",
+        //   icon: <ArchiveBook />,
+        //   path: "/reports",
+        // },
       ],
       admin: [
         {
@@ -135,6 +146,12 @@ const Sidebar: React.FC<SidebarProps> = ({ className = "" }) => {
           label: "USERS",
           icon: <Profile2User />,
           path: "/users",
+        },
+        {
+          id: "medical-records",
+          label: "MEDICAL RECORDS",
+          icon: <DocumentText />,
+          path: "/medical-records",
         },
         {
           id: "appointments",
@@ -148,12 +165,13 @@ const Sidebar: React.FC<SidebarProps> = ({ className = "" }) => {
           icon: <ArchiveBox />,
           path: "/medicine-inventory",
         },
-        {
-          id: "patient-records",
-          label: "PATIENT RECORDS",
-          icon: <DocumentText />,
-          path: "/patient-records",
-        },
+
+        // {
+        //   id: "patient-records",
+        //   label: "PATIENT RECORDS",
+        //   icon: <DocumentText />,
+        //   path: "/patient-records",
+        // },
         {
           id: "announcements",
           label: "ANNOUNCEMENTS",
@@ -167,10 +185,10 @@ const Sidebar: React.FC<SidebarProps> = ({ className = "" }) => {
           path: "/health-education",
         },
         {
-          id: "reports",
-          label: "REPORTS",
-          icon: <ArchiveBook />,
-          path: "/reports",
+          id: "services",
+          label: "SERVICES",
+          icon: <BoxAdd />,
+          path: "/services",
         },
       ],
     };

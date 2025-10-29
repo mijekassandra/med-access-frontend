@@ -1,17 +1,9 @@
 {
   "inventory": [
     {
-      "id": "1",
-      "name": "Paracetamol",
-      "description": "Analgesic and antipyretic medication for pain relief and fever reduction",
-      "dosage": "500mg",
-      "stock": 250,
-      "expiration_date": "2026-03-15",
-      "batch_no": "PAR2024A"
-    },
-    {
       "id": "2",
       "name": "Amoxicillin",
+      "brand": "Amoxil",
       "description": "Broad-spectrum antibiotic for bacterial infections",
       "dosage": "500mg",
       "stock": 120,
@@ -21,6 +13,7 @@
     {
       "id": "3",
       "name": "Ibuprofen",
+      "brand": "Advil",
       "description": "Nonsteroidal anti-inflammatory drug for pain and inflammation",
       "dosage": "400mg",
       "stock": 180,
@@ -28,17 +21,19 @@
       "batch_no": "IBU2024C"
     },
     {
-      "id": "4",
-      "name": "Omeprazole",
-      "description": "Proton pump inhibitor for acid reflux and stomach ulcers",
-      "dosage": "20mg",
-      "stock": 95,
+      "id": "3",
+      "name": "Ibuprofen",
+      "brand": "Generic",
+      "description": "Nonsteroidal anti-inflammatory drug for pain and inflammation",
+      "dosage": "400mg",
+      "stock": 205,
       "expiration_date": "2025-06-25",
-      "batch_no": "OME2024D"
+      "batch_no": "IBUG2024C"
     },
     {
       "id": "5",
       "name": "Metformin",
+      "brand": "Glucophage",
       "description": "Antidiabetic medication for type 2 diabetes management",
       "dosage": "500mg",
       "stock": 150,
@@ -48,6 +43,7 @@
     {
       "id": "6",
       "name": "Lisinopril",
+      "brand": "Prinivil",
       "description": "ACE inhibitor for hypertension and heart failure treatment",
       "dosage": "10mg",
       "stock": 80,
@@ -57,6 +53,7 @@
     {
       "id": "7",
       "name": "Atorvastatin",
+      "brand": "Generic",
       "description": "Statin medication for cholesterol management and cardiovascular protection",
       "dosage": "20mg",
       "stock": 110,
@@ -66,6 +63,7 @@
     {
       "id": "8",
       "name": "Levothyroxine",
+      "brand": "Generic",
       "description": "Thyroid hormone replacement for hypothyroidism",
       "dosage": "50mcg",
       "stock": 75,
@@ -75,74 +73,63 @@
     {
       "id": "9",
       "name": "Amlodipine",
+      "brand": "Generic",
       "description": "Calcium channel blocker for hypertension and angina",
       "dosage": "5mg",
       "stock": 90,
       "expiration_date": "2025-10-12",
       "batch_no": "AML2024I"
+    }
+  ],
+  "services": [
+    {
+      "id": "1",
+      "name": "Consultation",
+      "description": "General medical consultation with healthcare provider",
+      "price": 250,
+      "image": ""
     },
     {
-      "id": "10",
-      "name": "Ciprofloxacin",
-      "description": "Fluoroquinolone antibiotic for various bacterial infections",
-      "dosage": "500mg",
-      "stock": 65,
-      "expiration_date": "2025-05-18",
-      "batch_no": "CIP2024J"
+      "id": "2",
+      "name": "Immunization",
+      "description": "Vaccination services for children and adults including routine immunizations",
+      "price": 150,
+      "image": ""
     },
     {
-      "id": "11",
-      "name": "Prednisone",
-      "description": "Corticosteroid for inflammation and immune system suppression",
-      "dosage": "5mg",
-      "stock": 140,
-      "expiration_date": "2026-02-28",
-      "batch_no": "PRE2024K"
+      "id": "3",
+      "name": "Prenatal",
+      "description": "Prenatal care services for expecting mothers including check-ups and monitoring",
+      "price": 300,
+      "image": ""
     },
     {
-      "id": "12",
-      "name": "Warfarin",
-      "description": "Anticoagulant for blood clot prevention and treatment",
-      "dosage": "5mg",
-      "stock": 45,
-      "expiration_date": "2025-04-22",
-      "batch_no": "WAR2024L"
+      "id": "4",
+      "name": "ABTC",
+      "description": "Animal Bite Treatment Center services for rabies prevention and treatment",
+      "price": 200,
+      "image": ""
     },
     {
-      "id": "13",
-      "name": "Furosemide",
-      "description": "Loop diuretic for fluid retention and hypertension",
-      "dosage": "40mg",
-      "stock": 85,
-      "expiration_date": "2025-08-30",
-      "batch_no": "FUR2024M"
+      "id": "5",
+      "name": "TB Dots",
+      "description": "Tuberculosis Directly Observed Treatment Short-course program",
+      "price": 100,
+      "image": ""
     },
     {
-      "id": "14",
-      "name": "Tramadol",
-      "description": "Opioid analgesic for moderate to severe pain management",
-      "dosage": "50mg",
-      "stock": 60,
-      "expiration_date": "2025-12-05",
-      "batch_no": "TRA2024N"
+      "id": "6",
+      "name": "Laboratory",
+      "description": "Laboratory services including blood tests, urine analysis, and other diagnostic tests",
+      "price": 180,
+      "image": ""
     },
     {
-      "id": "15",
-      "name": "Diazepam",
-      "description": "Benzodiazepine for anxiety, muscle spasms, and seizures",
-      "dosage": "5mg",
-      "stock": 35,
-      "expiration_date": "2025-06-15",
-      "batch_no": "DIA2024O"
-    },
-    {
-      "id": "16",
-      "name": "Insulin Glargine",
-      "description": "Long-acting insulin for diabetes management",
-      "dosage": "100 units/ml",
-      "stock": 25,
-      "expiration_date": "2025-03-10",
-      "batch_no": "INS2024P"
+      "id": "7",
+      "name": "Family Planning",
+      "description": "Family planning services including counseling and contraceptive methods",
+      "price": 120,
+      "image": ""
     }
   ],
   "health-reports": [

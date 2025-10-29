@@ -64,9 +64,8 @@ const Inventory: React.FC = () => {
   //! Define columns -----------------------
   const columns: TableColumn<MedicineTable>[] = [
     {
-      key: "id",
-      header: "Med ID",
-      width: "100px",
+      key: "name",
+      header: "Name",
       sortable: true,
       render: (value) => (
         <span className="text-body-small-reg text-szBlack700 font-medium">
@@ -75,8 +74,8 @@ const Inventory: React.FC = () => {
       ),
     },
     {
-      key: "name",
-      header: "Name",
+      key: "brand",
+      header: "Brand",
       sortable: true,
       render: (value) => (
         <span className="text-body-small-reg text-szBlack700 font-medium">
@@ -128,15 +127,6 @@ const Inventory: React.FC = () => {
             day: "2-digit",
           })}
         </span>
-      ),
-    },
-    {
-      key: "batch_no",
-      header: "Batch no.",
-      width: "120px",
-      sortable: true,
-      render: (value) => (
-        <span className="text-body-small-reg text-szBlack700">{value}</span>
       ),
     },
   ];
@@ -229,6 +219,7 @@ const Inventory: React.FC = () => {
         // Search in specific fields with priority
         const searchableFields = [
           medicine.name,
+          medicine.brand,
           medicine.description,
           medicine.dosage,
           medicine.batch_no,
