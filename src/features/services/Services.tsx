@@ -5,76 +5,72 @@ import ContainerWrapper from "../../components/ContainerWrapper";
 import ServiceCard from "./components/ServiceCard";
 import Button from "../../global-components/Button";
 import ServiceModal from "./components/ServiceModal";
+import Loading from "../../components/Loading";
+
+// API
+import {
+  useGetServicesQuery,
+  useCreateServiceMutation,
+} from "./api/serviceApi";
 
 // icons
 import { Add } from "iconsax-react";
 
-// Mock data - in a real app, this would come from an API
-const servicesData = [
-  {
-    id: "1",
-    name: "Consultation",
-    price: 250,
-    description:
-      "General medical consultation with our healthcare professionals for diagnosis, treatment, and health advice.",
-    image: "src/assets/consultation-img.jpg",
-  },
-  {
-    id: "2",
-    name: "Immunization",
-    price: 150,
-    description:
-      "Vaccination services to protect against various diseases including routine immunizations for children and adults.",
-    image: "src/assets/immunization-img.png",
-  },
-  {
-    id: "3",
-    name: "Prenatal",
-    price: 300,
-    description:
-      "Comprehensive prenatal care including regular check-ups, monitoring, and guidance for expecting mothers.",
-    image: "",
-  },
-  {
-    id: "4",
-    name: "ABTC",
-    price: 200,
-    description:
-      "Animal Bite Treatment Center providing immediate care and rabies vaccination for animal bite victims.",
-    image: "",
-  },
-  {
-    id: "5",
-    name: "TB Dots",
-    price: 100,
-    description:
-      "Directly Observed Treatment Short-course program for tuberculosis patients ensuring proper medication adherence.",
-    image: "",
-  },
-  {
-    id: "6",
-    name: "Laboratory",
-    price: 180,
-    description:
-      "Diagnostic laboratory services including blood tests, urine analysis, and other medical examinations.",
-    image: "",
-  },
-  {
-    id: "7",
-    name: "Family Planning",
-    price: 120,
-    description:
-      "Family planning services and counseling to help families make informed decisions about their reproductive health.",
-    image: "",
-  },
-];
-
 const Services = () => {
   const [isServiceModalOpen, setIsServiceModalOpen] = useState(false);
+
+  // API hooks
+  const {
+    data: servicesResponse,
+    isLoading,
+    error,
+    refetch,
+  } = useGetServicesQuery();
+
+  const [createService] = useCreateServiceMutation();
 
   const handleOpenServiceModal = () => {
     setIsServiceModalOpen(true);
   };
+
+  const handleCreateService = async (serviceData: any) => {
+    try {
+      await createService(serviceData).unwrap();
+      // The cache will automatically update due to invalidatesTags
+    } catch (error) {
+      console.error("Failed to create service:", error);
+      throw error; // Re-throw to let the modal handle the error
+    }
+  };
+
+  // Extract services data from API response
+  // Temporary fix: Handle the actual response structure from your backend
+  const servicesData = servicesResponse?.[0]?.data || [];
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <ContainerWrapper>
+        <div className="flex justify-center items-center h-64">
+          <Loading message="Loading services..." />
+        </div>
+      </ContainerWrapper>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <ContainerWrapper>
+        <div className="flex flex-col justify-center items-center h-64 space-y-4">
+          <p className="text-red-500 text-center">
+            Failed to load services. Please try again.
+          </p>
+          <Button label="Retry" variant="primary" onClick={() => refetch()} />
+        </div>
+      </ContainerWrapper>
+    );
+  }
 
   return (
     <ContainerWrapper>
@@ -82,7 +78,7 @@ const Services = () => {
         {/* Header */}
         <div className="flex flex-col justify-center items-center w-full gap-2">
           <h1 className="text-h1 text-szPrimary500 text-center">
-            RHU Jasaan’s Health Services
+            RHU Jasaan's Health Services
           </h1>
           <p className="text-body-small-reg text-center text-szBlack500 max-w-[80%]">
             The Rural Health Unit (RHU) of Jasaan is dedicated to providing
@@ -106,14 +102,14 @@ const Services = () => {
 
         {/* Services Grid */}
         <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 ">
-          {servicesData.map((service) => (
+          {servicesData.map((service: any, index: number) => (
             <ServiceCard
-              key={service.id}
-              id={service.id}
+              key={service._id || service.id || index}
+              id={service._id || service.id}
               name={service.name}
               price={service.price}
               description={service.description}
-              image={service.image}
+              image={service.image || ""}
             />
           ))}
         </div>
@@ -122,6 +118,7 @@ const Services = () => {
       <ServiceModal
         isOpen={isServiceModalOpen}
         onClose={() => setIsServiceModalOpen(false)}
+        onSave={handleCreateService}
       />
     </ContainerWrapper>
   );

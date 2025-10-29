@@ -16,6 +16,7 @@ interface ServiceModalProps {
 
 export interface ServiceFormData {
   name: string;
+  price: number;
   description: string;
   image: File | null;
   imagePreview: string;
@@ -30,6 +31,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
 }) => {
   const [formData, setFormData] = useState<ServiceFormData>({
     name: "",
+    price: 0,
     description: "",
     image: null,
     imagePreview: "",
@@ -37,6 +39,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
 
   const [formErrors, setFormErrors] = useState({
     name: "",
+    price: "",
     description: "",
     image: "",
   });
@@ -53,6 +56,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
     if (service && (mode === "edit" || mode === "view")) {
       setFormData({
         name: service.name || "",
+        price: service.price || 0,
         description: service.description || "",
         image: null,
         imagePreview: service.imageUrl || "",
@@ -60,6 +64,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
     } else if (mode === "add") {
       setFormData({
         name: "",
+        price: 0,
         description: "",
         image: null,
         imagePreview: "",
@@ -69,12 +74,13 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
     // Clear errors when modal opens or mode changes
     setFormErrors({
       name: "",
+      price: "",
       description: "",
       image: "",
     });
   }, [service, mode, isOpen]);
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | number) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -128,6 +134,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
   const validateForm = () => {
     const errors = {
       name: "",
+      price: "",
       description: "",
       image: "",
     };
@@ -135,6 +142,11 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
     // Check if name is empty
     if (!formData.name.trim()) {
       errors.name = "This field is required";
+    }
+
+    // Check if price is valid
+    if (formData.price <= 0) {
+      errors.price = "Price must be greater than 0";
     }
 
     // Check if description is empty
@@ -168,24 +180,21 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
       // Prepare data for API call
       const serviceData = {
         name: formData.name,
+        price: formData.price,
         description: formData.description,
         image: formData.image,
-        imagePreview: formData.imagePreview,
       };
 
-      // Simulate API call - replace with actual API call
-      console.log("Service data:", serviceData);
+      // Call onSave with the service data
+      if (onSave) {
+        await onSave(serviceData);
+      }
 
       setSnackbarMessage(
         `Service has been ${mode === "add" ? "added" : "updated"} successfully!`
       );
       setSnackbarType("success");
       setShowSnackbar(true);
-
-      // Call onSave with the result if provided
-      if (onSave) {
-        onSave(serviceData);
-      }
 
       onClose();
     } catch (err: any) {
@@ -208,12 +217,14 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
   const handleCancel = () => {
     setFormData({
       name: "",
+      price: 0,
       description: "",
       image: null,
       imagePreview: "",
     });
     setFormErrors({
       name: "",
+      price: "",
       description: "",
       image: "",
     });
@@ -283,6 +294,19 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
               onChange={(e) => handleInputChange("name", e.target.value)}
               disabled={mode === "view"}
               error={!!formErrors.name}
+            />
+
+            {/* Service Price Input */}
+            <Inputs
+              label="SERVICE PRICE"
+              placeholder="Enter service price"
+              type="number"
+              value={formData.price.toString()}
+              onChange={(e) =>
+                handleInputChange("price", parseFloat(e.target.value) || 0)
+              }
+              disabled={mode === "view"}
+              error={!!formErrors.price}
             />
 
             {/* Service Description Input */}

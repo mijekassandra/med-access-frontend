@@ -7,6 +7,7 @@ import { announcementApi } from './features/announcements/api/announcementApi'
 import { healthEducationApi } from './features/health-education/api/healthEducationApi'
 import { authApi } from './features/auth/api/authApi'
 import { userApi } from './features/user/api/userApi'
+import { serviceApi } from './features/services/api/serviceApi'
 
 // Slices
 import authReducer from './features/auth/slice/authSlice'
@@ -20,6 +21,7 @@ export const store = configureStore({
     [healthEducationApi.reducerPath]: healthEducationApi.reducer,
     [authApi.reducerPath]: authApi.reducer,
     [userApi.reducerPath]: userApi.reducer,
+    [serviceApi.reducerPath]: serviceApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -28,7 +30,8 @@ export const store = configureStore({
       announcementApi.middleware,
       healthEducationApi.middleware,
       authApi.middleware,
-      userApi.middleware
+      userApi.middleware,
+      serviceApi.middleware
     ),
 })
 

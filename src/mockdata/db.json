@@ -83,53 +83,67 @@
   ],
   "services": [
     {
-      "id": "1",
-      "name": "Consultation",
-      "description": "General medical consultation with healthcare provider",
-      "price": 250,
-      "image": ""
+      "success": true,
+      "count": 7,
+      "data": [
+        {
+          "id": "1",
+          "name": "Consultation",
+          "price": 250,
+          "description": "General medical consultation with our healthcare professionals for diagnosis, treatment, and health advice.",
+          "image": "src/assets/consultation-img.jpg"
+        },
+        {
+          "id": "2",
+          "name": "Immunization",
+          "price": 150,
+          "description": "Vaccination services to protect against various diseases including routine immunizations for children and adults.",
+          "image": "src/assets/immunization-img.png"
+        },
+        {
+          "id": "3",
+          "name": "Prenatal",
+          "price": 300,
+          "description": "Comprehensive prenatal care including regular check-ups, monitoring, and guidance for expecting mothers.",
+          "image": ""
+        },
+        {
+          "id": "4",
+          "name": "ABTC",
+          "price": 200,
+          "description": "Animal Bite Treatment Center providing immediate care and rabies vaccination for animal bite victims.",
+          "image": ""
+        },
+        {
+          "id": "5",
+          "name": "TB Dots",
+          "price": 100,
+          "description": "Directly Observed Treatment Short-course program for tuberculosis patients ensuring proper medication adherence.",
+          "image": ""
+        },
+        {
+          "id": "6",
+          "name": "Laboratory",
+          "price": 180,
+          "description": "Diagnostic laboratory services including blood tests, urine analysis, and other medical examinations.",
+          "image": ""
+        },
+        {
+          "id": "7",
+          "name": "Family Planning",
+          "price": 120,
+          "description": "Family planning services and counseling to help families make informed decisions about their reproductive health.",
+          "image": ""
+        }
+      ],
+      "id": "f98b"
     },
     {
-      "id": "2",
-      "name": "Immunization",
-      "description": "Vaccination services for children and adults including routine immunizations",
-      "price": 150,
-      "image": ""
-    },
-    {
-      "id": "3",
-      "name": "Prenatal",
-      "description": "Prenatal care services for expecting mothers including check-ups and monitoring",
+      "id": "4de0",
+      "name": "sample",
       "price": 300,
-      "image": ""
-    },
-    {
-      "id": "4",
-      "name": "ABTC",
-      "description": "Animal Bite Treatment Center services for rabies prevention and treatment",
-      "price": 200,
-      "image": ""
-    },
-    {
-      "id": "5",
-      "name": "TB Dots",
-      "description": "Tuberculosis Directly Observed Treatment Short-course program",
-      "price": 100,
-      "image": ""
-    },
-    {
-      "id": "6",
-      "name": "Laboratory",
-      "description": "Laboratory services including blood tests, urine analysis, and other diagnostic tests",
-      "price": 180,
-      "image": ""
-    },
-    {
-      "id": "7",
-      "name": "Family Planning",
-      "description": "Family planning services including counseling and contraceptive methods",
-      "price": 120,
-      "image": ""
+      "description": "sample",
+      "image": {}
     }
   ],
   "health-reports": [
