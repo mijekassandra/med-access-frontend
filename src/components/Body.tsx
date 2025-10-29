@@ -11,7 +11,8 @@ import RoleGuard from "../features/auth/components/RoleGuard";
 // Feature pages
 import Dashboard from "../features/dashboard/pages/Dashboard";
 import MedicalRecordsIndex from "../features/medical-records";
-import Telemedicine from "../features/telemedicine/pages/Telemedicine";
+import Appointment from "../features/telemedicine/pages/Appointment";
+import AllAppointment from "../features/telemedicine/pages/AllAppointment";
 import Inventory from "../features/inventory/Inventory";
 import HealthEducation from "../features/health-education/HealthEducation";
 import Reports from "../features/reports/Reports";
@@ -42,10 +43,15 @@ const Body = ({ children }: BodyProps) => {
           title: "Medical Records",
           subheader: "Manage and view patient medical records",
         };
-      case "/telemedicine":
+      case "/appointments":
         return {
-          title: "Telemedicine",
-          subheader: "Manage virtual consultations and appointments",
+          title: "Appointments",
+          subheader: "Manage in-person and telemedicine appointments",
+        };
+      case "/appointments/all-appointments":
+        return {
+          title: "All Appointments",
+          subheader: "Manage all appointments",
         };
       case "/users":
         return {
@@ -111,10 +117,18 @@ const Body = ({ children }: BodyProps) => {
             }
           />
           <Route
-            path="/telemedicine"
+            path="/appointments"
             element={
-              <RoleGuard allowedRoles={["doctor"]}>
-                <Telemedicine />
+              <RoleGuard allowedRoles={["admin"]}>
+                <Appointment />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/appointments/all-appointments"
+            element={
+              <RoleGuard allowedRoles={["admin"]}>
+                <AllAppointment />
               </RoleGuard>
             }
           />

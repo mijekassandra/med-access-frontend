@@ -184,4 +184,12 @@
     background-repeat: no-repeat;
     background-size: 100% 100%;
   }
+
+  .appointment-card-label-style {
+    @apply text-szBlack700 text-body-base-strong leading-tight;
+  }
+
+  .appointment-card-value-style {
+    @apply text-szDarkGrey600 text-body-small-strong font-dmSans font-medium;
+  }
 }

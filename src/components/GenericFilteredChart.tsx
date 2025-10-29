@@ -83,11 +83,11 @@ const GenericFilteredChart: React.FC<GenericFilteredChartProps> = ({
       legend: {
         position: "bottom" as const,
         labels: {
-          padding: 20,
+          padding: 12,
           usePointStyle: true,
           font: {
             family: "Montserrat, sans-serif",
-            size: 12,
+            size: 11,
             weight: 600,
           },
           color: "#303030", // szBlack700
@@ -124,7 +124,7 @@ const GenericFilteredChart: React.FC<GenericFilteredChartProps> = ({
 
   return (
     <div
-      className={`bg-white rounded-lg shadow-sm p-6 border border-gray-200 ${className}`}
+      className={`bg-white rounded-lg shadow-sm px-3 py-2 border border-gray-200 ${className}`}
     >
       {/* Header with title, total, and filter */}
       <div className="flex justify-between items-center gap-3 mb-3">

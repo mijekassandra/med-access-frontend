@@ -2,7 +2,7 @@ import React from "react";
 
 //icons
 import { InfoCircle } from "iconsax-react";
-
+import Checked from "../assets/checked.png";
 //components
 import Modal from "../global-components/Modal";
 
@@ -22,7 +22,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   isOpen,
   onClose,
   onClick,
-  image,
+  image = { Checked },
   description,
   content,
   buttonLabel,
@@ -43,6 +43,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
       headerOptions="left"
       footerOptions="center"
       showCloseIcon={false}
+      zIndex={20}
       footerButtons={[
         {
           label: "Cancel",
@@ -59,12 +60,16 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         },
       ]}
       content={
-        <div className="flex flex-col gap-[8px] items-center">
-          {image && <img src={image} alt="confirmation" className="w-[80px]" />}
+        <div className="flex flex-col gap-4 items-center">
+          {image && (
+            <img
+              src={typeof image === "string" ? image : image.Checked}
+              alt="confirmation"
+              className="w-[86px]"
+            />
+          )}
 
-          <p className="text-body-base-strong text-szBlack800 text-center">
-            {description}
-          </p>
+          <h6 className="text-h6 text-szBlack800 text-center">{description}</h6>
           <div className="flex flex-col gap-[8px] w-full">{content}</div>
         </div>
       }

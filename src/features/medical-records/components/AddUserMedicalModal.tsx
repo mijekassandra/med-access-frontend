@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Modal from "../../../global-components/Modal";
 import Inputs from "../../../global-components/Inputs";
 import SnackbarAlert from "../../../global-components/SnackbarAlert";
+import Dropdown, { type Option } from "../../../global-components/Dropdown";
+import { useGetAllUsersQuery } from "../../user/api/userApi";
 
 interface MedicalRecord {
   id: string;
@@ -34,6 +36,22 @@ const AddUserMedicalModal = ({
   });
   const [isLoading, setIsLoading] = useState(false);
   const [showSnackbar, setShowSnackbar] = useState(false);
+
+  // Fetch all users for the dropdown
+  const {
+    data: usersData,
+    isLoading: usersLoading,
+    error: usersError,
+  } = useGetAllUsersQuery(undefined, {
+    skip: !isOpen, // Only fetch when modal is open
+  });
+
+  // Transform users data into dropdown options
+  const userOptions: Option[] =
+    usersData?.data?.map((user) => ({
+      label: user.fullName,
+      value: user.fullName,
+    })) || [];
 
   // Initialize form data when editing or viewing
   useEffect(() => {
@@ -145,12 +163,28 @@ const AddUserMedicalModal = ({
         content={
           <div className="space-y-4 mt-2">
             {/* Full width inputs */}
-            <Inputs
+            <Dropdown
               label="FULL NAME"
-              placeholder="Enter Full Name"
-              value={formData.fullName}
-              onChange={(e) => handleInputChange("fullName", e.target.value)}
-              disabled={mode === "view"}
+              size="small"
+              placeholder={
+                usersLoading
+                  ? "Loading users..."
+                  : usersError
+                  ? "Error loading users"
+                  : "Select Full Name"
+              }
+              options={userOptions}
+              value={userOptions.find(
+                (option) => option.value === formData.fullName
+              )}
+              onSelectionChange={(selected) => {
+                const selectedValue = Array.isArray(selected)
+                  ? selected[0]?.value
+                  : selected.value;
+                handleInputChange("fullName", selectedValue || "");
+              }}
+              disabled={mode === "view" || usersLoading || !!usersError}
+              usePortal={true}
             />
 
             {/* 2-column grid for other inputs */}
@@ -175,18 +209,20 @@ const AddUserMedicalModal = ({
             </div>
 
             {/* Full width treatment plan */}
-            <Inputs
-              label="TREATMENT PLAN"
-              placeholder="Enter Treatment Plan"
-              isTextarea
-              maxCharacter={500}
-              value={formData.treatmentPlan}
-              onChange={(e) =>
-                handleInputChange("treatmentPlan", e.target.value)
-              }
-              disabled={mode === "view"}
-              className="h-[140px]"
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">
+              <Inputs
+                label="TREATMENT PLAN"
+                placeholder="Enter Treatment Plan"
+                isTextarea
+                maxCharacter={500}
+                value={formData.treatmentPlan}
+                onChange={(e) =>
+                  handleInputChange("treatmentPlan", e.target.value)
+                }
+                disabled={mode === "view"}
+                className="h-[140px]"
+              />
+            </div>
           </div>
         }
       ></Modal>

@@ -5,7 +5,7 @@ import { useAuth } from "../features/auth/hooks/useAuth";
 //icons
 import {
   DocumentText,
-  Monitor,
+  Calendar,
   Logout,
   ArchiveBox,
   Health,
@@ -115,12 +115,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className = "" }) => {
           icon: <DocumentText />,
           path: "/medical-records",
         },
-        {
-          id: "telemedicine",
-          label: "TELEMEDICINE",
-          icon: <Monitor />,
-          path: "/telemedicine",
-        },
+
         {
           id: "health-education",
           label: "HEALTH EDUCATION",
@@ -140,6 +135,12 @@ const Sidebar: React.FC<SidebarProps> = ({ className = "" }) => {
           label: "USERS",
           icon: <Profile2User />,
           path: "/users",
+        },
+        {
+          id: "appointments",
+          label: "APPOINTMENTS",
+          icon: <Calendar />,
+          path: "/appointments",
         },
         {
           id: "medicine-inventory",

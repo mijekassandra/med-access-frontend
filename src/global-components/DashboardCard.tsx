@@ -53,19 +53,23 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
 
   return (
     <div
-      className={`bg-white rounded-lg shadow-sm p-6 border border-gray-200 ${className}`}
+      className={`bg-white rounded-lg shadow-sm p-3 border border-gray-200 ${className}`}
     >
-      <div className="flex items-center justify-between h-full">
-        <div className="">
-          <p className="text-szDarkGrey600 text-body-small-strong">{title}</p>
-          <h3 className="text-h3 text-szBlack800">{value}</h3>
-        </div>
-        <div
-          className={`w-10 h-10 ${colors.iconBg} rounded-lg flex items-center justify-center flex-shrink-0`}
-        >
-          {React.cloneElement(icon as React.ReactElement, {
-            className: `w-5 h-5 ${colors.iconText}`,
-          })}
+      <div className="flex flex-col gap-1 justify-between h-full">
+        <p className="text-szDarkGrey600 text-xs font-medium leading-tight">
+          {title}
+        </p>
+        <div className="flex flex-row justify-between w-full">
+          <p className="text-xl font-bold font-montserrat text-szBlack700">
+            {value}
+          </p>
+          <div
+            className={`w-8 h-8 ${colors.iconBg} rounded-lg flex items-center justify-center flex-shrink-0`}
+          >
+            {React.cloneElement(icon as React.ReactElement, {
+              className: `w-4 h-4 ${colors.iconText}`,
+            })}
+          </div>
         </div>
       </div>
     </div>

@@ -182,7 +182,7 @@ const MedicalRecordTable: React.FC = () => {
   return (
     <div className="grid grid-cols-1 gap-6">
       {/* Header with search and filter */}
-      <div className="flex flex-col lg:flex-row items-end md:items-center justify-between gap-3 md:gap-6">
+      <div className="flex flex-col lg:flex-row items-end justify-between gap-3 md:gap-6">
         <Inputs
           type="text"
           placeholder="Search medical records..."

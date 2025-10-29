@@ -2,19 +2,18 @@ import React from "react";
 import Avatar from "../../../global-components/Avatar";
 import Button from "../../../global-components/Button";
 import Chip from "../../../global-components/Chip";
-import ButtonsIcon from "../../../global-components/ButtonsIcon";
 
 interface TelemedicineCardProps {
   id: string;
   name: string;
   avatar?: string;
-  status: "pending" | "accepted" | "completed" | "cancelled";
+  status: "pending" | "accepted" | "serving" | "completed" | "cancelled";
   time?: string;
   description?: string;
   onAccept?: (id: string) => void;
   onReject?: (id: string) => void;
-  onView?: (id: string) => void;
-  isSelected?: boolean;
+  onView?: (appointment: any) => void;
+  onMarkAsDone?: (id: string) => void;
 }
 
 const TelemedicineCard: React.FC<TelemedicineCardProps> = ({
@@ -27,7 +26,7 @@ const TelemedicineCard: React.FC<TelemedicineCardProps> = ({
   onAccept,
   onReject,
   onView,
-  isSelected = false,
+  onMarkAsDone,
 }) => {
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -35,6 +34,8 @@ const TelemedicineCard: React.FC<TelemedicineCardProps> = ({
         return "yellow";
       case "accepted":
         return "green";
+      case "serving":
+        return "purple";
       case "completed":
         return "blue";
       case "cancelled":
@@ -50,6 +51,8 @@ const TelemedicineCard: React.FC<TelemedicineCardProps> = ({
         return "Pending";
       case "accepted":
         return "Accepted";
+      case "serving":
+        return "Serving";
       case "completed":
         return "Completed";
       case "cancelled":
@@ -62,7 +65,7 @@ const TelemedicineCard: React.FC<TelemedicineCardProps> = ({
   return (
     <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
       <div className="flex items-center justify-between">
-        <div className="flex items-start gap-2 flex-1">
+        <div className="flex items-start gap-2 w-full">
           <Avatar src={avatar} alt={name} size="medium" />
           <div className="flex-1 min-w-0">
             <p className="text-body-small-strong font-semibold text-gray-900 max-w-[100px] md:max-w-full">
@@ -72,39 +75,59 @@ const TelemedicineCard: React.FC<TelemedicineCardProps> = ({
               <p className="text-xs text-gray-500 mt-1">{description}</p>
             )}
             {time && <p className="text-xs text-gray-400 mt-1">{time}</p>}
-            {/* <div className="mt-2">
+            <div className="mt-2">
               <Chip
                 label={getStatusText(status)}
                 type="colored"
                 color={getStatusColor(status) as any}
               />
-            </div> */}
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 items-center">
+        <div className="flex flex-row gap-2">
           {status === "pending" && (
-            <>
+            <div className="flex items-center gap-[2px] w-fit">
               <Button
                 label="Accept"
                 size="small"
                 variant="secondaryDark"
-                onClick={() => {}}
+                onClick={() => onAccept?.(id)}
               />
               <Button
-                label="Delete"
+                label="Reject"
                 size="small"
                 variant="ghost"
-                onClick={() => {}}
+                onClick={() => onReject?.(id)}
               />
-            </>
+            </div>
+          )}
+          {status === "serving" && (
+            <div className="flex gap-2">
+              <Button
+                label="Done"
+                size="small"
+                variant="secondary"
+                onClick={() => onMarkAsDone?.(id)}
+              />
+              <Button
+                label="View"
+                size="small"
+                variant="primary"
+                onClick={() =>
+                  onView?.({ id, name, avatar, status, time, description })
+                }
+              />
+            </div>
           )}
           {status === "accepted" && (
             <Button
               label="View"
               size="small"
               variant="primary"
-              onClick={() => {}}
+              onClick={() =>
+                onView?.({ id, name, avatar, status, time, description })
+              }
               className="col-span-2"
             />
           )}

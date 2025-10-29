@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Modal from "../../../global-components/Modal";
 import Inputs from "../../../global-components/Inputs";
 import SnackbarAlert from "../../../global-components/SnackbarAlert";
 import Dropdown, { type Option } from "../../../global-components/Dropdown";
+import { useGetAllUsersQuery } from "../../user/api/userApi";
 
 interface PregnancyRecord {
   id: string;
@@ -43,6 +44,22 @@ const AddPregnancyRecordModal = ({
   });
   const [isLoading, setIsLoading] = useState(false);
   const [showSnackbar, setShowSnackbar] = useState(false);
+
+  // Fetch all users for the dropdown
+  const {
+    data: usersData,
+    isLoading: usersLoading,
+    error: usersError,
+  } = useGetAllUsersQuery(undefined, {
+    skip: !isOpen, // Only fetch when modal is open
+  });
+
+  // Transform users data into dropdown options
+  const userOptions: Option[] =
+    usersData?.data?.map((user) => ({
+      label: user.fullName,
+      value: user.fullName,
+    })) || [];
 
   // Initialize form data when editing or viewing
   useEffect(() => {
@@ -157,12 +174,28 @@ const AddPregnancyRecordModal = ({
         content={
           <div className="space-y-4 mt-2">
             {/* Full width inputs */}
-            <Inputs
+            <Dropdown
               label="FULL NAME"
-              placeholder="Enter Full Name"
-              value={formData.fullName}
-              onChange={(e) => handleInputChange("fullName", e.target.value)}
-              disabled={mode === "view"}
+              size="small"
+              placeholder={
+                usersLoading
+                  ? "Loading users..."
+                  : usersError
+                  ? "Error loading users"
+                  : "Select Full Name"
+              }
+              options={userOptions}
+              value={userOptions.find(
+                (option) => option.value === formData.fullName
+              )}
+              onSelectionChange={(selected) => {
+                const selectedValue = Array.isArray(selected)
+                  ? selected[0]?.value
+                  : selected.value;
+                handleInputChange("fullName", selectedValue || "");
+              }}
+              disabled={mode === "view" || usersLoading || !!usersError}
+              usePortal={true}
             />
 
             {/* 2-column grid for other inputs */}
