@@ -10,6 +10,7 @@ import {
   User,
   TickCircle,
   Refresh,
+  ExportCurve,
 } from "iconsax-react";
 
 //components
@@ -23,6 +24,11 @@ import ContainerWrapper from "../../../components/ContainerWrapper";
 import Chip from "../../../global-components/Chip";
 import SnackbarAlert from "../../../global-components/SnackbarAlert";
 import ButtonsIcon from "../../../global-components/ButtonsIcon";
+
+// Export
+import ExportModal from "../../../components/ExportModal";
+import { type ExportColumn } from "../../../types/export";
+import { useExport } from "../../../hooks/useExport";
 
 // Appointment data interface
 interface Appointment {
@@ -189,6 +195,30 @@ const AllAppointment: React.FC = () => {
   const [snackbarType, setSnackbarType] = useState<
     "success" | "error" | "warning" | "info"
   >("success");
+
+  // Export functionality
+  const exportColumns: ExportColumn[] = [
+    { key: "patientName", header: "Patient Name" },
+    { key: "doctorName", header: "Doctor Name" },
+    { key: "appointmentType", header: "Type" },
+    { key: "status", header: "Status" },
+    { key: "scheduledDate", header: "Date" },
+    { key: "scheduledTime", header: "Time" },
+    { key: "reason", header: "Reason" },
+    { key: "queueNumber", header: "Queue #" },
+  ];
+
+  const { openExportModal, exportProps } = useExport({
+    data: appointments,
+    columns: exportColumns,
+    title: "Export Appointments",
+    filename: "appointments",
+    dateConfig: {
+      columnKey: "scheduledDate",
+      label: "Scheduled Date",
+      dateFormat: "iso",
+    },
+  });
 
   const handleStatusFilterChange = (selected: Option | Option[]) => {
     setStatusFilter(selected);
@@ -548,6 +578,12 @@ const AllAppointment: React.FC = () => {
               onClick={handleClearFilters}
               size="medium"
             />
+            <ButtonsIcon
+              icon={<ExportCurve />}
+              onClick={openExportModal}
+              variant="secondary"
+              size="medium"
+            />
             <div className="min-w-[120px]">
               <Dropdown
                 options={[
@@ -692,6 +728,9 @@ const AllAppointment: React.FC = () => {
           onClose={handleCloseSnackbar}
           duration={3000}
         />
+
+        {/* Export Modal */}
+        <ExportModal {...exportProps} />
       </div>
     </ContainerWrapper>
   );

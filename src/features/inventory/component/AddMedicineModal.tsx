@@ -4,12 +4,15 @@ import Inputs from "../../../global-components/Inputs";
 import SnackbarAlert from "../../../global-components/SnackbarAlert";
 
 // types
-import type { MedicineTable } from "../../../types/database";
+import type {
+  MedicineInventory,
+  MedicineInventoryUpdate,
+} from "../api/medicineInventoryApi";
 
 // RTK Query
 import {
-  useAddMedicineInventoryMutation,
-  useEditMedicineInventoryMutation,
+  useCreateMedicineMutation,
+  useUpdateMedicineMutation,
 } from "../api/medicineInventoryApi";
 
 // Utils
@@ -24,8 +27,8 @@ interface AddMedicineModalProps {
   isOpen: boolean;
   onClose: () => void;
   mode: "add" | "edit" | "view";
-  medicine?: MedicineTable;
-  onSave?: (medicine: MedicineTable) => void;
+  medicine?: MedicineInventory;
+  onSave?: (medicine: MedicineInventory) => void;
 }
 
 const AddMedicineModal = ({
@@ -41,7 +44,7 @@ const AddMedicineModal = ({
     description: "",
     dosage: "",
     stock: 0,
-    expiration_date: new Date(),
+    expirationDate: new Date(),
     batch_no: "",
   });
   const [formErrors, setFormErrors] = useState({
@@ -50,7 +53,7 @@ const AddMedicineModal = ({
     description: "",
     dosage: "",
     stock: "",
-    expiration_date: "",
+    expirationDate: "",
     batch_no: "",
   });
   const [showSnackbar, setShowSnackbar] = useState(false);
@@ -60,10 +63,9 @@ const AddMedicineModal = ({
   );
 
   // RTK Query mutations
-  const [addMedicine, { isLoading: isAdding }] =
-    useAddMedicineInventoryMutation();
-  const [editMedicine, { isLoading: isEditing }] =
-    useEditMedicineInventoryMutation();
+  const [createMedicine, { isLoading: isAdding }] = useCreateMedicineMutation();
+  const [updateMedicine, { isLoading: isEditing }] =
+    useUpdateMedicineMutation();
 
   const isLoading = isAdding || isEditing;
 
@@ -76,7 +78,7 @@ const AddMedicineModal = ({
         description: medicine.description,
         dosage: medicine.dosage,
         stock: medicine.stock,
-        expiration_date: new Date(medicine.expiration_date), // Convert string to Date
+        expirationDate: new Date(medicine.expirationDate), // Convert string to Date
         batch_no: medicine.batch_no,
       });
     } else if (mode === "add") {
@@ -86,7 +88,7 @@ const AddMedicineModal = ({
         description: "",
         dosage: "",
         stock: 0,
-        expiration_date: getTodayDate(), // Use today's date as default
+        expirationDate: getTodayDate(), // Use today's date as default
         batch_no: "",
       });
     }
@@ -98,7 +100,7 @@ const AddMedicineModal = ({
       description: "",
       dosage: "",
       stock: "",
-      expiration_date: "",
+      expirationDate: "",
       batch_no: "",
     });
   }, [medicine, mode, isOpen]);
@@ -109,8 +111,8 @@ const AddMedicineModal = ({
       [field]:
         field === "stock"
           ? parseInt(value) || 0
-          : field === "expiration_date"
-          ? parseDateFromInput(value) || prev.expiration_date // Keep existing date if invalid
+          : field === "expirationDate"
+          ? parseDateFromInput(value) || prev.expirationDate // Keep existing date if invalid
           : value,
     }));
 
@@ -131,7 +133,7 @@ const AddMedicineModal = ({
       description: "",
       dosage: "",
       stock: "",
-      expiration_date: "",
+      expirationDate: "",
       batch_no: "",
     };
 
@@ -161,11 +163,8 @@ const AddMedicineModal = ({
     }
 
     // Check if expiration date is valid and not in the past
-    if (
-      !formData.expiration_date ||
-      !isDateInFuture(formData.expiration_date)
-    ) {
-      errors.expiration_date = "This field is required";
+    if (!formData.expirationDate || !isDateInFuture(formData.expirationDate)) {
+      errors.expirationDate = "This field is required";
     }
 
     setFormErrors(errors);
@@ -193,49 +192,45 @@ const AddMedicineModal = ({
           description: formData.description,
           dosage: formData.dosage,
           stock: formData.stock,
-          expiration_date: formData.expiration_date,
+          expirationDate: formData.expirationDate,
           batch_no: formData.batch_no,
         };
 
-        const result = await addMedicine(medicineData).unwrap();
+        const result = await createMedicine(medicineData).unwrap();
 
         setSnackbarMessage("Medicine has been added successfully!");
         setSnackbarType("success");
         setShowSnackbar(true);
 
         // Call onSave with the result if provided
-        if (onSave) {
-          onSave(result);
+        if (onSave && result.data) {
+          onSave(result.data);
         }
 
         onClose();
-      } else if (mode === "edit" && medicine?.id) {
+      } else if (mode === "edit" && medicine?._id) {
         // Prepare data for edit API call
-        const medicineData = {
+        const medicineData: MedicineInventoryUpdate = {
           name: formData.name,
+          brand: formData.brand,
           description: formData.description,
           dosage: formData.dosage,
           stock: formData.stock,
-          expiration_date: formData.expiration_date,
+          expirationDate: formData.expirationDate,
           batch_no: formData.batch_no,
         };
-
-        await editMedicine({
-          id: medicine.id,
-          medicine: medicineData,
-        }).unwrap();
 
         setSnackbarMessage("Medicine has been updated successfully!");
         setSnackbarType("success");
         setShowSnackbar(true);
+        const result = await updateMedicine({
+          id: medicine._id,
+          data: medicineData,
+        }).unwrap();
 
         // Call onSave with the updated data if provided
-        if (onSave) {
-          onSave({
-            id: medicine.id,
-            brand: formData.brand,
-            ...medicineData,
-          });
+        if (onSave && result.data) {
+          onSave(result.data);
         }
 
         onClose();
@@ -259,7 +254,7 @@ const AddMedicineModal = ({
       description: "",
       dosage: "",
       stock: 0,
-      expiration_date: getTodayDate(),
+      expirationDate: getTodayDate(),
       batch_no: "",
     });
     setFormErrors({
@@ -268,7 +263,7 @@ const AddMedicineModal = ({
       description: "",
       dosage: "",
       stock: "",
-      expiration_date: "",
+      expirationDate: "",
       batch_no: "",
     });
     onClose();
@@ -370,12 +365,12 @@ const AddMedicineModal = ({
                 label="EXPIRY DATE (DD/MM/YYYY)"
                 placeholder="DD/MM/YYYY"
                 type="date"
-                value={formatDateForInput(formData.expiration_date)}
+                value={formatDateForInput(formData.expirationDate)}
                 onChange={(e) =>
-                  handleInputChange("expiration_date", e.target.value)
+                  handleInputChange("expirationDate", e.target.value)
                 }
                 disabled={mode === "view"}
-                error={!!formErrors.expiration_date}
+                error={!!formErrors.expirationDate}
               />
               <Inputs
                 label="BATCH NO"

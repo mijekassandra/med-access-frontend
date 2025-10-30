@@ -5,6 +5,11 @@ import Tabs from "../../global-components/Tabs";
 import PersonnelTable from "./components/PersonnelTable";
 import PatientsTable from "./components/PatientsTable";
 
+// Hooks
+import { useAuth } from "../auth/hooks/useAuth";
+import { useSelector } from "react-redux";
+import type { RootState } from "../../store";
+
 const User: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -14,6 +19,8 @@ const User: React.FC = () => {
     { label: "Patients", value: "patients" },
     { label: "Personnel", value: "personnel" },
   ];
+
+  const { user } = useSelector((state: RootState) => state.auth);
 
   // Determine active tab based on current route
   const getActiveTabIndex = () => {
@@ -38,19 +45,23 @@ const User: React.FC = () => {
     <ContainerWrapper>
       <div className="w-full flex-1 flex flex-col space-y-8">
         {/* Tabs */}
-        <div className="w-full flex-shrink-0">
-          <Tabs
-            options={tabOptions}
-            activeIndex={activeTabIndex}
-            onTabChange={handleTabChange}
-          />
-        </div>
+        {user?.role === "admin" && (
+          <div className="w-full flex-shrink-0">
+            <Tabs
+              options={tabOptions}
+              activeIndex={activeTabIndex}
+              onTabChange={handleTabChange}
+            />
+          </div>
+        )}
 
         {/* Tab Content */}
         <div className="flex-1">
           <Routes>
             <Route path="/" element={<PatientsTable />} />
-            <Route path="/personnels" element={<PersonnelTable />} />
+            {user?.role !== "admin" && (
+              <Route path="/personnels" element={<PersonnelTable />} />
+            )}
           </Routes>
         </div>
       </div>

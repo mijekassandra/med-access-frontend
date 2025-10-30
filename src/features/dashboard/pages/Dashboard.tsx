@@ -14,9 +14,10 @@ import {
 import DashboardCard from "../../../global-components/DashboardCard";
 import ContainerWrapper from "../../../components/ContainerWrapper";
 import SnackbarAlert from "../../../global-components/SnackbarAlert";
-import MedicalRecordsPieChart from "../../../components/MedicalRecordsPieChart";
 import LatestAnnouncement from "../components/LatestAnnouncement";
 import UpcomingAppointments from "../components/UpcomingAppointments";
+import LowStockMedicine from "../components/LowStockMedicine";
+// import MedicalRecordsPieChart from "../../../components/MedicalRecordsPieChart";
 // import GenericFilteredChart from "../../../components/GenericFilteredChart";
 // import UserMedicalRecordTable from "../components/UserMedicalRecordTable";
 // import PersonnelDashboardTable from "../components/PersonnelDashboardTable";
@@ -47,14 +48,14 @@ const Dashboard: React.FC = () => {
     <>
       <ContainerWrapper className="space-y-4">
         {/* Dashboard Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
-          {/* Left Column ---------------------------------------*/}
-          <div className="lg:col-span-2 space-y-3">
+        <div className="flex flex-col sm:flex-row h-fit sm:h-96 gap-4 w-full">
+          {/* Left Column ----------------------------------------------------*/}
+          <div className="flex-[2] flex flex-col space-y-3">
             {userRole === "doctor" ? (
               <div className="grid gap-3">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <DashboardCard
-                    title="Reports"
+                    title="Appointments"
                     value={1234}
                     icon={<DocumentText1 />}
                     variant="green"
@@ -75,7 +76,7 @@ const Dashboard: React.FC = () => {
               </div>
             ) : (
               <div className="grid gap-3">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 ">
                   <DashboardCard
                     title="Users"
                     value={1234}
@@ -95,36 +96,35 @@ const Dashboard: React.FC = () => {
                     icon={<Notepad />}
                     variant="green"
                   />
-
-                  {/* <DashboardCard
-                title="Reports"
-                value={1234}
-                icon={<DocumentText1 />}
-                variant="grey"
-              /> */}
                 </div>
               </div>
             )}
 
-            <div className="grid grid-cols-1">
-              <MedicalRecordsPieChart
-                patientRecords={150}
-                pregnancyRecords={75}
-              />
+            <div className="h-[300px] sm:flex-1 sm:min-h-0">
+              {userRole === "admin" ? (
+                <LowStockMedicine />
+              ) : (
+                <UpcomingAppointments />
+              )}
             </div>
           </div>
-          {/* Right Column ---------------------------------------*/}
-          <div className="lg:col-span-1">
+
+          {/* Right Column ----------------------------------------------------*/}
+          <div className="flex-1 min-h-0">
             <LatestAnnouncement />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-3">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-            <UpcomingAppointments />
-            <RecentPatientRecord />
-          </div>
-        </div>
+        {userRole === "admin" && (
+          <>
+            <div className="grid grid-cols-1 gap-3">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                <UpcomingAppointments />
+                <RecentPatientRecord />
+              </div>
+            </div>
+          </>
+        )}
       </ContainerWrapper>
 
       {/* Welcome Snackbar */}

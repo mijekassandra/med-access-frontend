@@ -285,29 +285,31 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
         footerOptions={mode === "view" ? "left" : "stacked-left"}
         footerButtons={getFooterButtons()}
         content={
-          <div className="space-y-4 mt-2">
+          <div className="space-y-3 mt-2">
             {/* Service Name Input */}
-            <Inputs
-              label="SERVICE NAME"
-              placeholder="Enter service name"
-              value={formData.name}
-              onChange={(e) => handleInputChange("name", e.target.value)}
-              disabled={mode === "view"}
-              error={!!formErrors.name}
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">
+              <Inputs
+                label="SERVICE NAME"
+                placeholder="Enter service name"
+                value={formData.name}
+                onChange={(e) => handleInputChange("name", e.target.value)}
+                disabled={mode === "view"}
+                error={!!formErrors.name}
+              />
 
-            {/* Service Price Input */}
-            <Inputs
-              label="SERVICE PRICE"
-              placeholder="Enter service price"
-              type="number"
-              value={formData.price.toString()}
-              onChange={(e) =>
-                handleInputChange("price", parseFloat(e.target.value) || 0)
-              }
-              disabled={mode === "view"}
-              error={!!formErrors.price}
-            />
+              {/* Service Price Input */}
+              <Inputs
+                label="SERVICE PRICE"
+                placeholder="Enter service price"
+                type="number"
+                value={formData.price.toString()}
+                onChange={(e) =>
+                  handleInputChange("price", parseFloat(e.target.value) || 0)
+                }
+                disabled={mode === "view"}
+                error={!!formErrors.price}
+              />
+            </div>
 
             {/* Service Description Input */}
             <Inputs

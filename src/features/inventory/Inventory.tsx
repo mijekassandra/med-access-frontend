@@ -16,12 +16,12 @@ import DeleteConfirmation from "../../components/DeleteConfirmation";
 import SnackbarAlert from "../../global-components/SnackbarAlert";
 
 // types
-import type { MedicineTable } from "../../types/database";
+import type { MedicineInventory } from "./api/medicineInventoryApi";
 
 // integration
 import {
-  useGetMedicineInventoryQuery,
-  useDeleteMedicineInventoryMutation,
+  useGetMedicinesQuery,
+  useDeleteMedicineMutation,
 } from "./api/medicineInventoryApi";
 
 const Inventory: React.FC = () => {
@@ -33,7 +33,7 @@ const Inventory: React.FC = () => {
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
     useState(false);
   const [selectedMedicine, setSelectedMedicine] =
-    useState<MedicineTable | null>(null);
+    useState<MedicineInventory | null>(null);
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarType, setSnackbarType] = useState<"success" | "error">(
@@ -52,17 +52,17 @@ const Inventory: React.FC = () => {
   };
 
   //! rtk query -----------------------
-  const { data: medicines = [] } = useGetMedicineInventoryQuery();
+  const { data: medicines } = useGetMedicinesQuery();
 
   const [deleteMedicine, { isLoading: isDeleting }] =
-    useDeleteMedicineInventoryMutation();
+    useDeleteMedicineMutation();
 
   useEffect(() => {
     console.log("selectedMedicine: ", selectedMedicine);
   }, [selectedMedicine]);
 
   //! Define columns -----------------------
-  const columns: TableColumn<MedicineTable>[] = [
+  const columns: TableColumn<MedicineInventory>[] = [
     {
       key: "name",
       header: "Name",
@@ -132,7 +132,7 @@ const Inventory: React.FC = () => {
   ];
 
   //! Define actions -----------------------
-  const actions: TableAction<MedicineTable>[] = [
+  const actions: TableAction<MedicineInventory>[] = [
     {
       label: "Edit Medicine",
       icon: <Edit size={16} />,
@@ -148,7 +148,7 @@ const Inventory: React.FC = () => {
         setSelectedMedicine(record);
         setIsDeleteConfirmationOpen(true);
       },
-      disabled: (record) => record.id === "1",
+      disabled: (record) => record._id === "1",
     },
   ];
 
@@ -171,7 +171,7 @@ const Inventory: React.FC = () => {
   }, [debouncedSearchTerm]);
 
   //? Edit save -----------------------
-  const handleEditSave = (updatedMedicine: MedicineTable) => {
+  const handleEditSave = (updatedMedicine: MedicineInventory) => {
     // TODO: Implement edit API call
     console.log("Edit medicine:", updatedMedicine);
   };
@@ -180,7 +180,7 @@ const Inventory: React.FC = () => {
   const handleDeleteConfirm = async () => {
     if (selectedMedicine) {
       try {
-        await deleteMedicine({ id: selectedMedicine.id }).unwrap();
+        await deleteMedicine(selectedMedicine._id).unwrap();
         setIsDeleteConfirmationOpen(false);
         setSelectedMedicine(null);
         setSnackbarMessage("Medicine deleted successfully!");
@@ -210,7 +210,10 @@ const Inventory: React.FC = () => {
 
   //! Search medicines -----------------------
   const searchMedicines = useCallback(
-    (medicines: MedicineTable[], searchTerm: string): MedicineTable[] => {
+    (
+      medicines: MedicineInventory[],
+      searchTerm: string
+    ): MedicineInventory[] => {
       if (!searchTerm.trim()) return medicines;
 
       const searchLower = searchTerm.toLowerCase().trim();
@@ -223,9 +226,9 @@ const Inventory: React.FC = () => {
           medicine.description,
           medicine.dosage,
           medicine.batch_no,
-          medicine.id.toString(),
+          medicine._id.toString(),
           medicine.stock.toString(),
-          new Date(medicine.expiration_date).toLocaleDateString(),
+          new Date(medicine.expirationDate).toLocaleDateString(),
         ];
 
         return searchableFields.some((field) => {
@@ -239,7 +242,7 @@ const Inventory: React.FC = () => {
 
   //! Filter medicines based on search term -----------------------
   const filteredMedicines = useMemo(() => {
-    return searchMedicines(medicines, debouncedSearchTerm);
+    return searchMedicines(medicines?.data || [], debouncedSearchTerm);
   }, [medicines, debouncedSearchTerm, searchMedicines]);
 
   //! Calculate pagination -----------------------

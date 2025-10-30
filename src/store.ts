@@ -8,6 +8,7 @@ import { healthEducationApi } from './features/health-education/api/healthEducat
 import { authApi } from './features/auth/api/authApi'
 import { userApi } from './features/user/api/userApi'
 import { serviceApi } from './features/services/api/serviceApi'
+import { medicalRecordsApi } from './features/medical-records/api/medicalRecordsApi'
 
 // Slices
 import authReducer from './features/auth/slice/authSlice'
@@ -22,6 +23,7 @@ export const store = configureStore({
     [authApi.reducerPath]: authApi.reducer,
     [userApi.reducerPath]: userApi.reducer,
     [serviceApi.reducerPath]: serviceApi.reducer,
+    [medicalRecordsApi.reducerPath]: medicalRecordsApi.reducer
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -31,7 +33,8 @@ export const store = configureStore({
       healthEducationApi.middleware,
       authApi.middleware,
       userApi.middleware,
-      serviceApi.middleware
+      serviceApi.middleware,
+      medicalRecordsApi.middleware
     ),
 })
 

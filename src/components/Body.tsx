@@ -157,9 +157,17 @@ const Body = ({ children }: BodyProps) => {
             }
           />
           <Route
-            path="/users/*"
+            path="/users/"
             element={
               <RoleGuard allowedRoles={["admin", "doctor"]}>
+                <User />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/users/personnels"
+            element={
+              <RoleGuard allowedRoles={["admin"]}>
                 <User />
               </RoleGuard>
             }
