@@ -43,10 +43,6 @@ const Services = () => {
     }
   };
 
-  // Extract services data from API response
-  // Temporary fix: Handle the actual response structure from your backend
-  const servicesData = servicesResponse?.[0]?.data || [];
-
   // Show loading state
   if (isLoading) {
     return (
@@ -102,7 +98,7 @@ const Services = () => {
 
         {/* Services Grid */}
         <div className="grid gap-6 grid-cols-2 sm:grid-cols-3 ">
-          {servicesData.map((service: any, index: number) => (
+          {servicesResponse?.map((service: any, index: number) => (
             <ServiceCard
               key={service._id || service.id || index}
               id={service._id || service.id}

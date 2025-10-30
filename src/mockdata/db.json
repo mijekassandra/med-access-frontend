@@ -82,10 +82,6 @@
     }
   ],
   "services": [
-    {
-      "success": true,
-      "count": 7,
-      "data": [
         {
           "id": "1",
           "name": "Consultation",
@@ -135,16 +131,7 @@
           "description": "Family planning services and counseling to help families make informed decisions about their reproductive health.",
           "image": ""
         }
-      ],
-      "id": "f98b"
-    },
-    {
-      "id": "4de0",
-      "name": "sample",
-      "price": 300,
-      "description": "sample",
-      "image": {}
-    }
+
   ],
   "health-reports": [
     {
