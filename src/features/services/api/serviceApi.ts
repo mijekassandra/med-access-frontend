@@ -39,11 +39,11 @@ export interface ServiceListResponse {
 }
 
 // const baseUrl = import.meta.env.VITE_APP_BE_URL || 'http://localhost:3001';
-const baseUrl = import.meta.env.VITE_APP_URL || 'http://localhost:3000';
+// const baseUrl = import.meta.env.VITE_APP_BE_URL || 'http://localhost:3001';
+const baseUrl = 'http://localhost:3001';
 
 const baseQuery = fetchBaseQuery({
-  baseUrl: `${baseUrl}`,
-//   baseUrl: `${baseUrl}/api`,
+  baseUrl: `${baseUrl}/api`,
   prepareHeaders: (headers) => {
     const token = localStorage.getItem('token');
     

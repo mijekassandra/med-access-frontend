@@ -45,23 +45,20 @@ export interface AnnouncementListResponse {
   data: Announcement[];
 }
 
-const baseUrl = import.meta.env.VITE_APP_BE_URL || 'http://localhost:3001';
-
-const baseQuery = fetchBaseQuery({
-  baseUrl: `${baseUrl}/api`,
-  prepareHeaders: (headers) => {
-    const token = localStorage.getItem('token');
-    
-    if (token) {
-      headers.set('authorization', `Bearer ${token}`);
-    }
-    return headers;
-  },
-});
+const baseUrl = import.meta.env.VITE_APP_BE_URL || 'http://localhost:3001'
 
 export const announcementApi = createApi({
   reducerPath: "announcementApi",
-  baseQuery: baseQuery,
+  baseQuery: fetchBaseQuery({
+    baseUrl: `${baseUrl}/api`,
+    prepareHeaders: (headers) => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        headers.set('authorization', `Bearer ${token}`);
+      }
+      return headers;
+    },
+  }),
   tagTypes: ["Announcement"],
   endpoints: (builder) => ({
     // Get all announcements with optional published filter -------------------------------------------------------------------

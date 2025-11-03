@@ -8,7 +8,9 @@ interface TelemedicineCardProps {
   name: string;
   avatar?: string;
   status: "pending" | "accepted" | "serving" | "completed" | "cancelled";
-  time?: string;
+  queueNumber?: number;
+  appointmentType?: string;
+  date?: string;
   description?: string;
   onAccept?: (id: string) => void;
   onReject?: (id: string) => void;
@@ -21,7 +23,9 @@ const TelemedicineCard: React.FC<TelemedicineCardProps> = ({
   name,
   avatar,
   status,
-  time,
+  queueNumber,
+  appointmentType,
+  date,
   description,
   onAccept,
   onReject,
@@ -74,7 +78,16 @@ const TelemedicineCard: React.FC<TelemedicineCardProps> = ({
             {description && (
               <p className="text-xs text-gray-500 mt-1">{description}</p>
             )}
-            {time && <p className="text-xs text-gray-400 mt-1">{time}</p>}
+            {date && (
+              <p className="text-xs text-gray-500 mt-1">
+                {date} • {appointmentType}
+              </p>
+            )}
+            {queueNumber && (
+              <p className="text-xs text-gray-400 mt-1">
+                Queue #{queueNumber} • {appointmentType}
+              </p>
+            )}
             <div className="mt-2">
               <Chip
                 label={getStatusText(status)}
@@ -115,7 +128,14 @@ const TelemedicineCard: React.FC<TelemedicineCardProps> = ({
                 size="small"
                 variant="primary"
                 onClick={() =>
-                  onView?.({ id, name, avatar, status, time, description })
+                  onView?.({
+                    id,
+                    name,
+                    avatar,
+                    status,
+                    queueNumber,
+                    description,
+                  })
                 }
               />
             </div>
@@ -126,7 +146,7 @@ const TelemedicineCard: React.FC<TelemedicineCardProps> = ({
               size="small"
               variant="primary"
               onClick={() =>
-                onView?.({ id, name, avatar, status, time, description })
+                onView?.({ id, name, avatar, status, queueNumber, description })
               }
               className="col-span-2"
             />

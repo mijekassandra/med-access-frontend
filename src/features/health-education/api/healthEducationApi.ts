@@ -41,7 +41,7 @@ export interface HealthEducationListResponse {
   data: HealthEducationItem[];
 }
 
-const baseUrl = import.meta.env.VITE_APP_BE_URL || 'http://localhost:3001';
+const baseUrl = import.meta.env.VITE_APP_BE_URL || 'http://localhost:3001'
 
 const baseQuery = fetchBaseQuery({
   baseUrl: `${baseUrl}/api`,
