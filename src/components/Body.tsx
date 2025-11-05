@@ -107,7 +107,12 @@ const Body = ({ children }: BodyProps) => {
 
   return (
     <div className="flex-1 h-screen flex flex-col overflow-hidden">
-      <Appbar title={title} subheader={subheader} userRole={userRole} />
+      <Appbar
+        title={title}
+        subheader={subheader}
+        userRole={userRole}
+        user={user}
+      />
       <div className="flex-1 overflow-y-auto">
         <Routes>
           {/* Dashboard - accessible to both admin and doctor */}
@@ -157,17 +162,9 @@ const Body = ({ children }: BodyProps) => {
             }
           />
           <Route
-            path="/users/"
+            path="/users/*"
             element={
               <RoleGuard allowedRoles={["admin", "doctor"]}>
-                <User />
-              </RoleGuard>
-            }
-          />
-          <Route
-            path="/users/personnels"
-            element={
-              <RoleGuard allowedRoles={["admin"]}>
                 <User />
               </RoleGuard>
             }

@@ -287,6 +287,18 @@ const PersonnelTable = () => {
     return matchesSearch && matchesFilter;
   });
 
+  // Pagination logic
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(filteredPersonnel.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedPersonnel = filteredPersonnel.slice(startIndex, endIndex);
+
+  // Reset to page 1 when search term or filter changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedFilter]);
+
   // Show error if API call fails
   React.useEffect(() => {
     if (error) {
@@ -348,13 +360,13 @@ const PersonnelTable = () => {
       {/* Table */}
       <div className="flex-1">
         <Table
-          data={filteredPersonnel}
+          data={paginatedPersonnel}
           columns={columns}
           actions={actions}
           searchable={false} // We're handling search manually
           pagination={{
             currentPage,
-            totalPages: Math.ceil(filteredPersonnel.length / 10), // 10 items per page
+            totalPages: totalPages || 1, // Ensure at least 1 page
             onChange: handlePageChange,
           }}
           emptyMessage="No personnel found"

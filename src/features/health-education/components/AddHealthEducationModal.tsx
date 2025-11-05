@@ -5,6 +5,7 @@ import Modal from "../../../global-components/Modal";
 import Inputs from "../../../global-components/Inputs";
 import RadioButton from "../../../global-components/RadioButton";
 import SnackbarAlert from "../../../global-components/SnackbarAlert";
+import Toggle from "../../../global-components/Toggle";
 
 // types
 import type {
@@ -50,6 +51,8 @@ const AddHealthEducationModal: React.FC<AddHealthEducationModalProps> = ({
     url: "",
   });
 
+  const [isPublished, setIsPublished] = useState(true);
+
   const [formErrors, setFormErrors] = useState({
     title: "",
     headline: "",
@@ -82,6 +85,7 @@ const AddHealthEducationModal: React.FC<AddHealthEducationModalProps> = ({
         body: healthEducation.body,
         url: healthEducation.url || "",
       });
+      setIsPublished(healthEducation.isPublished);
     } else if (mode === "add") {
       setFormData({
         title: "",
@@ -90,6 +94,7 @@ const AddHealthEducationModal: React.FC<AddHealthEducationModalProps> = ({
         body: "",
         url: "",
       });
+      setIsPublished(true);
     }
 
     // Clear errors when modal opens or mode changes
@@ -250,6 +255,7 @@ const AddHealthEducationModal: React.FC<AddHealthEducationModalProps> = ({
             formData.contentType === "video"
               ? convertToEmbedUrl(formData.url)
               : null,
+          isPublished: isPublished,
         };
 
         const result = await updateHealthEducation({
@@ -299,6 +305,7 @@ const AddHealthEducationModal: React.FC<AddHealthEducationModalProps> = ({
       body: "",
       url: "",
     });
+    setIsPublished(true);
     setFormErrors({
       title: "",
       headline: "",
@@ -364,6 +371,25 @@ const AddHealthEducationModal: React.FC<AddHealthEducationModalProps> = ({
         footerButtons={getFooterButtons()}
         content={
           <div className="space-y-4 mt-2">
+            {/* Archive toggle - only show in edit mode */}
+            {mode === "edit" && (
+              <div className="space-y-2">
+                <p className="text-body-base-strong text-szBlack700">ARCHIVE</p>
+                <div className="flex items-center gap-2">
+                  <Toggle
+                    isOn={!isPublished}
+                    onToggle={() => setIsPublished(!isPublished)}
+                    disabled={mode === "edit" ? false : true}
+                  />
+                  <p className="text-caption-reg text-szGrey600">
+                    {!isPublished
+                      ? "Archived (will not be visible to users)"
+                      : "Active (visible to users)"}
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2">
               <p className="text-body-base-strong text-szBlack700">
                 CONTENT TYPE

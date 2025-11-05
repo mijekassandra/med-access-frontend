@@ -10,6 +10,7 @@ import DeleteConfirmation from "../../components/DeleteConfirmation";
 import Inputs from "../../global-components/Inputs";
 import { useAuth } from "../auth/hooks/useAuth";
 import { Add, SearchNormal1 } from "iconsax-react";
+import Loading from "../../components/Loading";
 
 // types
 import type { HealthEducationItem } from "./api/healthEducationApi";
@@ -196,15 +197,7 @@ const HealthEducation: React.FC = () => {
 
   // Handle loading and error states
   if (isLoading) {
-    return (
-      <ContainerWrapper>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-szGrey500">
-            Loading health education content...
-          </div>
-        </div>
-      </ContainerWrapper>
-    );
+    return <Loading message="Loading health education content..." />;
   }
 
   return (
@@ -242,7 +235,7 @@ const HealthEducation: React.FC = () => {
                 content_type={content.contentType}
                 body={content.body}
                 url={content.url || ""}
-                isPublished={true} // Backend doesn't have isPublished field, all items are published
+                isPublished={content.isPublished}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
               />

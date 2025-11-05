@@ -4,10 +4,17 @@ import Inputs from "../../../global-components/Inputs";
 import SnackbarAlert from "../../../global-components/SnackbarAlert";
 import Dropdown, { type Option } from "../../../global-components/Dropdown";
 import { useGetAllUsersQuery } from "../../user/api/userApi";
+import {
+  useCreateMedicalRecordMutation,
+  useUpdateMedicalRecordMutation,
+  type MedicalRecordCreate,
+  type MedicalRecordUpdate,
+} from "../api/medicalRecordsApi";
 
 interface MedicalRecord {
   id: string;
   fullName: string;
+  patientId?: string; // Optional patient ID for edit mode
   diagnosis: string;
   dateOfRecord: string;
   treatmentPlan: string;
@@ -19,6 +26,8 @@ interface AddUserMedicalModalProps {
   mode: "add" | "edit" | "view";
   medicalRecord?: MedicalRecord;
   onSave?: (medicalRecord: MedicalRecord) => void;
+  onError?: (error: string) => void;
+  onSuccess?: (message: string) => void;
 }
 
 const AddUserMedicalModal = ({
@@ -27,6 +36,8 @@ const AddUserMedicalModal = ({
   mode,
   medicalRecord,
   onSave,
+  onError,
+  onSuccess,
 }: AddUserMedicalModalProps) => {
   const [formData, setFormData] = useState({
     fullName: "",
@@ -34,8 +45,24 @@ const AddUserMedicalModal = ({
     dateOfRecord: "",
     treatmentPlan: "",
   });
+  const [formErrors, setFormErrors] = useState({
+    fullName: "",
+    diagnosis: "",
+    dateOfRecord: "",
+    treatmentPlan: "",
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [showSnackbar, setShowSnackbar] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarType, setSnackbarType] = useState<"success" | "error">(
+    "success"
+  );
+
+  // API hooks
+  const [createMedicalRecord, { isLoading: isCreating }] =
+    useCreateMedicalRecordMutation();
+  const [updateMedicalRecord, { isLoading: isUpdating }] =
+    useUpdateMedicalRecordMutation();
 
   // Fetch all users for the dropdown
   const {
@@ -47,21 +74,45 @@ const AddUserMedicalModal = ({
   });
 
   // Transform users data into dropdown options (only users with role "user")
+  // Store user ID along with fullName for API calls
   const userOptions: Option[] =
     usersData?.data
       ?.filter((user) => user.role === "user")
       ?.map((user) => ({
         label: user.fullName,
-        value: user.fullName,
+        value: user.id, // Store user ID instead of fullName
+        fullName: user.fullName, // Keep fullName for display
       })) || [];
+
+  // Get user by ID helper
+  const getUserById = (userId: string) => {
+    return usersData?.data?.find((user) => user.id === userId);
+  };
+
+  // Get user by fullName helper (for edit mode)
+  const getUserByFullName = (fullName: string) => {
+    return usersData?.data?.find((user) => user.fullName === fullName);
+  };
+
+  // Update loading state
+  useEffect(() => {
+    setIsLoading(isCreating || isUpdating);
+  }, [isCreating, isUpdating]);
 
   // Initialize form data when editing or viewing
   useEffect(() => {
     if (medicalRecord && (mode === "edit" || mode === "view")) {
+      // For edit mode, use patientId if available, otherwise find by fullName
+      const patientId = medicalRecord.patientId
+        ? medicalRecord.patientId
+        : getUserByFullName(medicalRecord.fullName)?.id;
+
       setFormData({
-        fullName: medicalRecord.fullName,
+        fullName: patientId || medicalRecord.fullName, // Use ID if found, otherwise keep fullName
         diagnosis: medicalRecord.diagnosis,
-        dateOfRecord: medicalRecord.dateOfRecord,
+        dateOfRecord: medicalRecord.dateOfRecord.includes("T")
+          ? medicalRecord.dateOfRecord.split("T")[0]
+          : medicalRecord.dateOfRecord, // Convert ISO date to date input format if needed
         treatmentPlan: medicalRecord.treatmentPlan,
       });
     } else if (mode === "add") {
@@ -72,36 +123,196 @@ const AddUserMedicalModal = ({
         treatmentPlan: "",
       });
     }
-  }, [medicalRecord, mode, isOpen]);
+
+    // Clear errors when modal opens or mode changes
+    setFormErrors({
+      fullName: "",
+      diagnosis: "",
+      dateOfRecord: "",
+      treatmentPlan: "",
+    });
+  }, [medicalRecord, mode, isOpen, usersData]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
+
+    // Clear error for this field when user starts typing
+    if (formErrors[field as keyof typeof formErrors]) {
+      setFormErrors((prev) => ({
+        ...prev,
+        [field]: "",
+      }));
+    }
+  };
+
+  // Validation function
+  const validateForm = () => {
+    const errors = {
+      fullName: "",
+      diagnosis: "",
+      dateOfRecord: "",
+      treatmentPlan: "",
+    };
+
+    // Check if patient is selected
+    if (!formData.fullName || !formData.fullName.trim()) {
+      errors.fullName = "This field is required";
+    }
+
+    // Check if diagnosis is empty
+    if (!formData.diagnosis.trim()) {
+      errors.diagnosis = "This field is required";
+    } else if (formData.diagnosis.trim().length < 3) {
+      errors.diagnosis = "Diagnosis must be at least 3 characters";
+    }
+
+    // Check if date of record is provided
+    if (!formData.dateOfRecord) {
+      errors.dateOfRecord = "This field is required";
+    } else {
+      const recordDate = new Date(formData.dateOfRecord);
+      const today = new Date();
+      today.setHours(23, 59, 59, 999); // Set to end of today
+
+      if (recordDate > today) {
+        errors.dateOfRecord = "Date of record cannot be in the future";
+      }
+    }
+
+    // Check if treatment plan is empty
+    if (!formData.treatmentPlan.trim()) {
+      errors.treatmentPlan = "This field is required";
+    } else if (formData.treatmentPlan.trim().length < 5) {
+      errors.treatmentPlan = "Treatment plan must be at least 5 characters";
+    }
+
+    setFormErrors(errors);
+
+    // Return true if no errors
+    return !Object.values(errors).some((error) => error !== "");
   };
 
   const handleSubmit = async () => {
-    setIsLoading(true);
-
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    setIsLoading(false);
-    setShowSnackbar(true);
-
-    if (onSave && mode === "edit") {
-      onSave({
-        id: medicalRecord?.id || "",
-        ...formData,
-      });
+    // Validate form first
+    if (!validateForm()) {
+      setSnackbarMessage("Please fill in all required fields correctly.");
+      setSnackbarType("error");
+      setShowSnackbar(true);
+      if (onError) onError("Please fill in all required fields correctly.");
+      return;
     }
 
-    onClose();
+    try {
+      // Convert date to ISO string
+      const dateOfRecordISO = new Date(formData.dateOfRecord).toISOString();
+
+      if (mode === "add") {
+        // Create new medical record
+        const createData: MedicalRecordCreate = {
+          patient: formData.fullName, // This should be the user ID
+          diagnosis: formData.diagnosis.trim(),
+          dateOfRecord: dateOfRecordISO,
+          treatmentPlan: formData.treatmentPlan.trim(),
+        };
+
+        await createMedicalRecord(createData).unwrap();
+        const successMsg = "Medical record added successfully";
+        setSnackbarMessage(successMsg);
+        setSnackbarType("success");
+        setShowSnackbar(true);
+        if (onSuccess) onSuccess(successMsg);
+        if (onSave) {
+          onSave({
+            id: "",
+            fullName:
+              getUserById(formData.fullName)?.fullName || formData.fullName,
+            diagnosis: formData.diagnosis,
+            dateOfRecord: dateOfRecordISO,
+            treatmentPlan: formData.treatmentPlan,
+          });
+        }
+
+        // Reset form and close modal immediately
+        setFormData({
+          fullName: "",
+          diagnosis: "",
+          dateOfRecord: "",
+          treatmentPlan: "",
+        });
+        setFormErrors({
+          fullName: "",
+          diagnosis: "",
+          dateOfRecord: "",
+          treatmentPlan: "",
+        });
+        onClose();
+      } else if (mode === "edit" && medicalRecord?.id) {
+        // Update existing medical record
+        const updateData: MedicalRecordUpdate = {
+          diagnosis: formData.diagnosis.trim(),
+          dateOfRecord: dateOfRecordISO,
+          treatmentPlan: formData.treatmentPlan.trim(),
+        };
+
+        await updateMedicalRecord({
+          id: medicalRecord.id,
+          data: updateData,
+        }).unwrap();
+        const successMsg = "Medical record updated successfully";
+        setSnackbarMessage(successMsg);
+        setSnackbarType("success");
+        setShowSnackbar(true);
+        if (onSuccess) onSuccess(successMsg);
+        if (onSave) {
+          onSave({
+            id: medicalRecord.id,
+            fullName:
+              getUserById(formData.fullName)?.fullName || formData.fullName,
+            diagnosis: formData.diagnosis,
+            dateOfRecord: dateOfRecordISO,
+            treatmentPlan: formData.treatmentPlan,
+          });
+        }
+
+        // Reset form and close modal immediately
+        setFormData({
+          fullName: "",
+          diagnosis: "",
+          dateOfRecord: "",
+          treatmentPlan: "",
+        });
+        setFormErrors({
+          fullName: "",
+          diagnosis: "",
+          dateOfRecord: "",
+          treatmentPlan: "",
+        });
+        onClose();
+      }
+    } catch (error: any) {
+      const errorMsg =
+        error?.data?.message ||
+        (mode === "add"
+          ? "Failed to create medical record"
+          : "Failed to update medical record");
+      setSnackbarMessage(errorMsg);
+      setSnackbarType("error");
+      setShowSnackbar(true);
+      if (onError) onError(errorMsg);
+    }
   };
 
   const handleCancel = () => {
     setFormData({
+      fullName: "",
+      diagnosis: "",
+      dateOfRecord: "",
+      treatmentPlan: "",
+    });
+    setFormErrors({
       fullName: "",
       diagnosis: "",
       dateOfRecord: "",
@@ -187,7 +398,14 @@ const AddUserMedicalModal = ({
                   : selected.value;
                 handleInputChange("fullName", selectedValue || "");
               }}
-              disabled={mode === "view" || usersLoading || !!usersError}
+              disabled={
+                mode === "view" ||
+                mode === "edit" ||
+                usersLoading ||
+                !!usersError ||
+                isLoading
+              }
+              error={!!formErrors.fullName}
               usePortal={true}
             />
 
@@ -198,7 +416,8 @@ const AddUserMedicalModal = ({
                 placeholder="Enter Diagnosis"
                 value={formData.diagnosis}
                 onChange={(e) => handleInputChange("diagnosis", e.target.value)}
-                disabled={mode === "view"}
+                disabled={mode === "view" || isLoading}
+                error={!!formErrors.diagnosis}
               />
               <Inputs
                 label="DATE OF RECORD (dd/mm/yyyy)"
@@ -208,7 +427,8 @@ const AddUserMedicalModal = ({
                 onChange={(e) =>
                   handleInputChange("dateOfRecord", e.target.value)
                 }
-                disabled={mode === "view"}
+                disabled={mode === "view" || isLoading}
+                error={!!formErrors.dateOfRecord}
               />
             </div>
 
@@ -221,7 +441,8 @@ const AddUserMedicalModal = ({
               onChange={(e) =>
                 handleInputChange("treatmentPlan", e.target.value)
               }
-              disabled={mode === "view"}
+              disabled={mode === "view" || isLoading}
+              error={!!formErrors.treatmentPlan}
               className="h-[140px]"
             />
           </div>
@@ -230,10 +451,8 @@ const AddUserMedicalModal = ({
 
       <SnackbarAlert
         isOpen={showSnackbar}
-        title={`User medical record has been ${
-          mode === "edit" ? "updated" : "added"
-        } successfully.`}
-        type="success"
+        title={snackbarMessage}
+        type={snackbarType}
         onClose={handleCloseSnackbar}
         duration={3000}
       />

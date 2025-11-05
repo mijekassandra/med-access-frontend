@@ -120,7 +120,7 @@ const HealthEducationCard: React.FC<HealthEducationCardProps> = ({
                 variant="Linear"
               />
             </button>
-            <button
+            {/* <button
               className="flex justify-center items-center w-10 h-10 group cursor-pointer transition-colors duration-200"
               aria-label="Delete"
               onClick={() => onDelete && onDelete(id)}
@@ -129,7 +129,7 @@ const HealthEducationCard: React.FC<HealthEducationCardProps> = ({
                 className="h-5 w-5 text-red-600 group-hover:text-red-800"
                 variant="Linear"
               />
-            </button>
+            </button> */}
           </div>
         )}
       </div>

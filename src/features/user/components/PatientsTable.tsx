@@ -1,9 +1,11 @@
 import React, { useState } from "react";
+import { useSelector } from "react-redux";
 
 //icons
 import { Add, SearchNormal1, Edit, Trash, ExportCurve } from "iconsax-react";
 
 // components
+import type { RootState } from "../../../store";
 import Table, {
   type TableColumn,
   type TableAction,
@@ -44,6 +46,8 @@ const convertUserToPatient = (user: User) => ({
 });
 
 const PatientsTable = () => {
+  const { user } = useSelector((state: RootState) => state.auth);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddPatientModalOpen, setIsAddPatientModalOpen] = useState(false);
@@ -147,7 +151,9 @@ const PatientsTable = () => {
       header: "Address",
       sortable: true,
       render: (value) => (
-        <span className="text-body-small-reg text-szBlack700">{value}</span>
+        <span className="text-body-small-reg text-szBlack700 truncate block max-w-[120px] ">
+          {value}
+        </span>
       ),
     },
     {
@@ -286,6 +292,18 @@ const PatientsTable = () => {
     return matchesSearch;
   });
 
+  // Pagination logic
+  const itemsPerPage = 5;
+  const totalPages = Math.ceil(filteredPatients.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedPatients = filteredPatients.slice(startIndex, endIndex);
+
+  // Reset to page 1 when search term changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
   // Show error if API call fails
   React.useEffect(() => {
     if (error) {
@@ -346,13 +364,13 @@ const PatientsTable = () => {
 
       {/* Table */}
       <Table
-        data={filteredPatients}
+        data={paginatedPatients}
         columns={columns}
-        actions={actions}
-        searchable={false} // We're handling search manually
+        actions={user?.role === "admin" ? actions : undefined}
+        searchable={false}
         pagination={{
           currentPage,
-          totalPages: Math.ceil(filteredPatients.length / 10), // 10 items per page
+          totalPages: totalPages || 1, // Ensure at least 1 page
           onChange: handlePageChange,
         }}
         emptyMessage="No patients found"

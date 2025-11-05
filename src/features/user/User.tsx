@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import ContainerWrapper from "../../components/ContainerWrapper";
 import Tabs from "../../global-components/Tabs";
@@ -6,7 +6,6 @@ import PersonnelTable from "./components/PersonnelTable";
 import PatientsTable from "./components/PatientsTable";
 
 // Hooks
-import { useAuth } from "../auth/hooks/useAuth";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../store";
 
@@ -24,13 +23,18 @@ const User: React.FC = () => {
 
   // Determine active tab based on current route
   const getActiveTabIndex = () => {
-    if (location.pathname.includes("patients")) {
-      return 1;
+    if (location.pathname.includes("personnels")) {
+      return 1; // Personnel tab
     }
-    return 0; // Default to personnel
+    return 0; // Default to Patients tab
   };
 
   const [activeTabIndex, setActiveTabIndex] = useState(getActiveTabIndex());
+
+  // Update active tab when route changes
+  useEffect(() => {
+    setActiveTabIndex(getActiveTabIndex());
+  }, [location.pathname]);
 
   const handleTabChange = (index: number) => {
     setActiveTabIndex(index);
@@ -59,9 +63,7 @@ const User: React.FC = () => {
         <div className="flex-1">
           <Routes>
             <Route path="/" element={<PatientsTable />} />
-            {user?.role !== "admin" && (
-              <Route path="/personnels" element={<PersonnelTable />} />
-            )}
+            <Route path="/personnels" element={<PersonnelTable />} />
           </Routes>
         </div>
       </div>

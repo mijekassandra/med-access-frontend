@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 
 //icons
 import { Add, SearchNormal1, Edit, Trash } from "iconsax-react";
@@ -40,9 +40,6 @@ const Inventory: React.FC = () => {
     "success"
   );
 
-  // Pagination constants
-  const ITEMS_PER_PAGE = 10;
-
   // Search debouncing
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
 
@@ -52,7 +49,11 @@ const Inventory: React.FC = () => {
   };
 
   //! rtk query -----------------------
-  const { data: medicines } = useGetMedicinesQuery();
+  const {
+    data: medicines,
+    error: medicinesError,
+    isLoading: isLoadingMedicines,
+  } = useGetMedicinesQuery(debouncedSearchTerm || undefined);
 
   const [deleteMedicine, { isLoading: isDeleting }] =
     useDeleteMedicineMutation();
@@ -121,11 +122,13 @@ const Inventory: React.FC = () => {
       sortable: true,
       render: (value) => (
         <span className="text-body-small-reg text-szBlack700">
-          {new Date(value).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-          })}
+          {value
+            ? new Date(value).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+              })
+            : "N/A"}
         </span>
       ),
     },
@@ -166,14 +169,15 @@ const Inventory: React.FC = () => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
+  // Reset to page 1 when search term changes
   useEffect(() => {
     setCurrentPage(1);
   }, [debouncedSearchTerm]);
 
   //? Edit save -----------------------
   const handleEditSave = (updatedMedicine: MedicineInventory) => {
-    // TODO: Implement edit API call
-    console.log("Edit medicine:", updatedMedicine);
+    // Edit is handled in the modal component
+    console.log("Medicine updated:", updatedMedicine);
   };
 
   //? Delete confirm -----------------------
@@ -186,14 +190,29 @@ const Inventory: React.FC = () => {
         setSnackbarMessage("Medicine deleted successfully!");
         setSnackbarType("success");
         setShowSnackbar(true);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to delete medicine:", error);
-        setSnackbarMessage("Failed to delete medicine. Please try again.");
+        const errorMessage =
+          error?.data?.message ||
+          "Failed to delete medicine. Please try again.";
+        setSnackbarMessage(errorMessage);
         setSnackbarType("error");
-        setShowSnackbar(true); // Keep the modal open so the user can try again
+        setShowSnackbar(true);
       }
     }
   };
+
+  //! Handle API errors -----------------------
+  useEffect(() => {
+    if (medicinesError) {
+      const errorMessage =
+        (medicinesError as any)?.data?.message ||
+        "Failed to load medicines. Please try again.";
+      setSnackbarMessage(errorMessage);
+      setSnackbarType("error");
+      setShowSnackbar(true);
+    }
+  }, [medicinesError]);
 
   //! Close modals -----------------------
   const handleCloseModals = () => {
@@ -208,47 +227,17 @@ const Inventory: React.FC = () => {
     setShowSnackbar(false);
   };
 
-  //! Search medicines -----------------------
-  const searchMedicines = useCallback(
-    (
-      medicines: MedicineInventory[],
-      searchTerm: string
-    ): MedicineInventory[] => {
-      if (!searchTerm.trim()) return medicines;
-
-      const searchLower = searchTerm.toLowerCase().trim();
-
-      return medicines.filter((medicine) => {
-        // Search in specific fields with priority
-        const searchableFields = [
-          medicine.name,
-          medicine.brand,
-          medicine.description,
-          medicine.dosage,
-          medicine.batch_no,
-          medicine._id.toString(),
-          medicine.stock.toString(),
-          new Date(medicine.expirationDate).toLocaleDateString(),
-        ];
-
-        return searchableFields.some((field) => {
-          if (field == null) return false;
-          return field.toString().toLowerCase().includes(searchLower);
-        });
-      });
-    },
-    []
-  );
-
   //! Filter medicines based on search term -----------------------
+  // Note: Search is now handled by the backend via query parameter
   const filteredMedicines = useMemo(() => {
-    return searchMedicines(medicines?.data || [], debouncedSearchTerm);
-  }, [medicines, debouncedSearchTerm, searchMedicines]);
+    return medicines?.data || [];
+  }, [medicines]);
 
-  //! Calculate pagination -----------------------
-  const totalPages = Math.ceil(filteredMedicines.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
+  //! Pagination logic -----------------------
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(filteredMedicines.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
   const paginatedMedicines = filteredMedicines.slice(startIndex, endIndex);
 
   return (
@@ -292,14 +281,15 @@ const Inventory: React.FC = () => {
         </div>
 
         {/* Table */}
+
         <Table
           data={paginatedMedicines}
           columns={columns}
           actions={actions}
-          searchable={false} // We're handling search manually
+          searchable={false} // Search is handled by backend
           pagination={{
             currentPage,
-            totalPages,
+            totalPages: totalPages || 1, // Ensure at least 1 page
             onChange: handlePageChange,
           }}
           emptyMessage={
@@ -312,6 +302,7 @@ const Inventory: React.FC = () => {
             setIsViewMedicineModalOpen(true);
           }}
           className="shadow-sm"
+          loading={isLoadingMedicines}
         />
       </div>
 

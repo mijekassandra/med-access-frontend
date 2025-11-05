@@ -10,6 +10,7 @@ export interface HealthEducationItem {
   url?: string | null;
   createdAt: string;
   updatedAt: string;
+  isPublished: boolean;
 }
 
 export interface HealthEducationCreate {
@@ -26,6 +27,7 @@ export interface HealthEducationUpdate {
   contentType?: 'article' | 'video';
   body?: string;
   url?: string | null;
+  isPublished?: boolean;
 }
 
 export interface ApiResponse<T> {

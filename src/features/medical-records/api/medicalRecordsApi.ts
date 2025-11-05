@@ -1,30 +1,34 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
+export interface Patient {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+}
+
 export interface MedicalRecord {
   _id: string;
-  patient_id: number;
-  doctor_id: number;
+  patient: Patient;
   diagnosis: string;
-  treatment: string;
-  recordDate: Date;
+  dateOfRecord: string;
+  treatmentPlan: string;
+  isPublished: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface MedicalRecordCreate {
-  patient_id: number;
-  doctor_id: number;
+  patient: string; // MongoDB ObjectId of the patient user
   diagnosis: string;
-  treatment: string;
-  recordDate: Date;
+  dateOfRecord: string; // ISO date string
+  treatmentPlan: string;
 }
 
 export interface MedicalRecordUpdate {
-  patient_id?: number;
-  doctor_id?: number;
   diagnosis?: string;
-  treatment?: string;
-  recordDate?: Date;
+  dateOfRecord?: string; // ISO date string
+  treatmentPlan?: string;
 }
 
 export interface ApiResponse<T> {

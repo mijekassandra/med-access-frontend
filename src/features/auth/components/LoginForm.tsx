@@ -66,6 +66,15 @@ const LoginForm = () => {
       const result = await login({ username, password }).unwrap();
 
       if (result.success) {
+        // Prevent "user" role from logging in - only allow admin and doctor
+        if (result.data.user.role === "user") {
+          const errorMsg =
+            "Access denied. Only administrators and doctors can access this system.";
+          setLocalError(errorMsg);
+          dispatch(setError(errorMsg));
+          return;
+        }
+
         // Store credentials in Redux store
         dispatch(
           setCredentials({
@@ -77,12 +86,8 @@ const LoginForm = () => {
         // Set welcome snackbar flag
         sessionStorage.setItem("showWelcomeSnackbar", "true");
 
-        // Navigate based on user role
-        if (result.data.user.role === "user") {
-          navigate("/patient-dashboard");
-        } else {
-          navigate("/dashboard");
-        }
+        // Navigate to dashboard (admin and doctor both go to dashboard)
+        navigate("/dashboard");
       }
     } catch (err: any) {
       const errorMsg =

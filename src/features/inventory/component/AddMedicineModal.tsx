@@ -15,13 +15,7 @@ import {
   useUpdateMedicineMutation,
 } from "../api/medicineInventoryApi";
 
-// Utils
-import {
-  formatDateForInput,
-  parseDateFromInput,
-  isDateInFuture,
-  getTodayDate,
-} from "../../../utils/dateUtils";
+// Utils - removed unused imports
 
 interface AddMedicineModalProps {
   isOpen: boolean;
@@ -44,7 +38,7 @@ const AddMedicineModal = ({
     description: "",
     dosage: "",
     stock: 0,
-    expirationDate: new Date(),
+    expiration_date: "",
     batch_no: "",
   });
   const [formErrors, setFormErrors] = useState({
@@ -53,7 +47,7 @@ const AddMedicineModal = ({
     description: "",
     dosage: "",
     stock: "",
-    expirationDate: "",
+    expiration_date: "",
     batch_no: "",
   });
   const [showSnackbar, setShowSnackbar] = useState(false);
@@ -73,13 +67,15 @@ const AddMedicineModal = ({
   useEffect(() => {
     if (medicine && (mode === "edit" || mode === "view")) {
       setFormData({
-        name: medicine.name,
-        brand: medicine.brand,
-        description: medicine.description,
-        dosage: medicine.dosage,
-        stock: medicine.stock,
-        expirationDate: new Date(medicine.expirationDate), // Convert string to Date
-        batch_no: medicine.batch_no,
+        name: medicine.name || "",
+        brand: medicine.brand || "",
+        description: medicine.description || "",
+        dosage: medicine.dosage || "",
+        stock: medicine.stock || 0,
+        expiration_date: medicine.expiration_date
+          ? new Date(medicine.expiration_date).toISOString().split("T")[0]
+          : "",
+        batch_no: medicine.batch_no || "",
       });
     } else if (mode === "add") {
       setFormData({
@@ -88,7 +84,7 @@ const AddMedicineModal = ({
         description: "",
         dosage: "",
         stock: 0,
-        expirationDate: getTodayDate(), // Use today's date as default
+        expiration_date: "",
         batch_no: "",
       });
     }
@@ -100,7 +96,7 @@ const AddMedicineModal = ({
       description: "",
       dosage: "",
       stock: "",
-      expirationDate: "",
+      expiration_date: "",
       batch_no: "",
     });
   }, [medicine, mode, isOpen]);
@@ -108,12 +104,7 @@ const AddMedicineModal = ({
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
       ...prev,
-      [field]:
-        field === "stock"
-          ? parseInt(value) || 0
-          : field === "expirationDate"
-          ? parseDateFromInput(value) || prev.expirationDate // Keep existing date if invalid
-          : value,
+      [field]: field === "stock" ? parseInt(value) || 0 : value,
     }));
 
     // Clear error for this field when user starts typing
@@ -125,7 +116,7 @@ const AddMedicineModal = ({
     }
   };
 
-  // Validation function
+  // Validation function (based on backend requirements: name and stock are required)
   const validateForm = () => {
     const errors = {
       name: "",
@@ -133,38 +124,23 @@ const AddMedicineModal = ({
       description: "",
       dosage: "",
       stock: "",
-      expirationDate: "",
+      expiration_date: "",
       batch_no: "",
     };
 
-    // Check if name is empty
+    // Check if name is empty (required)
     if (!formData.name.trim()) {
       errors.name = "This field is required";
     }
 
-    // Check if description is empty
-    if (!formData.description.trim()) {
-      errors.description = "This field is required";
+    // Check if stock is negative (stock must be >= 0, and we require it to be > 0 for UX)
+    if (formData.stock < 0) {
+      errors.stock = "Stock cannot be negative";
     }
 
-    // Check if dosage is empty
-    if (!formData.dosage.trim()) {
-      errors.dosage = "This field is required";
-    }
-
-    // Check if stock is empty or 0
-    if (!formData.stock || formData.stock <= 0) {
+    // Check if stock is provided (required)
+    if (formData.stock === undefined || formData.stock === null) {
       errors.stock = "This field is required";
-    }
-
-    // Check if batch number is empty
-    if (!formData.batch_no.trim()) {
-      errors.batch_no = "This field is required";
-    }
-
-    // Check if expiration date is valid and not in the past
-    if (!formData.expirationDate || !isDateInFuture(formData.expirationDate)) {
-      errors.expirationDate = "This field is required";
     }
 
     setFormErrors(errors);
@@ -185,15 +161,15 @@ const AddMedicineModal = ({
 
     try {
       if (mode === "add") {
-        // Prepare data for API call (exclude id for new medicine)
+        // Prepare data for API call - convert to backend format
         const medicineData = {
-          name: formData.name,
-          brand: formData.brand,
-          description: formData.description,
-          dosage: formData.dosage,
+          name: formData.name.trim(),
+          brand: formData.brand.trim() || "",
+          description: formData.description.trim() || "",
+          dosage: formData.dosage.trim() || "",
           stock: formData.stock,
-          expirationDate: formData.expirationDate,
-          batch_no: formData.batch_no,
+          expiration_date: formData.expiration_date || null,
+          batch_no: formData.batch_no.trim() || "",
         };
 
         const result = await createMedicine(medicineData).unwrap();
@@ -211,22 +187,23 @@ const AddMedicineModal = ({
       } else if (mode === "edit" && medicine?._id) {
         // Prepare data for edit API call
         const medicineData: MedicineInventoryUpdate = {
-          name: formData.name,
-          brand: formData.brand,
-          description: formData.description,
-          dosage: formData.dosage,
+          name: formData.name.trim(),
+          brand: formData.brand.trim() || "",
+          description: formData.description.trim() || "",
+          dosage: formData.dosage.trim() || "",
           stock: formData.stock,
-          expirationDate: formData.expirationDate,
-          batch_no: formData.batch_no,
+          expiration_date: formData.expiration_date || null,
+          batch_no: formData.batch_no.trim() || "",
         };
 
-        setSnackbarMessage("Medicine has been updated successfully!");
-        setSnackbarType("success");
-        setShowSnackbar(true);
         const result = await updateMedicine({
           id: medicine._id,
           data: medicineData,
         }).unwrap();
+
+        setSnackbarMessage("Medicine has been updated successfully!");
+        setSnackbarType("success");
+        setShowSnackbar(true);
 
         // Call onSave with the updated data if provided
         if (onSave && result.data) {
@@ -235,13 +212,14 @@ const AddMedicineModal = ({
 
         onClose();
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error saving medicine:", err);
-      setSnackbarMessage(
+      const errorMessage =
+        err?.data?.message ||
         `Failed to ${
           mode === "add" ? "add" : "update"
-        } medicine. Please try again.`
-      );
+        } medicine. Please try again.`;
+      setSnackbarMessage(errorMessage);
       setSnackbarType("error");
       setShowSnackbar(true);
     }
@@ -254,7 +232,7 @@ const AddMedicineModal = ({
       description: "",
       dosage: "",
       stock: 0,
-      expirationDate: getTodayDate(),
+      expiration_date: "",
       batch_no: "",
     });
     setFormErrors({
@@ -263,7 +241,7 @@ const AddMedicineModal = ({
       description: "",
       dosage: "",
       stock: "",
-      expirationDate: "",
+      expiration_date: "",
       batch_no: "",
     });
     onClose();
@@ -336,9 +314,9 @@ const AddMedicineModal = ({
                 label="BRAND"
                 placeholder="Enter Brand Name"
                 value={formData.brand}
-                onChange={(e) => handleInputChange("name", e.target.value)}
+                onChange={(e) => handleInputChange("brand", e.target.value)}
                 disabled={mode === "view"}
-                error={!!formErrors.name}
+                error={!!formErrors.brand}
               />
             </div>
 
@@ -362,15 +340,15 @@ const AddMedicineModal = ({
                 error={!!formErrors.stock}
               />
               <Inputs
-                label="EXPIRY DATE (DD/MM/YYYY)"
-                placeholder="DD/MM/YYYY"
+                label="EXPIRY DATE"
+                placeholder="Select expiration date"
                 type="date"
-                value={formatDateForInput(formData.expirationDate)}
+                value={formData.expiration_date}
                 onChange={(e) =>
-                  handleInputChange("expirationDate", e.target.value)
+                  handleInputChange("expiration_date", e.target.value)
                 }
                 disabled={mode === "view"}
-                error={!!formErrors.expirationDate}
+                error={!!formErrors.expiration_date}
               />
               <Inputs
                 label="BATCH NO"

@@ -1,36 +1,37 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
+// Types based on backend API documentation
 export interface MedicineInventory {
   _id: string;
   name: string;
-  brand: string;
-  description: string;
-  dosage: string;
+  brand?: string;
+  description?: string;
+  dosage?: string;
   stock: number;
-  expirationDate: Date;
-  batch_no: string;
+  expiration_date: string | null;
+  batch_no?: string;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface MedicineInventoryCreate {
   name: string;
-  brand: string;
-  description: string;
-  dosage: string;
+  brand?: string;
+  description?: string;
+  dosage?: string;
   stock: number;
-  expirationDate: Date;
-  batch_no: string;
+  expiration_date?: string | null;
+  batch_no?: string;
 }
 
 export interface MedicineInventoryUpdate {
-  name: string;
-  brand: string;
-  description: string;
-  dosage: string;
-  stock: number;
-  expirationDate: Date;
-  batch_no: string;
+  name?: string;
+  brand?: string;
+  description?: string;
+  dosage?: string;
+  stock?: number;
+  expiration_date?: string | null;
+  batch_no?: string;
 }
 
 export interface ApiResponse<T> {
@@ -65,9 +66,15 @@ export const medicineInventoryApi = createApi({
   baseQuery: baseQuery,
   tagTypes: ["MedicineInventory"],
   endpoints: (builder) => ({
-    // Get all medicines -------------------------------------------------------------------
-    getMedicines: builder.query<MedicineListResponse, void>({
-      query: () => "/medicines",
+    // Get all inventory items (supports search via query parameter) -------------------------------------------------------------------
+    getMedicines: builder.query<MedicineListResponse, string | void>({
+      query: (searchQuery) => {
+        const params = searchQuery ? { q: searchQuery } : {};
+        return {
+          url: "/inventory",
+          params,
+        };
+      },
       providesTags: (result) =>
         result?.data
           ? [
@@ -79,16 +86,16 @@ export const medicineInventoryApi = createApi({
           : [{ type: "MedicineInventory", id: "LIST" }],
     }),
 
-    // Get medicine by ID -------------------------------------------------------------------
+    // Get inventory item by ID -------------------------------------------------------------------
     getMedicineById: builder.query<ApiResponse<MedicineInventory>, string>({
-      query: (id) => `/medicines/${id}`,
+      query: (id) => `/inventory/${id}`,
       providesTags: (_result, _error, id) => [{ type: "MedicineInventory", id }],
     }),
 
-    // Create medicine -------------------------------------------------------------------
+    // Create inventory item -------------------------------------------------------------------
     createMedicine: builder.mutation<ApiResponse<MedicineInventory>, MedicineInventoryCreate>({
       query: (medicineData) => ({
-        url: "/medicines",
+        url: "/inventory",
         method: "POST",
         headers: {
           'Content-Type': 'application/json',
@@ -98,10 +105,10 @@ export const medicineInventoryApi = createApi({
       invalidatesTags: [{ type: "MedicineInventory", id: "LIST" }],
     }),
 
-    // Update medicine -------------------------------------------------------------------
+    // Update inventory item -------------------------------------------------------------------
     updateMedicine: builder.mutation<ApiResponse<MedicineInventory>, { id: string; data: MedicineInventoryUpdate }>({
       query: ({ id, data }) => ({
-        url: `/medicines/${id}`,
+        url: `/inventory/${id}`,
         method: "PUT",
         headers: {
           'Content-Type': 'application/json',
@@ -114,10 +121,10 @@ export const medicineInventoryApi = createApi({
       ],
     }),
 
-    // Delete medicine -------------------------------------------------------------------
+    // Delete inventory item -------------------------------------------------------------------
     deleteMedicine: builder.mutation<ApiResponse<{}>, string>({
       query: (id) => ({
-        url: `/medicines/${id}`,
+        url: `/inventory/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: (_result, _error, id) => [

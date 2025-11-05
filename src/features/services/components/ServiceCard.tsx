@@ -1,4 +1,4 @@
-import { Health } from "iconsax-react";
+import { Health, Edit, Trash, Eye } from "iconsax-react";
 import React from "react";
 
 interface ServiceCardProps {
@@ -7,6 +7,9 @@ interface ServiceCardProps {
   price: number;
   description?: string;
   image?: string;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  onView?: () => void;
 }
 
 const ServiceCard: React.FC<ServiceCardProps> = ({
@@ -14,6 +17,9 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
   price,
   description,
   image,
+  onEdit,
+  onDelete,
+  onView,
 }) => {
   return (
     <div className="bg-white w-full rounded-lg shadow-sm border border-szLightGrey200 hover:shadow-lg hover:border-szPrimary300 hover:-translate-y-1 transition-all duration-300 group overflow-hidden relative">
@@ -31,11 +37,67 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           </div>
         )}
         {/* Price Badge */}
-        <div className="absolute top-2 right-2 bg-white/95 backdrop-blur-sm rounded-full px-3 py-[4px] shadow-lg border border-szPrimary200">
+        <div className="absolute top-2 right-2 bg-white/95 backdrop-blur-sm rounded-full px-3 py-[4px] shadow-lg border border-szPrimary200 z-10 pointer-events-none">
           <p className="text-sm font-bold font-dmSans text-szPrimary700">
             ₱{price.toLocaleString()}
           </p>
         </div>
+        {/* Action Buttons (shown on hover if provided) */}
+        {(onEdit || onDelete) && (
+          <div
+            className="absolute top-2 left-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {onEdit && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onEdit();
+                }}
+                className="bg-white/90 backdrop-blur-sm rounded-full p-2 shadow-lg border border-szPrimary200 hover:bg-white transition-colors"
+                title="Edit service"
+              >
+                <Edit className="text-szPrimary700" size={16} />
+              </button>
+            )}
+            {onDelete && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onDelete();
+                }}
+                className="bg-white/90 backdrop-blur-sm rounded-full p-2 shadow-lg border border-error200 hover:bg-white transition-colors"
+                title="Delete service"
+              >
+                <Trash className="text-error700" size={16} />
+              </button>
+            )}
+          </div>
+        )}
+        {/* View Button (shown on hover if provided) */}
+        {onView && (
+          <div
+            className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onView();
+              }}
+              className="bg-white/90 backdrop-blur-sm rounded-full p-2 shadow-lg border border-szPrimary200 hover:bg-white transition-colors"
+              title="View details"
+            >
+              <Eye className="text-szPrimary700" size={16} />
+            </button>
+          </div>
+        )}
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
       </div>
@@ -46,7 +108,7 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           {name}
         </p>
         {description && (
-          <p className="text-body-small-reg text-szBlack500 text-center leading-relaxed group-hover:text-szBlack600 transition-colors duration-300">
+          <p className="text-body-small-reg text-szBlack500 text-center leading-relaxed group-hover:text-szBlack600 transition-colors duration-300 line-clamp-2">
             {description}
           </p>
         )}

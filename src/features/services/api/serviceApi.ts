@@ -1,28 +1,30 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-// Types based on the service data structure
+// Types based on backend API documentation
 export interface Service {
   _id: string;
-  name: string;
+  serviceName: string;
+  additionalInfo?: string;
   price: number;
-  description: string;
   image?: string | null;
+  isPublished: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface ServiceCreate {
-  name: string;
+  serviceName: string;
+  additionalInfo?: string;
   price: number;
-  description: string;
   image?: File | null;
 }
 
 export interface ServiceUpdate {
-  name?: string;
+  serviceName?: string;
+  additionalInfo?: string;
   price?: number;
-  description?: string;
   image?: File | null;
+  isPublished?: boolean;
 }
 
 export interface ApiResponse<T> {
@@ -38,9 +40,7 @@ export interface ServiceListResponse {
   data: Service[];
 }
 
-// const baseUrl = import.meta.env.VITE_APP_BE_URL || 'http://localhost:3001';
-// const baseUrl = import.meta.env.VITE_APP_BE_URL || 'http://localhost:3001';
-const baseUrl = 'http://localhost:3001';
+const baseUrl = import.meta.env.VITE_APP_BE_URL || 'http://localhost:3001';
 
 const baseQuery = fetchBaseQuery({
   baseUrl: `${baseUrl}/api`,
@@ -82,7 +82,7 @@ export const serviceApi = createApi({
     // Create service (supports file upload) -------------------------------------------------------------------
     createService: builder.mutation<ApiResponse<Service>, ServiceCreate | FormData>({
       query: (serviceData) => {
-        // Check if it's FormData (file upload) or regular object
+        // Always use FormData for file uploads
         if (serviceData instanceof FormData) {
           return {
             url: "/services",
@@ -90,13 +90,21 @@ export const serviceApi = createApi({
             body: serviceData,
           };
         } else {
+          // Convert to FormData for consistency with backend
+          const formData = new FormData();
+          formData.append('serviceName', serviceData.serviceName);
+          if (serviceData.additionalInfo) {
+            formData.append('additionalInfo', serviceData.additionalInfo);
+          }
+          formData.append('price', serviceData.price.toString());
+          if (serviceData.image) {
+            formData.append('image', serviceData.image);
+          }
+          
           return {
             url: "/services",
             method: "POST",
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: serviceData,
+            body: formData,
           };
         }
       },
@@ -106,7 +114,7 @@ export const serviceApi = createApi({
     // Update service (supports file upload) -------------------------------------------------------------------
     updateService: builder.mutation<ApiResponse<Service>, { id: string; data: ServiceUpdate | FormData }>({
       query: ({ id, data }) => {
-        // Check if it's FormData (file upload) or regular object
+        // Always use FormData for file uploads
         if (data instanceof FormData) {
           return {
             url: `/services/${id}`,
@@ -114,13 +122,28 @@ export const serviceApi = createApi({
             body: data,
           };
         } else {
+          // Convert to FormData for consistency with backend
+          const formData = new FormData();
+          if (data.serviceName) {
+            formData.append('serviceName', data.serviceName);
+          }
+          if (data.additionalInfo !== undefined) {
+            formData.append('additionalInfo', data.additionalInfo);
+          }
+          if (data.price !== undefined) {
+            formData.append('price', data.price.toString());
+          }
+          if (data.isPublished !== undefined) {
+            formData.append('isPublished', data.isPublished.toString());
+          }
+          if (data.image) {
+            formData.append('image', data.image);
+          }
+          
           return {
             url: `/services/${id}`,
             method: "PUT",
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: data,
+            body: formData,
           };
         }
       },

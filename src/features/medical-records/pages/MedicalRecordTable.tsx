@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 //icons
 import { Edit, Trash, SearchNormal1, Add, ExportCurve } from "iconsax-react";
@@ -14,84 +14,41 @@ import Button from "../../../global-components/Button";
 import AddUserMedicalModal from "../components/AddUserMedicalModal";
 import SnackbarAlert from "../../../global-components/SnackbarAlert";
 import ButtonsIcon from "../../../global-components/ButtonsIcon";
+import Loading from "../../../components/Loading";
+import DeleteConfirmation from "../../../components/DeleteConfirmation";
 
 //export
 import ExportModal from "../../../components/ExportModal";
 import { type ExportColumn } from "../../../types/export";
 import { useExport } from "../../../hooks/useExport";
 
-// Sample data type
-interface MedicalRecord {
+// API
+import {
+  useGetMedicalRecordsQuery,
+  useDeleteMedicalRecordMutation,
+} from "../api/medicalRecordsApi";
+
+// Table display type for compatibility with existing table component
+interface MedicalRecordDisplay {
   id: string;
   patientName: string;
+  patientId: string; // Patient user ID for API operations
   diagnosis: string;
   treatmentPlan: string;
   dateOfRecord: string;
+  _id: string; // Keep original ID for API operations
 }
-
-// Sample data
-const sampleData: MedicalRecord[] = [
-  {
-    id: "001",
-    patientName: "John Doe",
-    diagnosis: "Acute Tonsillitis",
-    treatmentPlan: "Antibiotics, rest",
-    dateOfRecord: "2024-06-10 09:40:00",
-  },
-  {
-    id: "002",
-    patientName: "Taylor Swift",
-    diagnosis: "Hypertension",
-    treatmentPlan: "ACE inhibitors, lifestyle changes",
-    dateOfRecord: "2024-06-09 14:30:00",
-  },
-  {
-    id: "003",
-    patientName: "Mike Johnson",
-    diagnosis: "Diabetes Type 2",
-    treatmentPlan: "Metformin, diet control",
-    dateOfRecord: "2024-06-08 11:15:00",
-  },
-  {
-    id: "004",
-    patientName: "Ariana Grande",
-    diagnosis: "Migraine",
-    treatmentPlan: "Pain relievers, stress management ",
-    dateOfRecord: "2024-06-07 16:45:00",
-  },
-  {
-    id: "005",
-    patientName: "Billie Eilish",
-    diagnosis: "Asthma",
-    treatmentPlan: "Inhalers, avoid triggers",
-    dateOfRecord: "2024-06-06 10:20:00",
-  },
-  {
-    id: "006",
-    patientName: "Lil Nas X",
-    diagnosis: "Asthma",
-    treatmentPlan: "Inhalers, avoid triggers",
-    dateOfRecord: "2024-06-06 10:20:00",
-  },
-  {
-    id: "007",
-    patientName: "Post Malone",
-    diagnosis: "Asthma",
-    treatmentPlan: "Inhalers, avoid triggers",
-    dateOfRecord: "2024-06-06 10:20:00",
-  },
-];
 
 const MedicalRecordTable: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [records, setRecords] = useState<MedicalRecord[]>(sampleData);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddMedicalModalOpen, setIsAddMedicalModalOpen] = useState(false);
   const [isEditMedicalModalOpen, setIsEditMedicalModalOpen] = useState(false);
   const [isViewMedicalModalOpen, setIsViewMedicalModalOpen] = useState(false);
-  const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | null>(
-    null
-  );
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
+    useState(false);
+  const [selectedRecord, setSelectedRecord] =
+    useState<MedicalRecordDisplay | null>(null);
   const [snackbar, setSnackbar] = useState<{
     isOpen: boolean;
     message: string;
@@ -102,10 +59,47 @@ const MedicalRecordTable: React.FC = () => {
     type: "success",
   });
 
+  // RTK Query hooks
+  const {
+    data: medicalRecordsData,
+    isLoading,
+    error: fetchError,
+    refetch,
+  } = useGetMedicalRecordsQuery();
+
+  const [deleteMedicalRecord, { isLoading: isDeleting }] =
+    useDeleteMedicalRecordMutation();
+
+  // Transform API data to display format
+  const records: MedicalRecordDisplay[] =
+    medicalRecordsData?.data
+      ?.filter((record) => record.isPublished)
+      ?.map((record) => ({
+        id: record._id,
+        _id: record._id,
+        patientName: `${record.patient.firstName} ${record.patient.lastName}`,
+        patientId: record.patient._id, // Store patient ID for edit mode
+        diagnosis: record.diagnosis,
+        treatmentPlan: record.treatmentPlan,
+        dateOfRecord: record.dateOfRecord,
+      })) || [];
+
   //sample only
   const user = {
     role: "admin",
   };
+
+  // Error handling for API calls
+  useEffect(() => {
+    if (fetchError) {
+      showError(
+        "data" in fetchError
+          ? (fetchError.data as any)?.message ||
+              "Failed to fetch medical records"
+          : "Failed to fetch medical records"
+      );
+    }
+  }, [fetchError]);
 
   // Export functionality
   const exportColumns: ExportColumn[] = [
@@ -127,9 +121,9 @@ const MedicalRecordTable: React.FC = () => {
     },
   });
 
-  const handleSelectionChange = (selected: Option | Option[]) => {
-    console.log("Selected Filter:", selected);
-  };
+  // const handleSelectionChange = (selected: Option | Option[]) => {
+  //   console.log("Selected Filter:", selected);
+  // };
 
   // Show error snackbar
   const showError = (message: string) => {
@@ -155,7 +149,7 @@ const MedicalRecordTable: React.FC = () => {
   };
 
   // Define columns
-  const columns: TableColumn<MedicalRecord>[] = [
+  const columns: TableColumn<MedicalRecordDisplay>[] = [
     {
       key: "patientName",
       header: "Patient Name",
@@ -176,11 +170,19 @@ const MedicalRecordTable: React.FC = () => {
       key: "treatmentPlan",
       header: "Treatment Plan",
       sortable: true,
+      render: (value) => (
+        <span
+          className="text-body-small-reg text-szBlack700 truncate block max-w-[300px]"
+          title={value}
+        >
+          {value}
+        </span>
+      ),
     },
     {
       key: "dateOfRecord",
-      header: "Date of Record",
-      width: "200px",
+      header: "Date",
+      width: "120px",
       sortable: true,
       render: (value) => (
         <span className="text-body-small-reg text-szBlack700">
@@ -188,8 +190,6 @@ const MedicalRecordTable: React.FC = () => {
             year: "numeric",
             month: "2-digit",
             day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
           })}
         </span>
       ),
@@ -197,7 +197,7 @@ const MedicalRecordTable: React.FC = () => {
   ];
 
   // Define actions
-  const actions: TableAction<MedicalRecord>[] = [
+  const actions: TableAction<MedicalRecordDisplay>[] = [
     {
       label: "Edit Record",
       icon: <Edit size={16} />,
@@ -210,17 +210,10 @@ const MedicalRecordTable: React.FC = () => {
       label: "Delete Record",
       icon: <Trash size={16} />,
       onClick: (record) => {
-        console.log("Delete record:", record);
-        if (
-          confirm(
-            `Are you sure you want to delete the record for Patient ID: ${record.id}?`
-          )
-        ) {
-          setRecords(records.filter((r) => r.id !== record.id));
-          showSuccess("Medical record deleted successfully");
-        }
+        setSelectedRecord(record);
+        setIsDeleteConfirmationOpen(true);
       },
-      disabled: (record) => record.id === "001", // Disable for first record as example
+      disabled: () => isDeleting,
     },
   ];
 
@@ -229,7 +222,7 @@ const MedicalRecordTable: React.FC = () => {
     console.log("Page changed to:", page);
   };
 
-  const handleRowClick = (record: MedicalRecord) => {
+  const handleRowClick = (record: MedicalRecordDisplay) => {
     setSelectedRecord(record);
     setIsViewMedicalModalOpen(true);
   };
@@ -238,31 +231,27 @@ const MedicalRecordTable: React.FC = () => {
     setIsAddMedicalModalOpen(false);
     setIsEditMedicalModalOpen(false);
     setIsViewMedicalModalOpen(false);
+    setIsDeleteConfirmationOpen(false);
     setSelectedRecord(null);
   };
 
-  const handleEditSave = async (updatedRecord: any) => {
+  const handleDeleteConfirm = async () => {
     if (!selectedRecord) return;
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Update the record in the local state
-      setRecords(
-        records.map((record) =>
-          record.id === selectedRecord.id
-            ? { ...record, ...updatedRecord }
-            : record
-        )
-      );
-
-      showSuccess("Medical record updated successfully");
-      setIsEditMedicalModalOpen(false);
+      await deleteMedicalRecord(selectedRecord._id).unwrap();
+      showSuccess("Medical record deleted successfully");
+      setIsDeleteConfirmationOpen(false);
       setSelectedRecord(null);
     } catch (error: any) {
-      showError("Failed to update medical record");
+      showError(error?.data?.message || "Failed to delete medical record");
     }
+  };
+
+  const handleEditSave = async () => {
+    // This will be handled by the modal component
+    // Refetch data after save
+    refetch();
   };
 
   const filteredRecords = records.filter((record) =>
@@ -270,6 +259,18 @@ const MedicalRecordTable: React.FC = () => {
       value.toString().toLowerCase().includes(searchTerm.toLowerCase())
     )
   );
+
+  // Pagination logic
+  const itemsPerPage = 5;
+  const totalPages = Math.ceil(filteredRecords.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedRecords = filteredRecords.slice(startIndex, endIndex);
+
+  // Reset to page 1 when search term changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   return (
     <div className="grid grid-cols-1 gap-6">
@@ -287,7 +288,7 @@ const MedicalRecordTable: React.FC = () => {
             user.role === "admin" ? "justify-between" : "justify-end"
           }`}
         >
-          {user.role === "admin" && (
+          {/* {user.role === "admin" && (
             <div className="min-w-[40%] sm:min-w-[160px]">
               <Dropdown
                 options={[
@@ -300,7 +301,7 @@ const MedicalRecordTable: React.FC = () => {
                 onSelectionChange={handleSelectionChange}
               />
             </div>
-          )}
+          )} */}
 
           <Button
             label="Add Patient"
@@ -322,18 +323,19 @@ const MedicalRecordTable: React.FC = () => {
 
       {/* Table */}
       <Table
-        data={filteredRecords}
+        data={paginatedRecords}
         columns={columns}
         actions={actions}
         searchable={false} // We're handling search manually
         pagination={{
           currentPage,
-          totalPages: Math.ceil(filteredRecords.length / 5), // 5 items per page
+          totalPages: totalPages || 1, // Ensure at least 1 page
           onChange: handlePageChange,
         }}
         emptyMessage="No medical records found"
         onRowClick={handleRowClick}
         className="shadow-sm"
+        loading={isLoading}
       />
 
       {/* Add Medical Record Modal */}
@@ -341,11 +343,9 @@ const MedicalRecordTable: React.FC = () => {
         isOpen={isAddMedicalModalOpen}
         onClose={handleCloseModals}
         mode="add"
-        onSave={(newRecord) => {
-          console.log("New medical record:", newRecord);
-          // Here you would typically add the new record to your state or make an API call
-          showSuccess("Medical record added successfully");
-        }}
+        onSave={handleEditSave}
+        onError={(error) => showError(error)}
+        onSuccess={(message) => showSuccess(message)}
       />
 
       {/* Edit Medical Record Modal */}
@@ -356,8 +356,9 @@ const MedicalRecordTable: React.FC = () => {
         medicalRecord={
           selectedRecord
             ? {
-                id: selectedRecord.id,
+                id: selectedRecord._id,
                 fullName: selectedRecord.patientName,
+                patientId: selectedRecord.patientId, // Pass patient ID for proper dropdown selection
                 diagnosis: selectedRecord.diagnosis,
                 dateOfRecord: selectedRecord.dateOfRecord,
                 treatmentPlan: selectedRecord.treatmentPlan,
@@ -365,6 +366,8 @@ const MedicalRecordTable: React.FC = () => {
             : undefined
         }
         onSave={handleEditSave}
+        onError={(error) => showError(error)}
+        onSuccess={(message) => showSuccess(message)}
       />
 
       {/* View Medical Record Modal */}
@@ -375,7 +378,7 @@ const MedicalRecordTable: React.FC = () => {
         medicalRecord={
           selectedRecord
             ? {
-                id: selectedRecord.id,
+                id: selectedRecord._id,
                 fullName: selectedRecord.patientName,
                 diagnosis: selectedRecord.diagnosis,
                 dateOfRecord: selectedRecord.dateOfRecord,
@@ -383,6 +386,19 @@ const MedicalRecordTable: React.FC = () => {
               }
             : undefined
         }
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmation
+        isOpen={isDeleteConfirmationOpen}
+        onClose={() => {
+          setIsDeleteConfirmationOpen(false);
+          setSelectedRecord(null);
+        }}
+        onClick={handleDeleteConfirm}
+        title="Delete Medical Record"
+        description={`Are you sure you want to delete the medical record for "${selectedRecord?.patientName}"?`}
+        isLoading={isDeleting}
       />
 
       {/* Snackbar for notifications */}

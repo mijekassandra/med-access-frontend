@@ -15,9 +15,9 @@ interface ServiceModalProps {
 }
 
 export interface ServiceFormData {
-  name: string;
+  serviceName: string;
   price: number;
-  description: string;
+  additionalInfo: string;
   image: File | null;
   imagePreview: string;
 }
@@ -30,17 +30,17 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
   onSave,
 }) => {
   const [formData, setFormData] = useState<ServiceFormData>({
-    name: "",
+    serviceName: "",
     price: 0,
-    description: "",
+    additionalInfo: "",
     image: null,
     imagePreview: "",
   });
 
   const [formErrors, setFormErrors] = useState({
-    name: "",
+    serviceName: "",
     price: "",
-    description: "",
+    additionalInfo: "",
     image: "",
   });
 
@@ -55,17 +55,17 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
   useEffect(() => {
     if (service && (mode === "edit" || mode === "view")) {
       setFormData({
-        name: service.name || "",
+        serviceName: service.serviceName || "",
         price: service.price || 0,
-        description: service.description || "",
+        additionalInfo: service.additionalInfo || "",
         image: null,
-        imagePreview: service.imageUrl || "",
+        imagePreview: service.image || "",
       });
     } else if (mode === "add") {
       setFormData({
-        name: "",
+        serviceName: "",
         price: 0,
-        description: "",
+        additionalInfo: "",
         image: null,
         imagePreview: "",
       });
@@ -73,9 +73,9 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
 
     // Clear errors when modal opens or mode changes
     setFormErrors({
-      name: "",
+      serviceName: "",
       price: "",
-      description: "",
+      additionalInfo: "",
       image: "",
     });
   }, [service, mode, isOpen]);
@@ -107,11 +107,21 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
         return;
       }
 
-      // Validate file size (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
+      // Validate file size (max 5MB per API docs)
+      if (file.size > 5 * 1024 * 1024) {
         setFormErrors((prev) => ({
           ...prev,
-          image: "Image size should be less than 10MB",
+          image: "Image size should be less than 5MB",
+        }));
+        return;
+      }
+
+      // Validate file type (per API docs)
+      const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
+      if (!allowedTypes.includes(file.type)) {
+        setFormErrors((prev) => ({
+          ...prev,
+          image: "Image must be JPEG, PNG, or GIF",
         }));
         return;
       }
@@ -133,31 +143,33 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
   // Validation function
   const validateForm = () => {
     const errors = {
-      name: "",
+      serviceName: "",
       price: "",
-      description: "",
+      additionalInfo: "",
       image: "",
     };
 
-    // Check if name is empty
-    if (!formData.name.trim()) {
-      errors.name = "This field is required";
+    // Check if serviceName is empty
+    if (!formData.serviceName.trim()) {
+      errors.serviceName = "This field is required";
+    }
+
+    // Check if serviceName exceeds max length (200 chars per API docs)
+    if (formData.serviceName.length > 200) {
+      errors.serviceName = "Service name must be 200 characters or less";
     }
 
     // Check if price is valid
-    if (formData.price <= 0) {
-      errors.price = "Price must be greater than 0";
+    if (formData.price < 0) {
+      errors.price = "Price cannot be negative";
     }
 
-    // Check if description is empty
-    if (!formData.description.trim()) {
-      errors.description = "This field is required";
+    // Check if additionalInfo exceeds max length (1000 chars per API docs)
+    if (formData.additionalInfo.length > 1000) {
+      errors.additionalInfo = "Additional info must be 1000 characters or less";
     }
 
-    // Check if image is provided (only for add mode)
-    if (mode === "add" && !formData.image && !formData.imagePreview) {
-      errors.image = "Please upload an image";
-    }
+    // Image is optional per API docs, so no validation needed
 
     setFormErrors(errors);
 
@@ -179,9 +191,9 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
     try {
       // Prepare data for API call
       const serviceData = {
-        name: formData.name,
+        serviceName: formData.serviceName,
         price: formData.price,
-        description: formData.description,
+        additionalInfo: formData.additionalInfo,
         image: formData.image,
       };
 
@@ -190,17 +202,13 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
         await onSave(serviceData);
       }
 
-      setSnackbarMessage(
-        `Service has been ${mode === "add" ? "added" : "updated"} successfully!`
-      );
-      setSnackbarType("success");
-      setShowSnackbar(true);
-
-      onClose();
+      // Note: Success message is handled in Services.tsx
+      // Only show error here if onSave throws
     } catch (err: any) {
       console.error("Error saving service:", err);
       const errorMessage =
         err?.data?.message ||
+        err?.error ||
         err?.message ||
         `Failed to ${
           mode === "add" ? "add" : "update"
@@ -216,16 +224,16 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
 
   const handleCancel = () => {
     setFormData({
-      name: "",
+      serviceName: "",
       price: 0,
-      description: "",
+      additionalInfo: "",
       image: null,
       imagePreview: "",
     });
     setFormErrors({
-      name: "",
+      serviceName: "",
       price: "",
-      description: "",
+      additionalInfo: "",
       image: "",
     });
     onClose();
@@ -288,40 +296,67 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
           <div className="space-y-3 mt-2">
             {/* Service Name Input */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">
-              <Inputs
-                label="SERVICE NAME"
-                placeholder="Enter service name"
-                value={formData.name}
-                onChange={(e) => handleInputChange("name", e.target.value)}
-                disabled={mode === "view"}
-                error={!!formErrors.name}
-              />
+              <div>
+                <Inputs
+                  label="SERVICE NAME"
+                  placeholder="Enter service name"
+                  value={formData.serviceName}
+                  onChange={(e) =>
+                    handleInputChange("serviceName", e.target.value)
+                  }
+                  disabled={mode === "view"}
+                  error={!!formErrors.serviceName}
+                  maxCharacter={200}
+                />
+                {formErrors.serviceName && (
+                  <p className="text-caption-reg text-red-500 ml-1 mt-1">
+                    {formErrors.serviceName}
+                  </p>
+                )}
+              </div>
 
               {/* Service Price Input */}
-              <Inputs
-                label="SERVICE PRICE"
-                placeholder="Enter service price"
-                type="number"
-                value={formData.price.toString()}
-                onChange={(e) =>
-                  handleInputChange("price", parseFloat(e.target.value) || 0)
-                }
-                disabled={mode === "view"}
-                error={!!formErrors.price}
-              />
+              <div>
+                <Inputs
+                  label="SERVICE PRICE"
+                  placeholder="Enter service price"
+                  type="number"
+                  value={formData.price.toString()}
+                  onChange={(e) =>
+                    handleInputChange("price", parseFloat(e.target.value) || 0)
+                  }
+                  disabled={mode === "view"}
+                  error={!!formErrors.price}
+                />
+                {formErrors.price && (
+                  <p className="text-caption-reg text-red-500 ml-1 mt-1">
+                    {formErrors.price}
+                  </p>
+                )}
+              </div>
             </div>
 
-            {/* Service Description Input */}
-            <Inputs
-              label="SERVICE DESCRIPTION"
-              placeholder="Enter service description"
-              isTextarea
-              value={formData.description}
-              onChange={(e) => handleInputChange("description", e.target.value)}
-              disabled={mode === "view"}
-              error={!!formErrors.description}
-              className="min-h-[80px]"
-            />
+            {/* Service Additional Info Input */}
+            <div>
+              <Inputs
+                label="ADDITIONAL INFO"
+                placeholder="Enter additional information (optional)"
+                isTextarea
+                value={formData.additionalInfo}
+                onChange={(e) =>
+                  handleInputChange("additionalInfo", e.target.value)
+                }
+                disabled={mode === "view"}
+                error={!!formErrors.additionalInfo}
+                className="min-h-[80px]"
+                maxCharacter={1000}
+              />
+              {formErrors.additionalInfo && (
+                <p className="text-caption-reg text-red-500 ml-1 mt-1">
+                  {formErrors.additionalInfo}
+                </p>
+              )}
+            </div>
 
             {/* Image Upload */}
             <div className="space-y-1">
@@ -331,7 +366,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
               <div className="border-2 border-dashed border-szGrey300 rounded-lg p-4 text-center">
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/gif"
                   onChange={handleImageChange}
                   disabled={mode === "view"}
                   className="hidden"
@@ -361,7 +396,7 @@ const ServiceModal: React.FC<ServiceModalProps> = ({
                         Click to upload image
                       </p>
                       <p className="text-xs text-szGrey500">
-                        PNG, JPG, GIF up to 10MB
+                        PNG, JPG, GIF up to 5MB
                       </p>
                     </div>
                   )}
