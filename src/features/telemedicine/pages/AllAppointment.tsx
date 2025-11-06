@@ -1,10 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 
 //icons
 import {
-  Edit,
   Trash,
-  Eye,
   SearchNormal1,
   Video,
   User,
@@ -24,13 +22,23 @@ import ContainerWrapper from "../../../components/ContainerWrapper";
 import Chip from "../../../global-components/Chip";
 import SnackbarAlert from "../../../global-components/SnackbarAlert";
 import ButtonsIcon from "../../../global-components/ButtonsIcon";
+import Loading from "../../../components/Loading";
+import DeleteConfirmation from "../../../components/DeleteConfirmation";
 
 // Export
 import ExportModal from "../../../components/ExportModal";
 import { type ExportColumn } from "../../../types/export";
 import { useExport } from "../../../hooks/useExport";
 
-// Appointment data interface
+// RTK Query
+import {
+  useGetAppointmentsQuery,
+  useUpdateAppointmentStatusMutation,
+  useDeleteAppointmentMutation,
+  type Appointment as ApiAppointment,
+} from "../api/appointmentApi";
+
+// Appointment data interface for component
 interface Appointment {
   id: string;
   patientName: string;
@@ -38,137 +46,48 @@ interface Appointment {
   doctorName: string;
   doctorId: string;
   appointmentType: "telemedicine" | "in-person";
-  status: "pending" | "accepted" | "serving" | "completed" | "cancelled";
+  status:
+    | "pending"
+    | "accepted"
+    | "serving"
+    | "completed"
+    | "cancelled"
+    | "denied";
   scheduledDate: string;
   scheduledTime: string;
   reason: string;
   notes?: string;
-  queueNumber?: number;
+  queueNumber?: number | null;
 }
 
-// Get today's date in YYYY-MM-DD format
-const today = new Date().toISOString().split("T")[0];
+// Helper function to convert API appointment to component format
+const mapApiAppointmentToComponent = (apiAppt: ApiAppointment): Appointment => {
+  const appointmentDate = new Date(apiAppt.date);
+  const scheduledDate = appointmentDate.toISOString().split("T")[0];
+  const scheduledTime = appointmentDate.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
 
-// Sample data
-const sampleAppointments: Appointment[] = [
-  {
-    id: "APT001",
-    patientName: "Dela Cruz, Juan",
-    patientId: "P001",
-    doctorName: "Dr. Smith, John",
-    doctorId: "D001",
-    appointmentType: "telemedicine",
-    status: "completed",
-    scheduledDate: today, // Today's date
-    scheduledTime: "09:00",
-    reason: "Follow-up consultation",
-    notes: "Patient requested video call",
-    queueNumber: 1,
-  },
-  {
-    id: "APT002",
-    patientName: "Santos, Maria",
-    patientId: "P002",
-    doctorName: "Dr. Johnson, Sarah",
-    doctorId: "D002",
-    appointmentType: "in-person",
-    status: "completed",
-    scheduledDate: today, // Today's date
-    scheduledTime: "10:30",
-    reason: "Initial consultation",
-    notes: "Physical examination required",
-    queueNumber: 2,
-  },
-  {
-    id: "APT003",
-    patientName: "Garcia, Pedro",
-    patientId: "P003",
-    doctorName: "Dr. Brown, Michael",
-    doctorId: "D003",
-    appointmentType: "telemedicine",
-    status: "completed",
-    scheduledDate: "2024-06-14",
-    scheduledTime: "14:00",
-    reason: "Prescription refill",
-    notes: "Medication adjustment needed",
-    queueNumber: 3,
-  },
-  {
-    id: "APT004",
-    patientName: "Lopez, Ana",
-    patientId: "P004",
-    doctorName: "Dr. Wilson, Emily",
-    doctorId: "D004",
-    appointmentType: "in-person",
-    status: "serving",
-    scheduledDate: "2024-06-13",
-    scheduledTime: "11:15",
-    reason: "Routine check-up",
-    notes: "Patient cancelled due to emergency",
-    queueNumber: 4,
-  },
-  {
-    id: "APT005",
-    patientName: "Martinez, Carlos",
-    patientId: "P005",
-    doctorName: "Dr. Davis, Robert",
-    doctorId: "D005",
-    appointmentType: "telemedicine",
-    status: "accepted",
-    scheduledDate: "2024-06-16",
-    scheduledTime: "15:30",
-    reason: "Mental health consultation",
-    notes: "Weekly therapy session",
-    queueNumber: 5,
-  },
-  {
-    id: "APT006",
-    patientName: "Rodriguez, Sofia",
-    patientId: "P006",
-    doctorName: "Dr. Miller, Lisa",
-    doctorId: "D006",
-    appointmentType: "in-person",
-    status: "accepted",
-    scheduledDate: "2024-06-17",
-    scheduledTime: "08:45",
-    reason: "Vaccination",
-    notes: "Annual flu shot",
-    queueNumber: 6,
-  },
-  {
-    id: "APT007",
-    patientName: "Fernandez, Roberto",
-    patientId: "P007",
-    doctorName: "Dr. Smith, John",
-    doctorId: "D001",
-    appointmentType: "telemedicine",
-    status: "accepted",
-    scheduledDate: "2024-06-12",
-    scheduledTime: "16:00",
-    reason: "Post-surgery follow-up",
-    notes: "Recovery progress check",
-    queueNumber: 7,
-  },
-  {
-    id: "APT008",
-    patientName: "Torres, Elena",
-    patientId: "P008",
-    doctorName: "Dr. Johnson, Sarah",
-    doctorId: "D002",
-    appointmentType: "in-person",
-    status: "accepted",
-    scheduledDate: "2024-06-18",
-    scheduledTime: "13:20",
-    reason: "Lab results review",
-    notes: "Blood work follow-up",
-    queueNumber: 8,
-  },
-];
+  return {
+    id: apiAppt._id,
+    patientName: `${apiAppt.patient.lastName}, ${apiAppt.patient.firstName}`,
+    patientId: apiAppt.patient._id,
+    doctorName: "N/A", // Not in API response
+    doctorId: "",
+    appointmentType:
+      apiAppt.type === "telemedicine" ? "telemedicine" : "in-person",
+    status: apiAppt.status === "denied" ? "cancelled" : apiAppt.status,
+    scheduledDate,
+    scheduledTime,
+    reason: apiAppt.reason,
+    queueNumber: apiAppt.queueNumber,
+  };
+};
 
 const AllAppointment: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [appointments, setAppointments] =
-    useState<Appointment[]>(sampleAppointments);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<Option | Option[]>({
     label: "All",
@@ -195,6 +114,64 @@ const AllAppointment: React.FC = () => {
   const [snackbarType, setSnackbarType] = useState<
     "success" | "error" | "warning" | "info"
   >("success");
+
+  // Get date filter value for API
+  const dateFilterValue = useMemo(() => {
+    const dateValue = Array.isArray(dateFilter)
+      ? dateFilter[0]?.value
+      : dateFilter?.value;
+
+    if (dateValue === "today") {
+      return new Date().toISOString().split("T")[0];
+    } else if (dateValue === "specific" && selectedDate) {
+      return selectedDate.toISOString().split("T")[0];
+    }
+    return undefined;
+  }, [dateFilter, selectedDate]);
+
+  // RTK Query hooks
+  const {
+    data: appointmentsResponse,
+    isLoading,
+    error,
+    refetch,
+  } = useGetAppointmentsQuery(
+    dateFilterValue ? { date: dateFilterValue } : undefined
+  );
+
+  const [updateAppointmentStatus] = useUpdateAppointmentStatusMutation();
+
+  const [deleteAppointment, { isLoading: isDeleting }] =
+    useDeleteAppointmentMutation();
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [appointmentToDelete, setAppointmentToDelete] = useState<string | null>(
+    null
+  );
+
+  // Convert API appointments to component format
+  const appointments = useMemo(() => {
+    if (appointmentsResponse?.data) {
+      return appointmentsResponse.data.map(mapApiAppointmentToComponent);
+    }
+    return [];
+  }, [appointmentsResponse]);
+
+  // Handle API errors
+  useEffect(() => {
+    if (error) {
+      const errorMessage =
+        "data" in error &&
+        typeof error.data === "object" &&
+        error.data !== null &&
+        "message" in error.data
+          ? (error.data as { message: string }).message
+          : "Failed to load appointments. Please try again.";
+      setSnackbarMessage(errorMessage);
+      setSnackbarType("error");
+      setShowSnackbar(true);
+    }
+  }, [error]);
 
   // Export functionality
   const exportColumns: ExportColumn[] = [
@@ -268,44 +245,84 @@ const AllAppointment: React.FC = () => {
     setDateFilter({ label: "All", value: "all" });
     setSelectedDate(null);
     setDateRange({ startDate: null, endDate: null });
+    refetch();
   };
 
   const handleCloseSnackbar = () => {
     setShowSnackbar(false);
   };
 
-  const handleMarkAsDone = (appointmentId: string) => {
-    setAppointments((prev) => {
-      const updatedAppointments = prev.map((apt) => {
-        if (apt.id === appointmentId) {
-          return { ...apt, status: "completed" as const };
-        }
-        return apt;
-      });
+  const handleDeleteAppointment = async () => {
+    if (appointmentToDelete) {
+      try {
+        await deleteAppointment(appointmentToDelete).unwrap();
+
+        // Refetch appointments to get updated data
+        refetch();
+
+        setSnackbarMessage("Appointment deleted successfully");
+        setSnackbarType("success");
+        setShowSnackbar(true);
+      } catch (err: any) {
+        const errorMessage =
+          err?.data?.message ||
+          "Failed to delete appointment. Please try again.";
+        setSnackbarMessage(errorMessage);
+        setSnackbarType("error");
+        setShowSnackbar(true);
+      }
+    }
+    setIsDeleteModalOpen(false);
+    setAppointmentToDelete(null);
+  };
+
+  const cancelDelete = () => {
+    setIsDeleteModalOpen(false);
+    setAppointmentToDelete(null);
+  };
+
+  const handleMarkAsDone = async (appointmentId: string) => {
+    try {
+      await updateAppointmentStatus({
+        id: appointmentId,
+        status: "completed",
+      }).unwrap();
 
       // Find the next patient in queue (accepted status with lowest queue number)
-      const nextPatient = updatedAppointments
+      const nextPatient = appointments
         .filter((apt) => apt.status === "accepted")
         .sort((a, b) => (a.queueNumber || 0) - (b.queueNumber || 0))[0];
 
       if (nextPatient) {
         // Update next patient to "serving" status
-        return updatedAppointments.map((apt) =>
-          apt.id === nextPatient.id
-            ? { ...apt, status: "serving" as const }
-            : apt
-        );
+        try {
+          await updateAppointmentStatus({
+            id: nextPatient.id,
+            status: "serving",
+          }).unwrap();
+        } catch (err) {
+          // If updating next patient fails, still show success for completing the first one
+          console.error("Failed to update next patient status:", err);
+        }
       }
 
-      return updatedAppointments;
-    });
+      // Refetch appointments to get updated data
+      refetch();
 
-    // Show success notification
-    setSnackbarMessage(
-      "Patient marked as done. Next patient in queue is now being served."
-    );
-    setSnackbarType("success");
-    setShowSnackbar(true);
+      // Show success notification
+      setSnackbarMessage(
+        "Patient marked as done. Next patient in queue is now being served."
+      );
+      setSnackbarType("success");
+      setShowSnackbar(true);
+    } catch (err: any) {
+      const errorMessage =
+        err?.data?.message ||
+        "Failed to update appointment status. Please try again.";
+      setSnackbarMessage(errorMessage);
+      setSnackbarType("error");
+      setShowSnackbar(true);
+    }
   };
 
   // Define columns
@@ -441,24 +458,45 @@ const AllAppointment: React.FC = () => {
     {
       label: "Cancel Appointment",
       icon: <Trash size={16} />,
-      onClick: (record) => {
+      onClick: async (record) => {
         console.log("Cancel appointment:", record);
         if (
           confirm(
             `Are you sure you want to cancel the appointment for ${record.patientName}?`
           )
         ) {
-          setAppointments(
-            appointments.map((apt) =>
-              apt.id === record.id
-                ? { ...apt, status: "cancelled" as const }
-                : apt
-            )
-          );
+          try {
+            await updateAppointmentStatus({
+              id: record.id,
+              status: "denied",
+            }).unwrap();
+
+            // Refetch appointments to get updated data
+            refetch();
+
+            setSnackbarMessage("Appointment cancelled successfully");
+            setSnackbarType("success");
+            setShowSnackbar(true);
+          } catch (err: any) {
+            const errorMessage =
+              err?.data?.message ||
+              "Failed to cancel appointment. Please try again.";
+            setSnackbarMessage(errorMessage);
+            setSnackbarType("error");
+            setShowSnackbar(true);
+          }
         }
       },
       disabled: (record) =>
         record.status === "completed" || record.status === "cancelled",
+    },
+    {
+      label: "Delete Appointment",
+      icon: <Trash size={16} />,
+      onClick: (record) => {
+        setAppointmentToDelete(record.id);
+        setIsDeleteModalOpen(true);
+      },
     },
   ];
 
@@ -559,6 +597,14 @@ const AllAppointment: React.FC = () => {
 
     return matchesSearch && matchesStatus && matchesType && matchesDate;
   });
+
+  if (isLoading) {
+    return (
+      <ContainerWrapper>
+        <Loading />
+      </ContainerWrapper>
+    );
+  }
 
   return (
     <ContainerWrapper>
@@ -727,6 +773,22 @@ const AllAppointment: React.FC = () => {
           type={snackbarType}
           onClose={handleCloseSnackbar}
           duration={3000}
+        />
+
+        {/* Delete Confirmation Modal */}
+        <DeleteConfirmation
+          isOpen={isDeleteModalOpen}
+          onClose={cancelDelete}
+          onClick={handleDeleteAppointment}
+          description={`Are you sure you want to delete the appointment for ${
+            appointmentToDelete
+              ? appointments.find((apt) => apt.id === appointmentToDelete)
+                  ?.patientName || "this patient"
+              : "this patient"
+          }?`}
+          buttonLabel={isDeleting ? "Deleting..." : "Delete"}
+          isLoading={isDeleting}
+          subDescription="This action cannot be undone."
         />
 
         {/* Export Modal */}

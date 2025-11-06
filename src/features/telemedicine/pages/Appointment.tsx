@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
 // icons
-import { SearchNormal1 } from "iconsax-react";
+import { SearchNormal1, Add, Play } from "iconsax-react";
 
 // components
 import ContainerWrapper from "../../../components/ContainerWrapper";
@@ -10,112 +10,47 @@ import TelemedicineCard from "../components/TelemedicineCard";
 import Inputs from "../../../global-components/Inputs";
 import Button from "../../../global-components/Button";
 import SnackbarAlert from "../../../global-components/SnackbarAlert";
+import ButtonsIcon from "../../../global-components/ButtonsIcon";
 import DeleteConfirmation from "../../../components/DeleteConfirmation";
 import AppointmentDetail from "../components/AppointmentDetail";
 import ConfirmationModal from "../../../components/ConfirmationModal";
+import Loading from "../../../components/Loading";
+import CreateAppointmentModal from "../components/CreateAppointmentModal";
 
-// Mock data
-const mockPendingRequests = [
-  {
-    id: "1",
-    name: "Dela Cruz, Juan",
-    avatar: "https://i.pravatar.cc/150?img=12",
-    status: "pending" as const,
-    date: "2025-11-03",
-    appointmentType: "In-person",
-  },
-  {
-    id: "2",
-    name: "Santos, Maria",
-    avatar: "https://i.pravatar.cc/150?img=12",
-    status: "pending" as const,
-    date: "2025-11-03",
-    appointmentType: "Telemedicine",
-  },
+// RTK Query
+import {
+  useGetAppointmentsQuery,
+  useUpdateAppointmentStatusMutation,
+  type Appointment as ApiAppointment,
+} from "../api/appointmentApi";
 
-  {
-    id: "13",
-    name: "Hernandez, Luis",
-    avatar: "https://i.pravatar.cc/150?img=13",
-    status: "pending" as const,
-    date: "2025-11-03",
-    appointmentType: "In-person",
-  },
-  {
-    id: "14",
-    name: "Gonzalez, Carmen",
-    avatar: "https://i.pravatar.cc/150?img=14",
-    status: "pending" as const,
-    date: "2025-11-03",
-    appointmentType: "In-person",
-  },
-  {
-    id: "15",
-    name: "Perez, Jose",
-    avatar: "https://i.pravatar.cc/150?img=15",
-    status: "pending" as const,
-    date: "2025-11-03",
-    appointmentType: "In-person",
-  },
-  {
-    id: "16",
-    name: "Ramirez, Rosa",
-    avatar: "https://i.pravatar.cc/150?img=16",
-    status: "pending" as const,
-    date: "2025-11-03",
-    appointmentType: "In-person",
-  },
-];
+// Helper function to convert API appointment to card format
+const mapApiAppointmentToCard = (apiAppt: ApiAppointment) => {
+  const appointmentDate = new Date(apiAppt.date);
+  const date = appointmentDate.toISOString().split("T")[0];
+  const name = `${apiAppt.patient.lastName}, ${apiAppt.patient.firstName}`;
 
-const mockTodayAppointments = [
-  {
-    id: "7",
-    name: "Coliao, Gladys",
-    avatar: "https://i.pravatar.cc/150?img=12",
-    status: "serving" as const,
-    queueNumber: 1,
-    appointmentType: "In-person",
-  },
-  {
-    id: "8",
-    name: "Fernandez, Roberto",
-    avatar: "https://i.pravatar.cc/150?img=12",
-    status: "accepted" as const,
-    queueNumber: 2,
-    appointmentType: "Telemedicine",
-  },
-  {
-    id: "9",
-    name: "Torres, Elena",
-    avatar: "https://i.pravatar.cc/150?img=12",
-    status: "accepted" as const,
-    queueNumber: 3,
-    appointmentType: "In-person",
-  },
-  {
-    id: "10",
-    name: "Reyes, Miguel",
-    avatar: "https://i.pravatar.cc/150?img=12",
-    status: "completed" as const,
-    queueNumber: 4,
-    appointmentType: "In-person",
-  },
-  {
-    id: "11",
-    name: "Cruz, Isabel",
-    avatar: "https://i.pravatar.cc/150?img=12",
-    status: "accepted" as const,
-    queueNumber: 5,
-    appointmentType: "Telemedicine",
-  },
-];
+  // Map "denied" status to "cancelled" for the card component
+  const status: "pending" | "accepted" | "serving" | "completed" | "cancelled" =
+    apiAppt.status === "denied"
+      ? "cancelled"
+      : (apiAppt.status as "pending" | "serving" | "accepted" | "completed");
+
+  return {
+    id: apiAppt._id,
+    firstName: apiAppt.patient.firstName,
+    lastName: apiAppt.patient.lastName,
+    name,
+    status,
+    date,
+    appointmentType:
+      apiAppt.type === "telemedicine" ? "Telemedicine" : "In-person",
+    queueNumber: apiAppt.queueNumber || undefined,
+  };
+};
 
 const Telemedicine = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [pendingRequests, setPendingRequests] = useState(mockPendingRequests);
-  const [todayAppointments, setTodayAppointments] = useState(
-    mockTodayAppointments
-  );
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [requestToDelete, setRequestToDelete] = useState<string | null>(null);
   const [isMarkDoneModalOpen, setIsMarkDoneModalOpen] = useState(false);
@@ -129,17 +64,96 @@ const Telemedicine = () => {
   >("success");
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [acceptingAppointmentId, setAcceptingAppointmentId] = useState<
+    string | null
+  >(null);
+  const [isStartingServing, setIsStartingServing] = useState(false);
+  const [markingAsDoneId, setMarkingAsDoneId] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const handleAccept = (id: string) => {
-    console.log("Accepting request:", id);
-    // Remove the request from pending list
-    setPendingRequests((prev) => prev.filter((request) => request.id !== id));
+  // Get today's date for filtering
+  const today = new Date().toISOString().split("T")[0];
 
-    // Show success notification
-    setSnackbarMessage("Appointment request accepted successfully");
-    setSnackbarType("success");
-    setShowSnackbar(true);
+  // RTK Query hooks - fetch all appointments (no date filter) so pending requests for any date appear
+  const {
+    data: appointmentsResponse,
+    isLoading,
+    error,
+    refetch,
+  } = useGetAppointmentsQuery();
+
+  const [updateAppointmentStatus] = useUpdateAppointmentStatusMutation();
+
+  // Store full API appointments for detail view
+  const fullAppointments = useMemo(() => {
+    return appointmentsResponse?.data || [];
+  }, [appointmentsResponse]);
+
+  // Convert API appointments to card format
+  const allAppointments = useMemo(() => {
+    if (appointmentsResponse?.data) {
+      return appointmentsResponse.data.map(mapApiAppointmentToCard);
+    }
+    return [];
+  }, [appointmentsResponse]);
+
+  // Filter pending requests
+  const pendingRequests = useMemo(() => {
+    return allAppointments.filter((apt) => apt.status === "pending");
+  }, [allAppointments]);
+
+  // Filter today's appointments (serving, accepted, completed) - only show appointments for today
+  const todayAppointments = useMemo(() => {
+    return allAppointments.filter(
+      (apt) =>
+        apt.date === today &&
+        (apt.status === "serving" ||
+          apt.status === "accepted" ||
+          apt.status === "completed")
+    );
+  }, [allAppointments, today]);
+
+  // Handle API errors
+  useEffect(() => {
+    if (error) {
+      const errorMessage =
+        "data" in error &&
+        typeof error.data === "object" &&
+        error.data !== null &&
+        "message" in error.data
+          ? (error.data as { message: string }).message
+          : "Failed to load appointments. Please try again.";
+      setSnackbarMessage(errorMessage);
+      setSnackbarType("error");
+      setShowSnackbar(true);
+    }
+  }, [error]);
+
+  const handleAccept = async (id: string) => {
+    setAcceptingAppointmentId(id);
+    try {
+      await updateAppointmentStatus({
+        id,
+        status: "accepted",
+      }).unwrap();
+
+      // Refetch appointments to get updated data
+      refetch();
+
+      // Show success notification
+      setSnackbarMessage("Appointment request accepted successfully");
+      setSnackbarType("success");
+      setShowSnackbar(true);
+    } catch (err: any) {
+      const errorMessage =
+        err?.data?.message || "Failed to accept appointment. Please try again.";
+      setSnackbarMessage(errorMessage);
+      setSnackbarType("error");
+      setShowSnackbar(true);
+    } finally {
+      setAcceptingAppointmentId(null);
+    }
   };
 
   const handleDeleteRequest = (id: string) => {
@@ -147,17 +161,29 @@ const Telemedicine = () => {
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (requestToDelete) {
-      setPendingRequests((prev) =>
-        prev.filter((request) => request.id !== requestToDelete)
-      );
-      console.log("Deleted request:", requestToDelete);
+      try {
+        await updateAppointmentStatus({
+          id: requestToDelete,
+          status: "denied",
+        }).unwrap();
 
-      // Show success notification
-      setSnackbarMessage("Appointment request rejected successfully");
-      setSnackbarType("success");
-      setShowSnackbar(true);
+        // Refetch appointments to get updated data
+        refetch();
+
+        // Show success notification
+        setSnackbarMessage("Appointment request rejected successfully");
+        setSnackbarType("success");
+        setShowSnackbar(true);
+      } catch (err: any) {
+        const errorMessage =
+          err?.data?.message ||
+          "Failed to reject appointment. Please try again.";
+        setSnackbarMessage(errorMessage);
+        setSnackbarType("error");
+        setShowSnackbar(true);
+      }
     }
     setIsDeleteModalOpen(false);
     setRequestToDelete(null);
@@ -173,7 +199,39 @@ const Telemedicine = () => {
   };
 
   const handleViewAppointment = (appointment: any) => {
-    setSelectedAppointment(appointment);
+    // Find the full appointment data from API response
+    const fullAppointment = fullAppointments.find(
+      (apt) => apt._id === appointment.id
+    );
+
+    if (fullAppointment) {
+      // Map the full appointment data for the detail view
+      const appointmentDate = new Date(fullAppointment.date);
+      const mappedAppointment = {
+        id: fullAppointment._id,
+        patientId: fullAppointment.patient._id,
+        name: `${fullAppointment.patient.lastName}, ${fullAppointment.patient.firstName}`,
+        firstName: fullAppointment.patient.firstName,
+        lastName: fullAppointment.patient.lastName,
+        status:
+          fullAppointment.status === "denied"
+            ? "cancelled"
+            : fullAppointment.status,
+        queueNumber: fullAppointment.queueNumber,
+        appointmentType:
+          fullAppointment.type === "telemedicine"
+            ? "Telemedicine"
+            : "In-person",
+        date: appointmentDate.toISOString().split("T")[0],
+        reason: fullAppointment.reason,
+        createdAt: fullAppointment.createdAt,
+        updatedAt: fullAppointment.updatedAt,
+      };
+      setSelectedAppointment(mappedAppointment);
+    } else {
+      // Fallback to card data if full appointment not found
+      setSelectedAppointment(appointment);
+    }
     setIsViewModalOpen(true);
   };
 
@@ -187,40 +245,87 @@ const Telemedicine = () => {
     setIsMarkDoneModalOpen(true);
   };
 
-  const confirmMarkAsDone = () => {
+  const confirmMarkAsDone = async () => {
     if (appointmentToMarkDone) {
-      // Update the appointment status to completed
-      setTodayAppointments((prev) =>
-        prev.map((appointment) =>
-          appointment.id === appointmentToMarkDone
-            ? { ...appointment, status: "completed" as const }
-            : appointment
-        )
-      );
+      setMarkingAsDoneId(appointmentToMarkDone);
+      try {
+        // Find the current appointment being marked as done
+        const currentAppointment = todayAppointments.find(
+          (apt) => apt.id === appointmentToMarkDone
+        );
 
-      // Find the next patient in queue (accepted status) and move them to serving
-      setTodayAppointments((prev) => {
-        const nextPatient = prev
-          .filter((apt) => apt.status === "accepted")
-          .sort((a, b) => a.id.localeCompare(b.id))[0]; // Simple sorting by ID for demo
-
-        if (nextPatient) {
-          return prev.map((apt) =>
-            apt.id === nextPatient.id
-              ? { ...apt, status: "serving" as const }
-              : apt
-          );
+        if (!currentAppointment) {
+          setSnackbarMessage("Appointment not found");
+          setSnackbarType("error");
+          setShowSnackbar(true);
+          setIsMarkDoneModalOpen(false);
+          setAppointmentToMarkDone(null);
+          setMarkingAsDoneId(null);
+          return;
         }
 
-        return prev;
-      });
+        const currentQueueNumber = currentAppointment.queueNumber || 0;
 
-      // Show success notification
-      setSnackbarMessage(
-        "Appointment marked as done. Next patient in queue is now being served."
-      );
-      setSnackbarType("success");
-      setShowSnackbar(true);
+        // Update the appointment status to completed
+        await updateAppointmentStatus({
+          id: appointmentToMarkDone,
+          status: "completed",
+        }).unwrap();
+
+        // Find the next patient in queue (queueNumber = currentQueueNumber + 1)
+        const nextPatient = todayAppointments.find(
+          (apt) =>
+            apt.status === "accepted" &&
+            apt.queueNumber === currentQueueNumber + 1
+        );
+
+        if (nextPatient) {
+          // Update next patient to "serving" status
+          try {
+            await updateAppointmentStatus({
+              id: nextPatient.id,
+              status: "serving",
+            }).unwrap();
+
+            // Refetch appointments to get updated data
+            refetch();
+
+            // Show success notification
+            setSnackbarMessage(
+              `Appointment marked as done. ${nextPatient.name} (Queue #${nextPatient.queueNumber}) is now being served.`
+            );
+            setSnackbarType("success");
+            setShowSnackbar(true);
+          } catch (err) {
+            // If updating next patient fails, still show success for completing the first one
+            console.error("Failed to update next patient status:", err);
+            refetch();
+            setSnackbarMessage(
+              "Appointment marked as done. Failed to start serving next patient."
+            );
+            setSnackbarType("warning");
+            setShowSnackbar(true);
+          }
+        } else {
+          // No next patient in queue (last in queue) - just mark as done
+          // Refetch appointments to get updated data
+          refetch();
+
+          // Show success notification
+          setSnackbarMessage("Appointment marked as done.");
+          setSnackbarType("success");
+          setShowSnackbar(true);
+        }
+      } catch (err: any) {
+        const errorMessage =
+          err?.data?.message ||
+          "Failed to update appointment status. Please try again.";
+        setSnackbarMessage(errorMessage);
+        setSnackbarType("error");
+        setShowSnackbar(true);
+      } finally {
+        setMarkingAsDoneId(null);
+      }
     }
     setIsMarkDoneModalOpen(false);
     setAppointmentToMarkDone(null);
@@ -233,6 +338,59 @@ const Telemedicine = () => {
 
   const handleViewAllAppointments = () => {
     navigate("/appointments/all-appointments");
+  };
+
+  const handleCreateAppointment = () => {
+    setIsCreateModalOpen(true);
+  };
+
+  const handleCloseCreateModal = () => {
+    setIsCreateModalOpen(false);
+  };
+
+  const handleAppointmentCreated = () => {
+    // Refetch appointments after creating
+    refetch();
+  };
+
+  const handleStartServing = async () => {
+    // Find the appointment with queueNumber 1
+    const nextAppointment = todayAppointments
+      .filter((apt) => apt.status === "accepted")
+      .sort((a, b) => (a.queueNumber || 0) - (b.queueNumber || 0))[0];
+
+    if (!nextAppointment || nextAppointment.queueNumber !== 1) {
+      setSnackbarMessage("No appointment with queue number 1 found");
+      setSnackbarType("error");
+      setShowSnackbar(true);
+      return;
+    }
+
+    setIsStartingServing(true);
+    try {
+      await updateAppointmentStatus({
+        id: nextAppointment.id,
+        status: "serving",
+      }).unwrap();
+
+      // Refetch appointments to get updated data
+      refetch();
+
+      // Show success notification
+      setSnackbarMessage(
+        `Started serving ${nextAppointment.name} (Queue #${nextAppointment.queueNumber})`
+      );
+      setSnackbarType("success");
+      setShowSnackbar(true);
+    } catch (err: any) {
+      const errorMessage =
+        err?.data?.message || "Failed to start serving. Please try again.";
+      setSnackbarMessage(errorMessage);
+      setSnackbarType("error");
+      setShowSnackbar(true);
+    } finally {
+      setIsStartingServing(false);
+    }
   };
 
   const filteredPendingRequests = pendingRequests.filter((request) =>
@@ -249,8 +407,17 @@ const Telemedicine = () => {
       // Sort serving appointments first, then accepted
       if (a.status === "serving" && b.status === "accepted") return -1;
       if (a.status === "accepted" && b.status === "serving") return 1;
-      return 0; // Keep original order for same status
+      // Then sort by queue number
+      return (a.queueNumber || 0) - (b.queueNumber || 0);
     });
+
+  if (isLoading) {
+    return (
+      <ContainerWrapper>
+        <Loading />
+      </ContainerWrapper>
+    );
+  }
 
   return (
     <ContainerWrapper>
@@ -266,16 +433,24 @@ const Telemedicine = () => {
             />
           </div>
 
-          <Button
-            label="View Appointments"
-            size="medium"
-            className="w-[250px]"
-            onClick={handleViewAllAppointments}
-          />
+          <div className="flex gap-3 items-center">
+            <Button
+              label="View Appointments"
+              size="medium"
+              className="w-[200px]"
+              onClick={handleViewAllAppointments}
+            />
+            <ButtonsIcon
+              icon={<Add />}
+              size="medium"
+              variant="primary"
+              onClick={handleCreateAppointment}
+            />
+          </div>
         </div>
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Left Section - Pending Requests */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
@@ -294,6 +469,7 @@ const Telemedicine = () => {
                   {...request}
                   onAccept={handleAccept}
                   onReject={handleDeleteRequest}
+                  isAccepting={acceptingAppointmentId === request.id}
                 />
               ))}
               {filteredPendingRequests.length === 0 && (
@@ -308,9 +484,26 @@ const Telemedicine = () => {
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-900">TODAY</h2>
-              <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                {filteredTodayAppointments.length}
-              </span>
+              <div className="flex items-center gap-3">
+                <Button
+                  label={isStartingServing ? "Starting..." : "Start Serving"}
+                  size="small"
+                  variant="primary"
+                  onClick={handleStartServing}
+                  disabled={
+                    isStartingServing ||
+                    !todayAppointments.some(
+                      (apt) =>
+                        apt.status === "accepted" && apt.queueNumber === 1
+                    )
+                  }
+                  loading={isStartingServing}
+                  rightIcon={<Play />}
+                />
+                <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                  {filteredTodayAppointments.length}
+                </span>
+              </div>
             </div>
 
             <div className="space-y-3 h-96 overflow-y-auto">
@@ -320,6 +513,7 @@ const Telemedicine = () => {
                   {...appointment}
                   onView={handleViewAppointment}
                   onMarkAsDone={handleMarkAsDone}
+                  isMarkingAsDone={markingAsDoneId === appointment.id}
                 />
               ))}
               {filteredTodayAppointments.length === 0 && (
@@ -375,7 +569,13 @@ const Telemedicine = () => {
           isOpen={isViewModalOpen}
           onClose={handleCloseViewModal}
           appointment={selectedAppointment}
-          onMarkAsDone={handleMarkAsDone}
+        />
+
+        {/* Create Appointment Modal */}
+        <CreateAppointmentModal
+          isOpen={isCreateModalOpen}
+          onClose={handleCloseCreateModal}
+          onSave={handleAppointmentCreated}
         />
       </div>
     </ContainerWrapper>

@@ -1,20 +1,17 @@
 import React from "react";
 import Modal from "../../../global-components/Modal";
-import Button from "../../../global-components/Button";
 import Chip from "../../../global-components/Chip";
 
 interface AppointmentDetailProps {
   isOpen: boolean;
   onClose: () => void;
   appointment: any;
-  onMarkAsDone?: (id: string) => void;
 }
 
 const AppointmentDetail: React.FC<AppointmentDetailProps> = ({
   isOpen,
   onClose,
   appointment,
-  onMarkAsDone,
 }) => {
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -65,17 +62,18 @@ const AppointmentDetail: React.FC<AppointmentDetailProps> = ({
           <div className="space-y-6">
             {/* Patient Information */}
             <div className="flex items-center gap-x-2">
-              <img
-                src={appointment.avatar}
-                alt={appointment.name}
-                className="w-12 h-12 rounded-full object-cover"
-              />
+              {/* <Avatar
+                firstName={appointment.firstName}
+                lastName={appointment.lastName}
+                alt={appointment.firstName + " " + appointment.lastName}
+                size="medium"
+              /> */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">
-                  {appointment.name}
+                  {appointment.name || appointment.patientName || "N/A"}
                 </h3>
                 <p className="text-sm text-gray-600">
-                  Patient ID: {appointment.id}
+                  Patient ID: {appointment.patientId || appointment.id}
                 </p>
               </div>
             </div>
@@ -96,7 +94,7 @@ const AppointmentDetail: React.FC<AppointmentDetailProps> = ({
                 <div>
                   <p className="appointment-card-label-style">Queue Number</p>
                   <p className="mt-1 appointment-card-value-style bold text-success700">
-                    # 20{" "}
+                    # {appointment.queueNumber}
                   </p>
                 </div>
               </div>
@@ -107,7 +105,7 @@ const AppointmentDetail: React.FC<AppointmentDetailProps> = ({
                     Appointment Type
                   </p>
                   <p className="mt-1 appointment-card-value-style">
-                    Telemedicine
+                    {appointment.appointmentType}
                   </p>
                 </div>
                 <div>
@@ -121,9 +119,9 @@ const AppointmentDetail: React.FC<AppointmentDetailProps> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="appointment-card-label-style">Description</p>
+                <p className="appointment-card-label-style">Reason</p>
                 <p className="mt-1 appointment-card-value-style">
-                  {appointment.description || "No description provided"}
+                  {appointment.reason}
                 </p>
               </div>
             </div>
