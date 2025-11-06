@@ -16,6 +16,8 @@ interface ConfirmationModalProps {
   buttonLabel: string;
   buttonFooterIcon?: React.ReactNode;
   contentHeight?: string;
+  isLoading?: boolean;
+  isLoadingText?: string;
 }
 
 const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
@@ -28,6 +30,8 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   buttonLabel,
   buttonFooterIcon,
   contentHeight = "h-auto min-h-[150px] max-h-[55vh]",
+  isLoading,
+  isLoadingText,
 }) => {
   return (
     <Modal
@@ -50,6 +54,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           variant: "ghost",
           onClick: () => onClose(),
           size: "medium",
+          disabled: isLoading,
         },
         {
           label: buttonLabel,
@@ -57,6 +62,9 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           onClick: () => onClick(),
           size: "medium",
           leftIcon: buttonFooterIcon,
+          disabled: isLoading,
+          loading: isLoading,
+          loadingText: isLoadingText,
         },
       ]}
       content={

@@ -37,22 +37,15 @@ import {
   useDeleteAppointmentMutation,
   type Appointment as ApiAppointment,
 } from "../api/appointmentApi";
+import UpdateAppointmentModal from "../components/UpdateAppointmentModal";
 
 // Appointment data interface for component
 interface Appointment {
   id: string;
   patientName: string;
   patientId: string;
-  doctorName: string;
-  doctorId: string;
   appointmentType: "telemedicine" | "in-person";
-  status:
-    | "pending"
-    | "accepted"
-    | "serving"
-    | "completed"
-    | "cancelled"
-    | "denied";
+  status: "pending" | "accepted" | "serving" | "completed" | "denied";
   scheduledDate: string;
   scheduledTime: string;
   reason: string;
@@ -74,11 +67,9 @@ const mapApiAppointmentToComponent = (apiAppt: ApiAppointment): Appointment => {
     id: apiAppt._id,
     patientName: `${apiAppt.patient.lastName}, ${apiAppt.patient.firstName}`,
     patientId: apiAppt.patient._id,
-    doctorName: "N/A", // Not in API response
-    doctorId: "",
     appointmentType:
       apiAppt.type === "telemedicine" ? "telemedicine" : "in-person",
-    status: apiAppt.status === "denied" ? "cancelled" : apiAppt.status,
+    status: apiAppt.status,
     scheduledDate,
     scheduledTime,
     reason: apiAppt.reason,
@@ -148,6 +139,9 @@ const AllAppointment: React.FC = () => {
   const [appointmentToDelete, setAppointmentToDelete] = useState<string | null>(
     null
   );
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [appointmentToEdit, setAppointmentToEdit] =
+    useState<ApiAppointment | null>(null);
 
   // Convert API appointments to component format
   const appointments = useMemo(() => {
@@ -176,11 +170,9 @@ const AllAppointment: React.FC = () => {
   // Export functionality
   const exportColumns: ExportColumn[] = [
     { key: "patientName", header: "Patient Name" },
-    { key: "doctorName", header: "Doctor Name" },
     { key: "appointmentType", header: "Type" },
     { key: "status", header: "Status" },
     { key: "scheduledDate", header: "Date" },
-    { key: "scheduledTime", header: "Time" },
     { key: "reason", header: "Reason" },
     { key: "queueNumber", header: "Queue #" },
   ];
@@ -257,8 +249,8 @@ const AllAppointment: React.FC = () => {
       try {
         await deleteAppointment(appointmentToDelete).unwrap();
 
-        // Refetch appointments to get updated data
-        refetch();
+        // Refetch appointments to get updated data and wait for it to complete
+        await refetch();
 
         setSnackbarMessage("Appointment deleted successfully");
         setSnackbarType("success");
@@ -306,8 +298,8 @@ const AllAppointment: React.FC = () => {
         }
       }
 
-      // Refetch appointments to get updated data
-      refetch();
+      // Refetch appointments to get updated data and wait for it to complete
+      await refetch();
 
       // Show success notification
       setSnackbarMessage(
@@ -323,6 +315,27 @@ const AllAppointment: React.FC = () => {
       setSnackbarType("error");
       setShowSnackbar(true);
     }
+  };
+
+  const handleEditAppointment = (record: Appointment) => {
+    // Find the full API appointment data
+    const fullAppointment = appointmentsResponse?.data?.find(
+      (apt) => apt._id === record.id
+    );
+    if (fullAppointment) {
+      setAppointmentToEdit(fullAppointment);
+      setIsEditModalOpen(true);
+    }
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setAppointmentToEdit(null);
+  };
+
+  const handleAppointmentUpdated = async () => {
+    // Refetch appointments to get updated data
+    await refetch();
   };
 
   // Define columns
@@ -379,7 +392,7 @@ const AllAppointment: React.FC = () => {
               return "purple";
             case "completed":
               return "blue";
-            case "cancelled":
+            case "denied":
               return "red";
             default:
               return "gray";
@@ -396,8 +409,8 @@ const AllAppointment: React.FC = () => {
               return "Serving";
             case "completed":
               return "Completed";
-            case "cancelled":
-              return "Cancelled";
+            case "denied":
+              return "Denied";
             default:
               return "Unknown";
           }
@@ -437,59 +450,50 @@ const AllAppointment: React.FC = () => {
   // Define actions
   const actions: TableAction<Appointment>[] = [
     {
-      label: "Mark as Done",
+      label: "Edit Appointment",
       icon: <TickCircle size={16} />,
       onClick: (record) => {
-        console.log("Mark as done:", record);
-        if (
-          confirm(
-            `Are you sure you want to mark ${record.patientName} as done? This will trigger the next patient in queue.`
-          )
-        ) {
-          handleMarkAsDone(record.id);
-        }
+        handleEditAppointment(record);
       },
-      disabled: (record) =>
-        record.status === "completed" ||
-        record.status === "cancelled" ||
-        record.status === "pending",
+      visible: (record) => record.status === "pending",
+      disabled: (record) => record.status !== "pending",
     },
 
-    {
-      label: "Cancel Appointment",
-      icon: <Trash size={16} />,
-      onClick: async (record) => {
-        console.log("Cancel appointment:", record);
-        if (
-          confirm(
-            `Are you sure you want to cancel the appointment for ${record.patientName}?`
-          )
-        ) {
-          try {
-            await updateAppointmentStatus({
-              id: record.id,
-              status: "denied",
-            }).unwrap();
+    // {
+    //   label: "Cancel Appointment",
+    //   icon: <Trash size={16} />,
+    //   onClick: async (record) => {
+    //     console.log("Cancel appointment:", record);
+    //     if (
+    //       confirm(
+    //         `Are you sure you want to cancel the appointment for ${record.patientName}?`
+    //       )
+    //     ) {
+    //       try {
+    //         await updateAppointmentStatus({
+    //           id: record.id,
+    //           status: "denied",
+    //         }).unwrap();
 
-            // Refetch appointments to get updated data
-            refetch();
+    //         // Refetch appointments to get updated data
+    //         refetch();
 
-            setSnackbarMessage("Appointment cancelled successfully");
-            setSnackbarType("success");
-            setShowSnackbar(true);
-          } catch (err: any) {
-            const errorMessage =
-              err?.data?.message ||
-              "Failed to cancel appointment. Please try again.";
-            setSnackbarMessage(errorMessage);
-            setSnackbarType("error");
-            setShowSnackbar(true);
-          }
-        }
-      },
-      disabled: (record) =>
-        record.status === "completed" || record.status === "cancelled",
-    },
+    //         setSnackbarMessage("Appointment cancelled successfully");
+    //         setSnackbarType("success");
+    //         setShowSnackbar(true);
+    //       } catch (err: any) {
+    //         const errorMessage =
+    //           err?.data?.message ||
+    //           "Failed to cancel appointment. Please try again.";
+    //         setSnackbarMessage(errorMessage);
+    //         setSnackbarType("error");
+    //         setShowSnackbar(true);
+    //       }
+    //     }
+    //   },
+    //   disabled: (record) =>
+    //     record.status === "completed" || record.status === "cancelled",
+    // },
     {
       label: "Delete Appointment",
       icon: <Trash size={16} />,
@@ -506,97 +510,131 @@ const AllAppointment: React.FC = () => {
   };
 
   // Filter appointments based on search term, status, type, and date
-  const filteredAppointments = appointments.filter((appointment) => {
-    const matchesSearch = Object.values(appointment).some((value) =>
-      value.toString().toLowerCase().includes(searchTerm.toLowerCase())
-    );
+  const filteredAppointments = useMemo(() => {
+    return appointments.filter((appointment) => {
+      const matchesSearch = Object.values(appointment).some((value) =>
+        value.toString().toLowerCase().includes(searchTerm.toLowerCase())
+      );
 
-    const statusValue = Array.isArray(statusFilter)
-      ? statusFilter[0]?.value
-      : statusFilter?.value;
-    const typeValue = Array.isArray(typeFilter)
-      ? typeFilter[0]?.value
-      : typeFilter?.value;
-    const dateValue = Array.isArray(dateFilter)
-      ? dateFilter[0]?.value
-      : dateFilter?.value;
+      const statusValue = Array.isArray(statusFilter)
+        ? statusFilter[0]?.value
+        : statusFilter?.value;
+      const typeValue = Array.isArray(typeFilter)
+        ? typeFilter[0]?.value
+        : typeFilter?.value;
+      const dateValue = Array.isArray(dateFilter)
+        ? dateFilter[0]?.value
+        : dateFilter?.value;
 
-    const matchesStatus =
-      statusValue === "all" || appointment.status === statusValue;
-    const matchesType =
-      typeValue === "all" || appointment.appointmentType === typeValue;
+      const matchesStatus =
+        statusValue === "all" || appointment.status === statusValue;
+      const matchesType =
+        typeValue === "all" || appointment.appointmentType === typeValue;
 
-    // Date filtering logic
-    let matchesDate = true;
+      // Date filtering logic
+      let matchesDate = true;
 
-    if (dateValue === "today") {
-      const today = new Date().toISOString().split("T")[0];
-      matchesDate = appointment.scheduledDate === today;
-    } else if (dateValue === "specific" && selectedDate) {
-      // Use local date formatting to avoid timezone issues
-      const selectedDateStr =
-        selectedDate.getFullYear() +
-        "-" +
-        String(selectedDate.getMonth() + 1).padStart(2, "0") +
-        "-" +
-        String(selectedDate.getDate()).padStart(2, "0");
-      matchesDate = appointment.scheduledDate === selectedDateStr;
-    } else if (
-      dateValue === "range" &&
-      (dateRange.startDate || dateRange.endDate)
-    ) {
-      const appointmentDate = new Date(appointment.scheduledDate + "T00:00:00");
-
-      if (dateRange.startDate && dateRange.endDate) {
-        const startDate = new Date(
-          dateRange.startDate.getFullYear(),
-          dateRange.startDate.getMonth(),
-          dateRange.startDate.getDate()
-        );
-        const endDate = new Date(
-          dateRange.endDate.getFullYear(),
-          dateRange.endDate.getMonth(),
-          dateRange.endDate.getDate()
-        );
-        const appointmentDateOnly = new Date(
-          appointmentDate.getFullYear(),
-          appointmentDate.getMonth(),
-          appointmentDate.getDate()
+      if (dateValue === "today") {
+        const today = new Date().toISOString().split("T")[0];
+        matchesDate = appointment.scheduledDate === today;
+      } else if (dateValue === "specific" && selectedDate) {
+        // Use local date formatting to avoid timezone issues
+        const selectedDateStr =
+          selectedDate.getFullYear() +
+          "-" +
+          String(selectedDate.getMonth() + 1).padStart(2, "0") +
+          "-" +
+          String(selectedDate.getDate()).padStart(2, "0");
+        matchesDate = appointment.scheduledDate === selectedDateStr;
+      } else if (
+        dateValue === "range" &&
+        (dateRange.startDate || dateRange.endDate)
+      ) {
+        const appointmentDate = new Date(
+          appointment.scheduledDate + "T00:00:00"
         );
 
-        matchesDate =
-          appointmentDateOnly >= startDate && appointmentDateOnly <= endDate;
-      } else if (dateRange.startDate) {
-        const startDate = new Date(
-          dateRange.startDate.getFullYear(),
-          dateRange.startDate.getMonth(),
-          dateRange.startDate.getDate()
-        );
-        const appointmentDateOnly = new Date(
-          appointmentDate.getFullYear(),
-          appointmentDate.getMonth(),
-          appointmentDate.getDate()
-        );
-        matchesDate = appointmentDateOnly >= startDate;
-      } else if (dateRange.endDate) {
-        const endDate = new Date(
-          dateRange.endDate.getFullYear(),
-          dateRange.endDate.getMonth(),
-          dateRange.endDate.getDate()
-        );
-        const appointmentDateOnly = new Date(
-          appointmentDate.getFullYear(),
-          appointmentDate.getMonth(),
-          appointmentDate.getDate()
-        );
-        matchesDate = appointmentDateOnly <= endDate;
+        if (dateRange.startDate && dateRange.endDate) {
+          const startDate = new Date(
+            dateRange.startDate.getFullYear(),
+            dateRange.startDate.getMonth(),
+            dateRange.startDate.getDate()
+          );
+          const endDate = new Date(
+            dateRange.endDate.getFullYear(),
+            dateRange.endDate.getMonth(),
+            dateRange.endDate.getDate()
+          );
+          const appointmentDateOnly = new Date(
+            appointmentDate.getFullYear(),
+            appointmentDate.getMonth(),
+            appointmentDate.getDate()
+          );
+
+          matchesDate =
+            appointmentDateOnly >= startDate && appointmentDateOnly <= endDate;
+        } else if (dateRange.startDate) {
+          const startDate = new Date(
+            dateRange.startDate.getFullYear(),
+            dateRange.startDate.getMonth(),
+            dateRange.startDate.getDate()
+          );
+          const appointmentDateOnly = new Date(
+            appointmentDate.getFullYear(),
+            appointmentDate.getMonth(),
+            appointmentDate.getDate()
+          );
+          matchesDate = appointmentDateOnly >= startDate;
+        } else if (dateRange.endDate) {
+          const endDate = new Date(
+            dateRange.endDate.getFullYear(),
+            dateRange.endDate.getMonth(),
+            dateRange.endDate.getDate()
+          );
+          const appointmentDateOnly = new Date(
+            appointmentDate.getFullYear(),
+            appointmentDate.getMonth(),
+            appointmentDate.getDate()
+          );
+          matchesDate = appointmentDateOnly <= endDate;
+        }
+      } else if (dateValue === "all") {
+        matchesDate = true;
       }
-    } else if (dateValue === "all") {
-      matchesDate = true;
-    }
 
-    return matchesSearch && matchesStatus && matchesType && matchesDate;
-  });
+      return matchesSearch && matchesStatus && matchesType && matchesDate;
+    });
+  }, [
+    appointments,
+    searchTerm,
+    statusFilter,
+    typeFilter,
+    dateFilter,
+    selectedDate,
+    dateRange,
+  ]);
+
+  // Pagination logic
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(filteredAppointments.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedAppointments = filteredAppointments.slice(
+    startIndex,
+    endIndex
+  );
+
+  // Reset to page 1 when search term or filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    searchTerm,
+    statusFilter,
+    typeFilter,
+    dateFilter,
+    selectedDate,
+    dateRange,
+  ]);
 
   if (isLoading) {
     return (
@@ -721,7 +759,7 @@ const AllAppointment: React.FC = () => {
                   { label: "Accepted", value: "accepted" },
                   { label: "Serving", value: "serving" },
                   { label: "Completed", value: "completed" },
-                  { label: "Cancelled", value: "cancelled" },
+                  { label: "Denied", value: "denied" },
                 ]}
                 size="small"
                 label="Status:"
@@ -750,13 +788,13 @@ const AllAppointment: React.FC = () => {
 
         {/* Table */}
         <Table
-          data={filteredAppointments}
+          data={paginatedAppointments}
           columns={columns}
           actions={actions}
           searchable={false} // We're handling search manually
           pagination={{
             currentPage,
-            totalPages: Math.ceil(filteredAppointments.length / 10), // 10 items per page
+            totalPages: totalPages || 1, // Ensure at least 1 page
             onChange: handlePageChange,
           }}
           emptyMessage="No appointments found"
@@ -793,6 +831,14 @@ const AllAppointment: React.FC = () => {
 
         {/* Export Modal */}
         <ExportModal {...exportProps} />
+
+        {/* Update Appointment Modal */}
+        <UpdateAppointmentModal
+          isOpen={isEditModalOpen}
+          onClose={handleCloseEditModal}
+          appointment={appointmentToEdit}
+          onSave={handleAppointmentUpdated}
+        />
       </div>
     </ContainerWrapper>
   );

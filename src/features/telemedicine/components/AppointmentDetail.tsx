@@ -8,6 +8,25 @@ interface AppointmentDetailProps {
   appointment: any;
 }
 
+// Simple hash function to mask patient ID
+const hashPatientId = (id: string): string => {
+  if (!id) return "";
+
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    const char = id.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+
+  // Convert to positive hex string and take first 12 characters
+  const hashStr = Math.abs(hash)
+    .toString(16)
+    .padStart(12, "0")
+    .substring(0, 12);
+  return `#${hashStr.toUpperCase()}`;
+};
+
 const AppointmentDetail: React.FC<AppointmentDetailProps> = ({
   isOpen,
   onClose,
@@ -73,7 +92,8 @@ const AppointmentDetail: React.FC<AppointmentDetailProps> = ({
                   {appointment.name || appointment.patientName || "N/A"}
                 </h3>
                 <p className="text-sm text-gray-600">
-                  Patient ID: {appointment.patientId || appointment.id}
+                  Patient ID:{" "}
+                  {hashPatientId(appointment.patientId || appointment.id)}
                 </p>
               </div>
             </div>
@@ -108,12 +128,12 @@ const AppointmentDetail: React.FC<AppointmentDetailProps> = ({
                     {appointment.appointmentType}
                   </p>
                 </div>
-                <div>
+                {/* <div>
                   <p className="appointment-card-label-style">Doctor</p>
                   <p className="mt-1 appointment-card-value-style">
                     {appointment.doctor || "No doctor provided"}
                   </p>
-                </div>
+                </div> */}
               </div>
             </div>
 

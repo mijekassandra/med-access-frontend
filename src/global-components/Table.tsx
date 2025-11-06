@@ -18,6 +18,7 @@ export interface TableAction<T = Record<string, any>> {
   icon?: React.ReactNode;
   onClick: (record: T) => void;
   disabled?: (record: T) => boolean;
+  visible?: (record: T) => boolean;
 }
 
 export interface TableProps<T = Record<string, any>> {
@@ -164,12 +165,14 @@ const Table = <T extends Record<string, any>>({
   };
 
   const getActionItems = (record: T): DropdownMenuItem[] => {
-    return actions.map((action) => ({
-      label: action.label,
-      icon: action.icon,
-      onClick: () => action.onClick(record),
-      disabled: action.disabled?.(record) || false,
-    }));
+    return actions
+      .filter((action) => action.visible?.(record) !== false)
+      .map((action) => ({
+        label: action.label,
+        icon: action.icon,
+        onClick: () => action.onClick(record),
+        disabled: action.disabled?.(record) || false,
+      }));
   };
 
   if (loading) {

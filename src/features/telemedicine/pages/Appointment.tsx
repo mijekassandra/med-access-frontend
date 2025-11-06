@@ -138,8 +138,8 @@ const Telemedicine = () => {
         status: "accepted",
       }).unwrap();
 
-      // Refetch appointments to get updated data
-      refetch();
+      // Refetch appointments to get updated data and wait for it to complete
+      await refetch();
 
       // Show success notification
       setSnackbarMessage("Appointment request accepted successfully");
@@ -169,8 +169,8 @@ const Telemedicine = () => {
           status: "denied",
         }).unwrap();
 
-        // Refetch appointments to get updated data
-        refetch();
+        // Refetch appointments to get updated data and wait for it to complete
+        await refetch();
 
         // Show success notification
         setSnackbarMessage("Appointment request rejected successfully");
@@ -287,8 +287,8 @@ const Telemedicine = () => {
               status: "serving",
             }).unwrap();
 
-            // Refetch appointments to get updated data
-            refetch();
+            // Refetch appointments to get updated data and wait for it to complete
+            await refetch();
 
             // Show success notification
             setSnackbarMessage(
@@ -299,7 +299,7 @@ const Telemedicine = () => {
           } catch (err) {
             // If updating next patient fails, still show success for completing the first one
             console.error("Failed to update next patient status:", err);
-            refetch();
+            await refetch();
             setSnackbarMessage(
               "Appointment marked as done. Failed to start serving next patient."
             );
@@ -308,8 +308,8 @@ const Telemedicine = () => {
           }
         } else {
           // No next patient in queue (last in queue) - just mark as done
-          // Refetch appointments to get updated data
-          refetch();
+          // Refetch appointments to get updated data and wait for it to complete
+          await refetch();
 
           // Show success notification
           setSnackbarMessage("Appointment marked as done.");
@@ -373,8 +373,8 @@ const Telemedicine = () => {
         status: "serving",
       }).unwrap();
 
-      // Refetch appointments to get updated data
-      refetch();
+      // Refetch appointments to get updated data and wait for it to complete
+      await refetch();
 
       // Show success notification
       setSnackbarMessage(
@@ -434,17 +434,17 @@ const Telemedicine = () => {
           </div>
 
           <div className="flex gap-3 items-center">
+            <ButtonsIcon
+              icon={<Add />}
+              size="medium"
+              variant="secondary"
+              onClick={handleCreateAppointment}
+            />
             <Button
               label="View Appointments"
               size="medium"
               className="w-[200px]"
               onClick={handleViewAllAppointments}
-            />
-            <ButtonsIcon
-              icon={<Add />}
-              size="medium"
-              variant="primary"
-              onClick={handleCreateAppointment}
             />
           </div>
         </div>
@@ -486,7 +486,7 @@ const Telemedicine = () => {
               <h2 className="text-lg font-semibold text-gray-900">TODAY</h2>
               <div className="flex items-center gap-3">
                 <Button
-                  label={isStartingServing ? "Starting..." : "Start Serving"}
+                  label="Start Serving"
                   size="small"
                   variant="primary"
                   onClick={handleStartServing}
@@ -498,6 +498,7 @@ const Telemedicine = () => {
                     )
                   }
                   loading={isStartingServing}
+                  loadingText="Starting..."
                   rightIcon={<Play />}
                 />
                 <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
@@ -553,6 +554,8 @@ const Telemedicine = () => {
               : "this patient"
           }?`}
           buttonLabel="Mark as Done"
+          isLoading={markingAsDoneId !== null}
+          isLoadingText="Marking..."
         />
 
         {/* Snackbar Alert */}

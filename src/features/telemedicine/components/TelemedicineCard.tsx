@@ -50,7 +50,7 @@ const TelemedicineCard: React.FC<TelemedicineCardProps> = ({
         return "purple";
       case "completed":
         return "blue";
-      case "cancelled":
+      case "denied":
         return "red";
       default:
         return "gray";
@@ -67,8 +67,8 @@ const TelemedicineCard: React.FC<TelemedicineCardProps> = ({
         return "Serving";
       case "completed":
         return "Completed";
-      case "cancelled":
-        return "Cancelled";
+      case "denied":
+        return "Denied";
       default:
         return "Unknown";
     }
@@ -91,11 +91,11 @@ const TelemedicineCard: React.FC<TelemedicineCardProps> = ({
             {description && (
               <p className="text-xs text-gray-500 mt-1">{description}</p>
             )}
-            {/* {date && (
+            {date && status === "pending" && (
               <p className="text-xs text-gray-500 mt-1">
                 {date} • {appointmentType}
               </p>
-            )} */}
+            )}
             {queueNumber && (
               <p className="text-xs text-gray-400 mt-1">
                 Queue #{queueNumber} • {appointmentType}
@@ -115,12 +115,13 @@ const TelemedicineCard: React.FC<TelemedicineCardProps> = ({
           {status === "pending" && (
             <div className="flex items-center gap-[2px] w-fit">
               <Button
-                label={isAccepting ? "Accepting..." : "Accept"}
+                label="Accept"
                 size="small"
                 variant="secondaryDark"
                 onClick={() => onAccept?.(id)}
                 disabled={isAccepting}
                 loading={isAccepting}
+                loadingText="Accepting..."
               />
               <Button
                 label="Reject"
@@ -134,12 +135,13 @@ const TelemedicineCard: React.FC<TelemedicineCardProps> = ({
           {status === "serving" && (
             <div className="flex gap-2">
               <Button
-                label={isMarkingAsDone ? "Marking..." : "Done"}
+                label="Done"
                 size="small"
                 variant="secondary"
                 onClick={() => onMarkAsDone?.(id)}
                 disabled={isMarkingAsDone}
                 loading={isMarkingAsDone}
+                loadingText="Marking..."
               />
               <Button
                 label="View"

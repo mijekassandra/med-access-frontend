@@ -13,6 +13,7 @@ export interface ButtonProps {
   className?: string;
   loading?: boolean;
   fullWidth?: boolean;
+  loadingText?: string;
   onClick?: () => void;
 }
 
@@ -28,6 +29,7 @@ const Button: React.FC<ButtonProps> = ({
   className = "",
   loading = false,
   fullWidth = false,
+  loadingText = "Submitting",
   onClick,
 }) => {
   const baseClasses = `flex items-center justify-center rounded-custom-md font-semibold transition-all`;
@@ -107,7 +109,7 @@ const Button: React.FC<ButtonProps> = ({
               variant === "ghost" ? "text-szBlack700" : "text-szWhite100"
             }`}
           >
-            Submitting
+            {loadingText}
           </p>
           <Spinner
             size={size}
