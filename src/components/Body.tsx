@@ -152,11 +152,10 @@ const Body = ({ children }: BodyProps) => {
             }
           />
 
-          {/* Admin-only routes */}
           <Route
             path="/medicine-inventory"
             element={
-              <RoleGuard allowedRoles={["admin"]}>
+              <RoleGuard allowedRoles={["admin", "doctor"]}>
                 <Inventory />
               </RoleGuard>
             }

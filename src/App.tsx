@@ -13,7 +13,7 @@ import WelcomeSnackbar from "./components/WelcomeSnackbar";
 import Login from "./features/auth/pages/Login";
 // import ForgotPasswordPage from "./features/auth/pages/ForgotPasswordPage";
 // import ResetPasswordPage from "./features/auth/pages/ResetPasswordPage";
-import PatientMobileApp from "./features/patient-mobile/PatientMobileApp";
+// import PatientMobileApp from "./features/patient-mobile/PatientMobileApp";
 // import Register from "./features/auth/pages/Register";
 // import EmailVerificationSuccess from "./features/auth/pages/EmailVerificationSuccess";
 
@@ -83,7 +83,7 @@ function App() {
           /> */}
 
           {/* Patient Mobile App Routes - protected for users only */}
-          <Route
+          {/* <Route
             path="/patient-dashboard"
             element={
               <ProtectedRoute allowedRoles={["user"]}>
@@ -170,7 +170,7 @@ function App() {
                 <PatientMobileApp />
               </ProtectedRoute>
             }
-          />
+          /> */}
 
           {/* 404 Page - Standalone route for direct access */}
           <Route path="/404" element={<PageNotFound />} />

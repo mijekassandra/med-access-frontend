@@ -1,66 +1,71 @@
+import { useMemo } from "react";
 import { Calendar } from "iconsax-react";
 import Avatar from "../../../global-components/Avatar";
+import Loading from "../../../components/Loading";
 
 //utils
 import { formatDateForDisplay } from "../../../utils/dateUtils";
 
+// RTK Query
+import { useGetAppointmentsQuery } from "../../telemedicine/api/appointmentApi";
+
 interface Appointment {
   id: string;
   name: string;
+  firstName: string;
+  lastName: string;
   avatar?: string;
-  status: "confirmed" | "pending" | "cancelled";
+  status: "accepted" | "pending" | "cancelled";
   date: string;
   time: string;
 }
 
 const UpcomingAppointments = () => {
-  // Sample data - replace with actual data from props or API
-  const appointments: Appointment[] = [
-    {
-      id: "1",
-      name: "Dela Cruz, Juan M.",
-      avatar: "https://i.pravatar.cc/150?img=1",
-      status: "confirmed",
-      date: "2025-01-01",
-      time: "9:30 AM",
-    },
-    {
-      id: "2",
-      name: "Santos, Maria L.",
-      avatar: "https://i.pravatar.cc/150?img=2",
-      status: "confirmed",
-      date: "2025-01-01",
-      time: "10:00 AM",
-    },
-    {
-      id: "3",
-      name: "Garcia, Pedro R.",
-      avatar: "https://i.pravatar.cc/150?img=3",
-      status: "confirmed",
-      date: "2025-01-01",
-      time: "10:30 AM",
-    },
-    {
-      id: "4",
-      name: "Lopez, Ana S.",
-      avatar: "https://i.pravatar.cc/150?img=4",
-      status: "confirmed",
-      date: "2025-01-01",
-      time: "11:00 AM",
-    },
-    {
-      id: "5",
-      name: "Martinez, Carlos D.",
-      avatar: "https://i.pravatar.cc/150?img=5",
-      status: "confirmed",
-      date: "2025-01-01",
-      time: "11:30 AM",
-    },
-  ];
+  // Get today's date in YYYY-MM-DD format for API
+  const today = new Date().toISOString().split("T")[0];
+
+  // Fetch appointments for today
+  const { data: appointmentsResponse, isLoading } = useGetAppointmentsQuery({
+    date: today,
+  });
+
+  // Filter and map appointments
+  const appointments: Appointment[] = useMemo(() => {
+    if (!appointmentsResponse?.data) return [];
+
+    // Filter for accepted status and today's date, then limit to 5
+    const todayAppointments = appointmentsResponse.data
+      .filter((apt) => {
+        const appointmentDate = new Date(apt.date).toISOString().split("T")[0];
+        return apt.status === "accepted" && appointmentDate === today;
+      })
+      .slice(0, 5) // Limit to first 5
+      .map((apt) => {
+        const appointmentDate = new Date(apt.date);
+        const dateString = appointmentDate.toISOString().split("T")[0];
+        const timeString = appointmentDate.toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        });
+
+        return {
+          id: apt._id,
+          name: `${apt.patient.lastName}, ${apt.patient.firstName}`,
+          firstName: apt.patient.firstName,
+          lastName: apt.patient.lastName,
+          status: apt.status as "accepted" | "pending" | "cancelled",
+          date: dateString,
+          time: timeString,
+        };
+      });
+
+    return todayAppointments;
+  }, [appointmentsResponse, today]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "confirmed":
+      case "accepted":
         return "bg-green-500";
       case "pending":
         return "bg-yellow-500";
@@ -87,59 +92,70 @@ const UpcomingAppointments = () => {
 
       {/* Body */}
       <div className="max-h-80 overflow-y-auto">
-        {appointments.map((appointment, index) => (
-          <div key={appointment.id}>
-            <div className="flex justify-between items-center px-4 py-2 hover:bg-gray-50 transition-colors">
-              {/* Avatar */}
-              <div className="flex justify-start items-center gap-2 ">
-                <div className="flex-shrink-0 mr-1">
-                  <Avatar
-                    src={appointment.avatar}
-                    alt={appointment.name}
-                    size="small"
-                  />
+        {isLoading ? (
+          <div className="p-4 flex-1 flex items-center justify-center">
+            <Loading message="Loading upcoming appointments..." />
+          </div>
+        ) : (
+          <>
+            {appointments.map((appointment, index) => (
+              <div key={appointment.id}>
+                <div className="flex justify-between items-center px-4 py-2 hover:bg-gray-50 transition-colors">
+                  {/* Avatar */}
+                  <div className="flex justify-start items-center gap-2 ">
+                    <div className="flex-shrink-0 mr-1">
+                      <Avatar
+                        firstName={appointment.firstName}
+                        lastName={appointment.lastName}
+                        alt={appointment.name}
+                        size="small"
+                      />
+                    </div>
+
+                    {/* Name */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {appointment.name}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Status Indicator */}
+                  <div className="flex justify-end items-center gap-2">
+                    <div className="flex-shrink-0 mx-2 w-[10px]">
+                      <div
+                        className={`w-2 h-2 rounded-full ${getStatusColor(
+                          appointment.status
+                        )}`}
+                        title={appointment.status}
+                      />
+                    </div>
+
+                    {/* Date and Time */}
+                    <div className="flex-shrink-0 w-[90px]">
+                      <p className="text-sm text-gray-500">
+                        {formatDateForDisplay(appointment.date)}
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Name */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {appointment.name}
-                  </p>
-                </div>
+                {/* Separator */}
+                {index < appointments.length - 1 && (
+                  <div className="border-b border-gray-100 mx-4" />
+                )}
               </div>
+            ))}
 
-              {/* Status Indicator */}
-              <div className="flex justify-end items-center gap-2">
-                <div className="flex-shrink-0 mx-2 w-[10px]">
-                  <div
-                    className={`w-2 h-2 rounded-full ${getStatusColor(
-                      appointment.status
-                    )}`}
-                    title={appointment.status}
-                  />
-                </div>
-
-                {/* Date and Time */}
-                <div className="flex-shrink-0 w-[90px]">
-                  <p className="text-sm text-gray-500">
-                    {formatDateForDisplay(appointment.date)}
-                  </p>
-                </div>
+            {/* Empty State */}
+            {appointments.length === 0 && !isLoading && (
+              <div className="px-4 py-8 text-center">
+                <p className="text-sm text-gray-500">
+                  No upcoming appointments
+                </p>
               </div>
-            </div>
-
-            {/* Separator */}
-            {index < appointments.length - 1 && (
-              <div className="border-b border-gray-100 mx-4" />
             )}
-          </div>
-        ))}
-
-        {/* Empty State */}
-        {appointments.length === 0 && (
-          <div className="px-4 py-8 text-center">
-            <p className="text-sm text-gray-500">No upcoming appointments</p>
-          </div>
+          </>
         )}
       </div>
     </div>

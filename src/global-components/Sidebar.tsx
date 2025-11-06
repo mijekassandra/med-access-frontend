@@ -133,6 +133,12 @@ const Sidebar: React.FC<SidebarProps> = ({ className = "" }) => {
           icon: <Profile2User />,
           path: "/users",
         },
+        {
+          id: "medicine-inventory",
+          label: "MEDICINE INVENTORY",
+          icon: <ArchiveBox />,
+          path: "/medicine-inventory",
+        },
         // {
         //   id: "reports",
         //   label: "REPORTS",
@@ -166,12 +172,6 @@ const Sidebar: React.FC<SidebarProps> = ({ className = "" }) => {
           path: "/medicine-inventory",
         },
 
-        // {
-        //   id: "patient-records",
-        //   label: "PATIENT RECORDS",
-        //   icon: <DocumentText />,
-        //   path: "/patient-records",
-        // },
         {
           id: "announcements",
           label: "ANNOUNCEMENTS",

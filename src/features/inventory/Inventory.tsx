@@ -303,6 +303,7 @@ const Inventory: React.FC = () => {
           }}
           className="shadow-sm"
           loading={isLoadingMedicines}
+          
         />
       </div>
 

@@ -346,13 +346,15 @@ const PatientsTable = () => {
             />
           </div> */}
 
-          <Button
-            label="Add User"
-            leftIcon={<Add />}
-            className={`w-fit sm:w-[150px] truncate`}
-            size="medium"
-            onClick={() => setIsAddPatientModalOpen(true)}
-          />
+          {user?.role === "admin" && (
+            <Button
+              label="Add User"
+              leftIcon={<Add />}
+              className={`w-fit sm:w-[150px] truncate`}
+              size="medium"
+              onClick={() => setIsAddPatientModalOpen(true)}
+            />
+          )}
           <ButtonsIcon
             icon={<ExportCurve size={24} />}
             variant="secondary"

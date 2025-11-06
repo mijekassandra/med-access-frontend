@@ -116,7 +116,7 @@ const AddMedicineModal = ({
     }
   };
 
-  // Validation function (based on backend requirements: name and stock are required)
+  // Validation function - all fields are required
   const validateForm = () => {
     const errors = {
       name: "",
@@ -131,16 +131,58 @@ const AddMedicineModal = ({
     // Check if name is empty (required)
     if (!formData.name.trim()) {
       errors.name = "This field is required";
+    } else if (formData.name.trim().length < 2) {
+      errors.name = "Medicine name must be at least 2 characters";
     }
 
-    // Check if stock is negative (stock must be >= 0, and we require it to be > 0 for UX)
-    if (formData.stock < 0) {
-      errors.stock = "Stock cannot be negative";
+    // Check if brand is empty (required)
+    if (!formData.brand.trim()) {
+      errors.brand = "This field is required";
+    } else if (formData.brand.trim().length < 2) {
+      errors.brand = "Brand name must be at least 2 characters";
+    }
+
+    // Check if description is empty (required)
+    if (!formData.description.trim()) {
+      errors.description = "This field is required";
+    } else if (formData.description.trim().length < 5) {
+      errors.description = "Description must be at least 5 characters";
+    }
+
+    // Check if dosage is empty (required)
+    if (!formData.dosage.trim()) {
+      errors.dosage = "This field is required";
+    } else if (formData.dosage.trim().length < 2) {
+      errors.dosage = "Dosage must be at least 2 characters";
     }
 
     // Check if stock is provided (required)
     if (formData.stock === undefined || formData.stock === null) {
       errors.stock = "This field is required";
+    } else if (formData.stock < 0) {
+      errors.stock = "Stock cannot be negative";
+    } else if (formData.stock === 0) {
+      errors.stock = "Stock must be greater than 0";
+    }
+
+    // Check if expiration date is provided (required)
+    if (!formData.expiration_date) {
+      errors.expiration_date = "This field is required";
+    } else {
+      const expiryDate = new Date(formData.expiration_date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (expiryDate < today) {
+        errors.expiration_date = "Expiration date cannot be in the past";
+      }
+    }
+
+    // Check if batch number is empty (required)
+    if (!formData.batch_no.trim()) {
+      errors.batch_no = "This field is required";
+    } else if (formData.batch_no.trim().length < 2) {
+      errors.batch_no = "Batch number must be at least 2 characters";
     }
 
     setFormErrors(errors);
@@ -153,7 +195,7 @@ const AddMedicineModal = ({
   const handleSubmit = async () => {
     // Validate form first
     if (!validateForm()) {
-      setSnackbarMessage("Please fill in all required fields.");
+      setSnackbarMessage("Please fill in all required fields correctly.");
       setSnackbarType("error");
       setShowSnackbar(true);
       return;
