@@ -249,8 +249,12 @@ const AllAppointment: React.FC = () => {
       try {
         await deleteAppointment(appointmentToDelete).unwrap();
 
-        // Refetch appointments to get updated data and wait for it to complete
-        await refetch();
+        // Close modal immediately after successful deletion
+        setIsDeleteModalOpen(false);
+        setAppointmentToDelete(null);
+
+        // Refetch appointments in the background (non-blocking)
+        refetch();
 
         setSnackbarMessage("Appointment deleted successfully");
         setSnackbarType("success");
@@ -262,10 +266,11 @@ const AllAppointment: React.FC = () => {
         setSnackbarMessage(errorMessage);
         setSnackbarType("error");
         setShowSnackbar(true);
+        // Close modal even on error
+        setIsDeleteModalOpen(false);
+        setAppointmentToDelete(null);
       }
     }
-    setIsDeleteModalOpen(false);
-    setAppointmentToDelete(null);
   };
 
   const cancelDelete = () => {
@@ -273,49 +278,49 @@ const AllAppointment: React.FC = () => {
     setAppointmentToDelete(null);
   };
 
-  const handleMarkAsDone = async (appointmentId: string) => {
-    try {
-      await updateAppointmentStatus({
-        id: appointmentId,
-        status: "completed",
-      }).unwrap();
+  // const handleMarkAsDone = async (appointmentId: string) => {
+  //   try {
+  //     await updateAppointmentStatus({
+  //       id: appointmentId,
+  //       status: "completed",
+  //     }).unwrap();
 
-      // Find the next patient in queue (accepted status with lowest queue number)
-      const nextPatient = appointments
-        .filter((apt) => apt.status === "accepted")
-        .sort((a, b) => (a.queueNumber || 0) - (b.queueNumber || 0))[0];
+  //     // Find the next patient in queue (accepted status with lowest queue number)
+  //     const nextPatient = appointments
+  //       .filter((apt) => apt.status === "accepted")
+  //       .sort((a, b) => (a.queueNumber || 0) - (b.queueNumber || 0))[0];
 
-      if (nextPatient) {
-        // Update next patient to "serving" status
-        try {
-          await updateAppointmentStatus({
-            id: nextPatient.id,
-            status: "serving",
-          }).unwrap();
-        } catch (err) {
-          // If updating next patient fails, still show success for completing the first one
-          console.error("Failed to update next patient status:", err);
-        }
-      }
+  //     if (nextPatient) {
+  //       // Update next patient to "serving" status
+  //       try {
+  //         await updateAppointmentStatus({
+  //           id: nextPatient.id,
+  //           status: "serving",
+  //         }).unwrap();
+  //       } catch (err) {
+  //         // If updating next patient fails, still show success for completing the first one
+  //         console.error("Failed to update next patient status:", err);
+  //       }
+  //     }
 
-      // Refetch appointments to get updated data and wait for it to complete
-      await refetch();
+  //     // Refetch appointments to get updated data and wait for it to complete
+  //     await refetch();
 
-      // Show success notification
-      setSnackbarMessage(
-        "Patient marked as done. Next patient in queue is now being served."
-      );
-      setSnackbarType("success");
-      setShowSnackbar(true);
-    } catch (err: any) {
-      const errorMessage =
-        err?.data?.message ||
-        "Failed to update appointment status. Please try again.";
-      setSnackbarMessage(errorMessage);
-      setSnackbarType("error");
-      setShowSnackbar(true);
-    }
-  };
+  //     // Show success notification
+  //     setSnackbarMessage(
+  //       "Patient marked as done. Next patient in queue is now being served."
+  //     );
+  //     setSnackbarType("success");
+  //     setShowSnackbar(true);
+  //   } catch (err: any) {
+  //     const errorMessage =
+  //       err?.data?.message ||
+  //       "Failed to update appointment status. Please try again.";
+  //     setSnackbarMessage(errorMessage);
+  //     setSnackbarType("error");
+  //     setShowSnackbar(true);
+  //   }
+  // };
 
   const handleEditAppointment = (record: Appointment) => {
     // Find the full API appointment data
