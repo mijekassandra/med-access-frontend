@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
 // icons
-import { SearchNormal1, Add, Play } from "iconsax-react";
+import { SearchNormal1, Add, Play, Refresh } from "iconsax-react";
 
 // components
 import ContainerWrapper from "../../../components/ContainerWrapper";
@@ -81,6 +81,7 @@ const Telemedicine = () => {
     isLoading,
     error,
     refetch,
+    isFetching,
   } = useGetAppointmentsQuery();
 
   const [updateAppointmentStatus] = useUpdateAppointmentStatusMutation();
@@ -353,6 +354,19 @@ const Telemedicine = () => {
     refetch();
   };
 
+  const handleRefresh = async () => {
+    try {
+      await refetch();
+      setSnackbarMessage("Appointments refreshed successfully");
+      setSnackbarType("success");
+      setShowSnackbar(true);
+    } catch (err) {
+      setSnackbarMessage("Failed to refresh appointments");
+      setSnackbarType("error");
+      setShowSnackbar(true);
+    }
+  };
+
   const handleStartServing = async () => {
     // Find the appointment with queueNumber 1
     const nextAppointment = todayAppointments
@@ -457,9 +471,21 @@ const Telemedicine = () => {
               <h2 className="text-lg font-semibold text-gray-900">
                 Appointment Requests
               </h2>
-              <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                {filteredPendingRequests.length}
-              </span>
+              <div className="flex items-center gap-3">
+                <Button
+                  label="Refresh"
+                  size="small"
+                  variant="secondary"
+                  onClick={handleRefresh}
+                  disabled={isFetching}
+                  loading={isFetching}
+                  loadingText="Refreshing..."
+                  rightIcon={<Refresh />}
+                />
+                <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                  {filteredPendingRequests.length}
+                </span>
+              </div>
             </div>
 
             <div className="space-y-3 h-96 overflow-y-auto">
