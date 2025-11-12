@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useGetAnnouncementsQuery } from "../../announcements/api/announcementApi";
 import Loading from "../../../components/Loading";
 import { Notification, Calendar, User } from "iconsax-react";
@@ -9,6 +9,23 @@ const LatestAnnouncement: React.FC = () => {
     isLoading,
     error,
   } = useGetAnnouncementsQuery({ published: true });
+
+  // Sort announcements by createdAt in descending order (newest first) and get the latest
+  // This hook must be called before any conditional returns to follow Rules of Hooks
+  const latestAnnouncement = useMemo(() => {
+    if (!announcementsData?.data || announcementsData.data.length === 0) {
+      return null;
+    }
+
+    // Sort by createdAt in descending order (newest first)
+    const sortedAnnouncements = [...announcementsData.data].sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return dateB - dateA;
+    });
+
+    return sortedAnnouncements[0];
+  }, [announcementsData?.data]);
 
   if (isLoading) {
     return (
@@ -34,9 +51,9 @@ const LatestAnnouncement: React.FC = () => {
         <div className="bg-szPrimary200 px-4 py-3 flex-shrink-0">
           <div className="flex items-center gap-2">
             <Notification size={20} className="text-szPrimary700" />
-            <h6 className="text-h6 font-bold text-szPrimary700">
+            <p className="text-h6 font-bold text-szPrimary700">
               Latest Announcement
-            </h6>
+            </p>
           </div>
         </div>
         <div className="p-4 text-center flex-1 flex flex-col items-center justify-center">
@@ -51,7 +68,7 @@ const LatestAnnouncement: React.FC = () => {
     );
   }
 
-  if (!announcementsData?.data || announcementsData.data.length === 0) {
+  if (!latestAnnouncement) {
     return (
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden h-full flex flex-col">
         <div className="bg-szPrimary200 px-4 py-3 flex-shrink-0">
@@ -74,9 +91,6 @@ const LatestAnnouncement: React.FC = () => {
     );
   }
 
-  // Get the latest announcement (first one from the sorted list)
-  const latestAnnouncement = announcementsData.data[0];
-
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transition-shadow duration-200 h-full flex flex-col">
       {/* Header */}
@@ -95,9 +109,9 @@ const LatestAnnouncement: React.FC = () => {
       <div className="p-3 space-y-4 flex-1 min-h-0 flex flex-col">
         {/* Title */}
         <div>
-          <h5 className="text-h5 font-semibold text-szBlack800 leading-tight mb-2">
+          <h6 className="text-h6 font-semibold text-szBlack800 leading-tight">
             {latestAnnouncement.title}
-          </h5>
+          </h6>
         </div>
 
         {/* Content Preview */}

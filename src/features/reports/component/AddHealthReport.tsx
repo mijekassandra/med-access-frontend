@@ -41,7 +41,7 @@ AddHealthReportProps) => {
     report_date: "",
   });
   // const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitReportLoading, setIsSubmitReportLoading] = useState(false);
+  // const [isSubmitReportLoading, setIsSubmitReportLoading] = useState(false);
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarType, setSnackbarType] = useState<"success" | "error">(

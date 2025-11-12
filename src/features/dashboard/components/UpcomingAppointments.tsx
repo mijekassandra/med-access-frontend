@@ -91,7 +91,7 @@ const UpcomingAppointments = () => {
       </div>
 
       {/* Body */}
-      <div className="max-h-80 overflow-y-auto">
+      <div className="min-h-[200px] max-h-80 overflow-y-auto">
         {isLoading ? (
           <div className="p-4 flex-1 flex items-center justify-center">
             <Loading message="Loading upcoming appointments..." />
@@ -149,7 +149,7 @@ const UpcomingAppointments = () => {
 
             {/* Empty State */}
             {appointments.length === 0 && !isLoading && (
-              <div className="px-4 py-8 text-center">
+              <div className="min-h-[200px] flex items-center justify-center">
                 <p className="text-sm text-gray-500">
                   No upcoming appointments
                 </p>

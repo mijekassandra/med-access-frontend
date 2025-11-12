@@ -187,7 +187,12 @@ const Announcement = () => {
       });
     }
 
-    return filtered;
+    // Sort by createdAt in descending order (newest first)
+    return [...filtered].sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return dateB - dateA;
+    });
   }, [announcements, debouncedSearchTerm, selectedFilter, searchAnnouncements]);
 
   //! Calculate pagination -----------------------

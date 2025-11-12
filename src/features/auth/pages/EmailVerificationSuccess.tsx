@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 
 //icons
-import { ArrowLeft, TickCircle } from "iconsax-react";
+import { TickCircle } from "iconsax-react";
 
 //components
 import Button from "../../../global-components/Button";

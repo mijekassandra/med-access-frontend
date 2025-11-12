@@ -470,6 +470,7 @@ const Telemedicine = () => {
                   onAccept={handleAccept}
                   onReject={handleDeleteRequest}
                   isAccepting={acceptingAppointmentId === request.id}
+                  disableAllActions={acceptingAppointmentId !== null}
                 />
               ))}
               {filteredPendingRequests.length === 0 && (

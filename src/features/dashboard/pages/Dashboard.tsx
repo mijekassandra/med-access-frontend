@@ -26,12 +26,41 @@ import LowStockMedicine from "../components/LowStockMedicine";
 import type { RootState } from "../../../store";
 import RecentPatientRecord from "../components/RecentPatientRecord";
 
+// API hooks
+import { useGetAllUsersQuery } from "../../user/api/userApi";
+import { useGetMedicinesQuery } from "../../inventory/api/medicineInventoryApi";
+import { useGetServicesQuery } from "../../services/api/serviceApi";
+import { useGetAppointmentsQuery } from "../../telemedicine/api/appointmentApi";
+import { useGetHealthEducationQuery } from "../../health-education/api/healthEducationApi";
+
 const Dashboard: React.FC = () => {
   const [showWelcomeSnackbar, setShowWelcomeSnackbar] = useState(false);
 
   // Get user data from Redux store
   const { user } = useSelector((state: RootState) => state.auth);
   const userRole = user?.role as "admin" | "doctor" | "user" | undefined;
+
+  // Fetch data for dashboard cards
+  const { data: usersData } = useGetAllUsersQuery(undefined, {
+    skip: userRole === "doctor", // Skip if doctor role
+  });
+  const { data: medicinesData } = useGetMedicinesQuery();
+  const { data: servicesData } = useGetServicesQuery(undefined, {
+    skip: userRole === "doctor", // Skip if doctor role
+  });
+  const { data: appointmentsData } = useGetAppointmentsQuery(undefined, {
+    skip: userRole !== "doctor", // Only fetch for doctor role
+  });
+  const { data: healthEducationData } = useGetHealthEducationQuery(undefined, {
+    skip: userRole !== "doctor", // Only fetch for doctor role
+  });
+
+  // Extract counts
+  const usersCount = usersData?.count || 0;
+  const medicinesCount = medicinesData?.count || 0;
+  const servicesCount = servicesData?.count || 0;
+  const appointmentsCount = appointmentsData?.count || 0;
+  const healthEducationCount = healthEducationData?.count || 0;
 
   useEffect(() => {
     // Check if we should show welcome snackbar
@@ -56,19 +85,19 @@ const Dashboard: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <DashboardCard
                     title="Appointments"
-                    value={1234}
+                    value={appointmentsCount}
                     icon={<DocumentText1 />}
                     variant="green"
                   />
                   <DashboardCard
                     title="Inventory"
-                    value={1234}
+                    value={medicinesCount}
                     icon={<Box />}
                     variant="orange"
                   />
                   <DashboardCard
                     title="Health Education"
-                    value={1234}
+                    value={healthEducationCount}
                     icon={<Health />}
                     variant="blue"
                   />
@@ -79,20 +108,20 @@ const Dashboard: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 ">
                   <DashboardCard
                     title="Users"
-                    value={1234}
+                    value={usersCount}
                     icon={<Profile2User />}
                     variant="blue"
                   />
                   <DashboardCard
                     title="Medicine Inventory"
-                    value={1234}
+                    value={medicinesCount}
                     icon={<Box />}
                     variant="orange"
                   />
 
                   <DashboardCard
                     title="Services"
-                    value={1234}
+                    value={servicesCount}
                     icon={<Notepad />}
                     variant="green"
                   />

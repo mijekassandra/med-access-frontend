@@ -185,15 +185,21 @@ const HealthEducation: React.FC = () => {
 
   // Filter and sort content
   const filteredContent = useMemo(() => {
-    return searchHealthEducation(healthEducationContent, debouncedSearchTerm);
+    const filtered = searchHealthEducation(
+      healthEducationContent,
+      debouncedSearchTerm
+    );
+
+    // Sort by createdAt in descending order (newest first)
+    return [...filtered].sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return dateB - dateA;
+    });
   }, [healthEducationContent, debouncedSearchTerm, searchHealthEducation]);
 
-  // Sort content: videos first, then articles
-  const sortedContent = [...filteredContent].sort((a, b) => {
-    if (a.contentType === "video" && b.contentType === "article") return -1;
-    if (a.contentType === "article" && b.contentType === "video") return 1;
-    return 0;
-  });
+  // Use filteredContent directly (already sorted)
+  const sortedContent = filteredContent;
 
   // Handle loading and error states
   if (isLoading) {

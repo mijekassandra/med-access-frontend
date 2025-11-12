@@ -20,6 +20,7 @@ import Announcement from "../features/announcements/Announcement";
 import Services from "../features/services/Services";
 // import Reports from "../features/reports/Reports";
 // import PatientRecords from "../features/patient-records/PatientRecords";
+import type { User as UserType } from "../types/auth";
 
 interface BodyProps {
   children?: React.ReactNode;
@@ -111,7 +112,7 @@ const Body = ({ children }: BodyProps) => {
         title={title}
         subheader={subheader}
         userRole={userRole}
-        user={user}
+        user={user as UserType}
       />
       <div className="flex-1 overflow-y-auto">
         <Routes>

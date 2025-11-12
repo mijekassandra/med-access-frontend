@@ -1,13 +1,12 @@
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 
 //icons
-import { ArrowLeft } from "iconsax-react";
 
 //components
 import RegisterForm from "../components/RegisterForm";
 
 const Register = () => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-szBackground flex flex-col">

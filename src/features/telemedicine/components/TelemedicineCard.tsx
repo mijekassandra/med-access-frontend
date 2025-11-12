@@ -20,6 +20,7 @@ interface TelemedicineCardProps {
   onMarkAsDone?: (id: string) => void;
   isAccepting?: boolean;
   isMarkingAsDone?: boolean;
+  disableAllActions?: boolean;
 }
 
 const TelemedicineCard: React.FC<TelemedicineCardProps> = ({
@@ -39,6 +40,7 @@ const TelemedicineCard: React.FC<TelemedicineCardProps> = ({
   onMarkAsDone,
   isAccepting = false,
   isMarkingAsDone = false,
+  disableAllActions = false,
 }) => {
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -119,7 +121,7 @@ const TelemedicineCard: React.FC<TelemedicineCardProps> = ({
                 size="small"
                 variant="secondaryDark"
                 onClick={() => onAccept?.(id)}
-                disabled={isAccepting}
+                disabled={isAccepting || disableAllActions}
                 loading={isAccepting}
                 loadingText="Accepting..."
               />
@@ -128,7 +130,7 @@ const TelemedicineCard: React.FC<TelemedicineCardProps> = ({
                 size="small"
                 variant="ghost"
                 onClick={() => onReject?.(id)}
-                disabled={isAccepting}
+                disabled={isAccepting || disableAllActions}
               />
             </div>
           )}

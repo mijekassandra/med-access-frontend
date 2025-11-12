@@ -1,4 +1,3 @@
-import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Home, ArrowLeft2, SearchNormal1 } from "iconsax-react";
 import Button from "../global-components/Button";

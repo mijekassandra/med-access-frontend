@@ -6,7 +6,6 @@ import {
   ArrowDown2,
   ArrowUp2,
   Edit2,
-  Trash,
 } from "iconsax-react";
 import Chip from "../../../global-components/Chip";
 
@@ -34,7 +33,7 @@ const HealthEducationCard: React.FC<HealthEducationCardProps> = ({
   url,
   className = "",
   onEdit,
-  onDelete,
+  // onDelete,
   isPublished,
 }) => {
   const { user } = useAuth();

@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 //icons
-import { ArrowLeft, Eye, EyeSlash } from "iconsax-react";
+import { Eye, EyeSlash } from "iconsax-react";
 
 //components
 import Inputs from "../../../global-components/Inputs";
@@ -11,10 +11,8 @@ import SnackbarAlert from "../../../global-components/SnackbarAlert";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const email = location.state?.email || "";
 
-  const [formData, setFormData] = useState({
+  const [formData, _setFormData] = useState({
     newPassword: "",
     confirmPassword: "",
   });
@@ -29,13 +27,13 @@ const ResetPassword = () => {
     "success"
   );
 
-  const handleInputChange =
-    (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      setFormData((prev) => ({
-        ...prev,
-        [field]: e.target.value,
-      }));
-    };
+  // const handleInputChange =
+  //   (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+  //     setFormData((prev) => ({
+  //       ...prev,
+  //       [field]: e.target.value,
+  //     }));
+  //   };
 
   const togglePasswordVisibility = (field: keyof typeof showPasswords) => {
     setShowPasswords((prev) => ({
@@ -94,9 +92,9 @@ const ResetPassword = () => {
     }
   };
 
-  const handleBackToForgotPassword = () => {
-    navigate("/forgot-password");
-  };
+  // const handleBackToForgotPassword = () => {
+  //   navigate("/forgot-password");
+  // };
 
   const isFormValid =
     formData.newPassword.trim() !== "" &&
@@ -125,7 +123,7 @@ const ResetPassword = () => {
               placeholder="Enter your new password"
               value={formData.newPassword}
               icon={showPasswords.new ? Eye : EyeSlash}
-              onChange={handleInputChange("newPassword")}
+              // onChange={handleInputChange("newPassword")}
               iconClick={() => togglePasswordVisibility("new")}
             />
           </div>
@@ -139,7 +137,7 @@ const ResetPassword = () => {
               placeholder="Confirm your new password"
               value={formData.confirmPassword}
               icon={showPasswords.confirm ? Eye : EyeSlash}
-              onChange={handleInputChange("confirmPassword")}
+              // onChange={handleInputChange("confirmPassword")}
               iconClick={() => togglePasswordVisibility("confirm")}
             />
           </div>

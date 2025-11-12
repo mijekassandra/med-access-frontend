@@ -9,12 +9,10 @@ import Table, {
   type TableAction,
 } from "../../../global-components/Table";
 import Inputs from "../../../global-components/Inputs";
-import Dropdown, { type Option } from "../../../global-components/Dropdown";
 import Button from "../../../global-components/Button";
 import AddUserMedicalModal from "../components/AddUserMedicalModal";
 import SnackbarAlert from "../../../global-components/SnackbarAlert";
 import ButtonsIcon from "../../../global-components/ButtonsIcon";
-import Loading from "../../../components/Loading";
 import DeleteConfirmation from "../../../components/DeleteConfirmation";
 
 //export

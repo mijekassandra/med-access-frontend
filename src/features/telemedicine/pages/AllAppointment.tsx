@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 
 //icons
 import {
@@ -9,6 +10,7 @@ import {
   TickCircle,
   Refresh,
   ExportCurve,
+  ArrowLeft2,
 } from "iconsax-react";
 
 //components
@@ -24,6 +26,7 @@ import SnackbarAlert from "../../../global-components/SnackbarAlert";
 import ButtonsIcon from "../../../global-components/ButtonsIcon";
 import Loading from "../../../components/Loading";
 import DeleteConfirmation from "../../../components/DeleteConfirmation";
+import Button from "../../../global-components/Button";
 
 // Export
 import ExportModal from "../../../components/ExportModal";
@@ -33,7 +36,7 @@ import { useExport } from "../../../hooks/useExport";
 // RTK Query
 import {
   useGetAppointmentsQuery,
-  useUpdateAppointmentStatusMutation,
+  // useUpdateAppointmentStatusMutation,
   useDeleteAppointmentMutation,
   type Appointment as ApiAppointment,
 } from "../api/appointmentApi";
@@ -78,6 +81,8 @@ const mapApiAppointmentToComponent = (apiAppt: ApiAppointment): Appointment => {
 };
 
 const AllAppointment: React.FC = () => {
+  const navigate = useNavigate();
+
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<Option | Option[]>({
@@ -130,7 +135,7 @@ const AllAppointment: React.FC = () => {
     dateFilterValue ? { date: dateFilterValue } : undefined
   );
 
-  const [updateAppointmentStatus] = useUpdateAppointmentStatusMutation();
+  // const [updateAppointmentStatus] = useUpdateAppointmentStatusMutation();
 
   const [deleteAppointment, { isLoading: isDeleting }] =
     useDeleteAppointmentMutation();
@@ -651,9 +656,20 @@ const AllAppointment: React.FC = () => {
 
   return (
     <ContainerWrapper>
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 gap-2">
+        {/* Back Button */}
+        <div className="flex items-center mb-2">
+          <Button
+            label="Back to Appointments"
+            leftIcon={<ArrowLeft2 size={16} />}
+            onClick={() => navigate("/appointments")}
+            size="small"
+            variant="primary"
+          />
+        </div>
+
         {/* Header with search and filters */}
-        <div className="flex flex-col justify-between gap-3 w-full">
+        <div className="flex flex-col justify-between gap-4 w-full mb-2">
           <Inputs
             type="text"
             placeholder="Search appointments..."
