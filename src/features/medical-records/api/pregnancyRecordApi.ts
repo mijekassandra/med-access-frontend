@@ -1,36 +1,48 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
+export interface Patient {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+}
+
+export interface Checkup {
+  date: string;
+  remarks: string;
+}
+
 export interface PregnancyRecord {
   _id: string;
-  user_id: number;
-  doctor_id: number;
-  startDate: Date;
-  gestationalAge: number;
-  milestone: string;
-  notes: string;
-  status: 'ongoing' | 'completed';
+  patient: Patient;
+  firstDayOfLastPeriod: string;
+  numberOfWeeks: number;
+  status: string;
+  remarks: string;
+  checkups: Checkup[];
   createdAt: string;
   updatedAt: string;
 }
 
 export interface PregnancyRecordCreate {
-  patient_id: number;
-  doctor_id: number;
-  startDate: Date;
-  gestationalAge: number;
-  milestone: string;
-  notes: string;
-  status: 'ongoing' | 'completed';
+  patient: string; // MongoDB ObjectId of the patient user
+  firstDayOfLastPeriod: string; // ISO date string
+  numberOfWeeks: number; // 0-45
+  status?: string; // Optional, max 100 characters
+  remarks?: string; // Optional, max 2000 characters
+  checkups?: Checkup[]; // Optional array of checkups
 }
 
 export interface PregnancyRecordUpdate {
-  patient_id?: number;
-  doctor_id?: number;
-  startDate?: Date;
-  gestationalAge?: number;
-  milestone?: string;
-  notes?: string;
-  status?: 'ongoing' | 'completed';
+  firstDayOfLastPeriod?: string; // ISO date string
+  numberOfWeeks?: number; // 0-45
+  status?: string; // Optional, max 100 characters (can be empty string)
+  remarks?: string; // Optional, max 2000 characters (can be empty string)
+}
+
+export interface AddCheckupRequest {
+  date: string; // ISO date string
+  remarks: string; // Max 1000 characters
 }
 
 export interface ApiResponse<T> {
@@ -125,6 +137,22 @@ export const pregnancyRecordApi = createApi({
         { type: "PregnancyRecord", id },
       ],
     }),
+
+    // Add checkup to pregnancy record -------------------------------------------------------------------
+    addCheckup: builder.mutation<ApiResponse<PregnancyRecord>, { id: string; data: AddCheckupRequest }>({
+      query: ({ id, data }) => ({
+        url: `/pregnancy-records/${id}/checkups`,
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: data,
+      }),
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: "PregnancyRecord", id: "LIST" },
+        { type: "PregnancyRecord", id },
+      ],
+    }),
   }),
 });
 
@@ -133,5 +161,6 @@ export const {
   useGetPregnancyRecordByIdQuery,
   useCreatePregnancyRecordMutation,
   useUpdatePregnancyRecordMutation,
-  useDeletePregnancyRecordMutation
+  useDeletePregnancyRecordMutation,
+  useAddCheckupMutation,
 } = pregnancyRecordApi;

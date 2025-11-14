@@ -262,6 +262,7 @@ const Table = <T extends Record<string, any>>({
                         color="text-szBlack700"
                         position="left"
                         width={dropdownWidth}
+                        direction="down"
                       />
                     </td>
                   )}

@@ -9,6 +9,7 @@ import { authApi } from './features/auth/api/authApi'
 import { userApi } from './features/user/api/userApi'
 import { serviceApi } from './features/services/api/serviceApi'
 import { medicalRecordsApi } from './features/medical-records/api/medicalRecordsApi'
+import { pregnancyRecordApi } from './features/medical-records/api/pregnancyRecordApi'
 import { appointmentApi } from './features/telemedicine/api/appointmentApi'
 
 // Slices
@@ -25,6 +26,7 @@ export const store = configureStore({
     [userApi.reducerPath]: userApi.reducer,
     [serviceApi.reducerPath]: serviceApi.reducer,
     [medicalRecordsApi.reducerPath]: medicalRecordsApi.reducer,
+    [pregnancyRecordApi.reducerPath]: pregnancyRecordApi.reducer,
     [appointmentApi.reducerPath]: appointmentApi.reducer
   },
   middleware: (getDefaultMiddleware) =>
@@ -37,6 +39,7 @@ export const store = configureStore({
       userApi.middleware,
       serviceApi.middleware,
       medicalRecordsApi.middleware,
+      pregnancyRecordApi.middleware,
       appointmentApi.middleware
     ),
 })
