@@ -1,7 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
+import { createPortal } from "react-dom";
+import { Video } from "iconsax-react";
 import Avatar from "../../../global-components/Avatar";
 import Button from "../../../global-components/Button";
 import Chip from "../../../global-components/Chip";
+import ConfirmationModal from "../../../components/ConfirmationModal";
 
 interface TelemedicineCardProps {
   id: string;
@@ -18,9 +21,11 @@ interface TelemedicineCardProps {
   onReject?: (id: string) => void;
   onView?: (appointment: any) => void;
   onMarkAsDone?: (id: string) => void;
+  onStartVideoCall?: (id: string, patientId: string) => void;
   isAccepting?: boolean;
   isMarkingAsDone?: boolean;
   disableAllActions?: boolean;
+  patientId?: string;
 }
 
 const TelemedicineCard: React.FC<TelemedicineCardProps> = ({
@@ -38,10 +43,27 @@ const TelemedicineCard: React.FC<TelemedicineCardProps> = ({
   onReject,
   onView,
   onMarkAsDone,
+  onStartVideoCall,
   isAccepting = false,
   isMarkingAsDone = false,
   disableAllActions = false,
+  patientId,
 }) => {
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+
+  const handleDoneClick = () => {
+    setIsConfirmModalOpen(true);
+  };
+
+  const handleConfirmDone = () => {
+    onMarkAsDone?.(id);
+    setIsConfirmModalOpen(false);
+  };
+
+  const handleCancelDone = () => {
+    setIsConfirmModalOpen(false);
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending":
@@ -135,12 +157,12 @@ const TelemedicineCard: React.FC<TelemedicineCardProps> = ({
             </div>
           )}
           {status === "serving" && (
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button
                 label="Done"
                 size="small"
                 variant="secondary"
-                onClick={() => onMarkAsDone?.(id)}
+                onClick={handleDoneClick}
                 disabled={isMarkingAsDone}
                 loading={isMarkingAsDone}
                 loadingText="Marking..."
@@ -161,21 +183,54 @@ const TelemedicineCard: React.FC<TelemedicineCardProps> = ({
                 }
                 disabled={isMarkingAsDone}
               />
+              {appointmentType === "Telemedicine" && patientId && (
+                <Button
+                  label=" Call"
+                  size="small"
+                  variant="red"
+                  onClick={() => onStartVideoCall?.(id, patientId)}
+                  disabled={isMarkingAsDone}
+                  leftIcon={<Video />}
+                  fullWidth
+                />
+              )}
             </div>
           )}
           {status === "accepted" && (
-            <Button
-              label="View"
-              size="small"
-              variant="primary"
-              onClick={() =>
-                onView?.({ id, name, avatar, status, queueNumber, description })
-              }
-              className="col-span-2"
-            />
+            <div className="flex gap-2">
+              <Button
+                label="View"
+                size="small"
+                variant="primary"
+                onClick={() =>
+                  onView?.({
+                    id,
+                    name,
+                    avatar,
+                    status,
+                    queueNumber,
+                    description,
+                  })
+                }
+              />
+            </div>
           )}
         </div>
       </div>
+
+      {/* Confirmation Modal for Mark as Done - Rendered via Portal */}
+      {createPortal(
+        <ConfirmationModal
+          isOpen={isConfirmModalOpen}
+          onClose={handleCancelDone}
+          onClick={handleConfirmDone}
+          description={`Are you sure you want to mark the appointment as done for ${name}?`}
+          buttonLabel="Mark as Done"
+          isLoading={isMarkingAsDone}
+          isLoadingText="Marking..."
+        />,
+        document.body
+      )}
     </div>
   );
 };

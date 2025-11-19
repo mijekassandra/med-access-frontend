@@ -3,7 +3,7 @@ import Spinner from "./Spinner";
 
 export interface ButtonProps {
   label: string;
-  variant?: "primary" | "secondary" | "ghost" | "secondaryDark";
+  variant?: "primary" | "secondary" | "ghost" | "secondaryDark" | "red";
   size?: "large" | "medium" | "small";
   disabled?: boolean;
   type?: "button" | "submit" | "reset";
@@ -43,6 +43,7 @@ const Button: React.FC<ButtonProps> = ({
       "bg-szSecondary500 text-szWhite100 hover:bg-szSecondary700 active:bg-szSecondary700 focus:outline focus:outline-1 focus:outline-szSecondary700",
     ghost:
       "bg-transparent text-szPrimary700 hover:text-szPrimary900 active:text-szBlack900 active:outline-none focus:text-szPrimary700 focus:outline focus:outline-1 focus:outline-szSecondary500 focus:bg-szWhite100",
+    red: "bg-red-600 text-szWhite100 hover:bg-red-700 active:bg-red-800 focus:outline focus:outline-1 focus:outline-red-800",
   };
 
   const disabledClasses = {
@@ -50,6 +51,7 @@ const Button: React.FC<ButtonProps> = ({
     secondary: "bg-szSecondary50",
     secondaryDark: "bg-szSecondary100",
     ghost: "bg-transparent",
+    red: "bg-red-100",
   };
 
   const textColorClasses = {
@@ -58,6 +60,7 @@ const Button: React.FC<ButtonProps> = ({
     secondaryDark: "text-szWhite100 active:text-szWhite100",
     ghost:
       "text-szPrimary700 hover:text-szPrimary900 active:text-szBlack900 focus:text-szPrimary700",
+    red: "text-szWhite100 active:text-szWhite100",
   };
 
   const textSizeClasses = {
@@ -83,6 +86,7 @@ const Button: React.FC<ButtonProps> = ({
     secondary: "bg-szSecondary500",
     secondaryDark: "bg-szSecondary500",
     ghost: "bg-transparent",
+    red: "bg-red-800",
   };
 
   return (

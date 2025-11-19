@@ -11,6 +11,7 @@ import WelcomeSnackbar from "./components/WelcomeSnackbar";
 
 // pages
 import Login from "./features/auth/pages/Login";
+import VideoCall from "./features/telemedicine/pages/VideoCall";
 // import ForgotPasswordPage from "./features/auth/pages/ForgotPasswordPage";
 // import ResetPasswordPage from "./features/auth/pages/ResetPasswordPage";
 // import PatientMobileApp from "./features/patient-mobile/PatientMobileApp";
@@ -174,6 +175,16 @@ function App() {
 
           {/* 404 Page - Standalone route for direct access */}
           <Route path="/404" element={<PageNotFound />} />
+
+          {/* Video Call - Standalone full-screen route */}
+          <Route
+            path="/appointments/video-call"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "doctor"]}>
+                <VideoCall />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Main Application Routes - protected for admin and doctor roles */}
           <Route path="/*" element={<AppLayout />} />

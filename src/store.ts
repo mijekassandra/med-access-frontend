@@ -11,6 +11,7 @@ import { serviceApi } from './features/services/api/serviceApi'
 import { medicalRecordsApi } from './features/medical-records/api/medicalRecordsApi'
 import { pregnancyRecordApi } from './features/medical-records/api/pregnancyRecordApi'
 import { appointmentApi } from './features/telemedicine/api/appointmentApi'
+import { videoCallApi } from './features/telemedicine/api/videoCallApi'
 
 // Slices
 import authReducer from './features/auth/slice/authSlice'
@@ -27,7 +28,8 @@ export const store = configureStore({
     [serviceApi.reducerPath]: serviceApi.reducer,
     [medicalRecordsApi.reducerPath]: medicalRecordsApi.reducer,
     [pregnancyRecordApi.reducerPath]: pregnancyRecordApi.reducer,
-    [appointmentApi.reducerPath]: appointmentApi.reducer
+    [appointmentApi.reducerPath]: appointmentApi.reducer,
+    [videoCallApi.reducerPath]: videoCallApi.reducer
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -40,7 +42,8 @@ export const store = configureStore({
       serviceApi.middleware,
       medicalRecordsApi.middleware,
       pregnancyRecordApi.middleware,
-      appointmentApi.middleware
+      appointmentApi.middleware,
+      videoCallApi.middleware
     ),
 })
 

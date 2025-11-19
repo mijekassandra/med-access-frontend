@@ -46,6 +46,7 @@ const mapApiAppointmentToCard = (apiAppt: ApiAppointment) => {
     appointmentType:
       apiAppt.type === "telemedicine" ? "Telemedicine" : "In-person",
     queueNumber: apiAppt.queueNumber || undefined,
+    patientId: apiAppt.patient._id,
   };
 };
 
@@ -367,6 +368,27 @@ const Telemedicine = () => {
     }
   };
 
+  const handleStartVideoCall = (appointmentId: string, patientId: string) => {
+    // Find the appointment to get patient details
+    const appointment = fullAppointments.find(
+      (apt) => apt._id === appointmentId
+    );
+    if (appointment) {
+      // Open video call page in a new tab with query parameters
+      const params = new URLSearchParams({
+        patientId,
+        appointmentId,
+        patientName: `${appointment.patient.lastName}, ${appointment.patient.firstName}`,
+        patientFirstName: appointment.patient.firstName,
+        patientLastName: appointment.patient.lastName,
+      });
+      const url = `${
+        window.location.origin
+      }/appointments/video-call?${params.toString()}`;
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+  };
+
   const handleStartServing = async () => {
     // Find the appointment with queueNumber 1
     const nextAppointment = todayAppointments
@@ -541,6 +563,7 @@ const Telemedicine = () => {
                   {...appointment}
                   onView={handleViewAppointment}
                   onMarkAsDone={handleMarkAsDone}
+                  onStartVideoCall={handleStartVideoCall}
                   isMarkingAsDone={markingAsDoneId === appointment.id}
                 />
               ))}
