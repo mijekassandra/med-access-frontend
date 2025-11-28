@@ -142,6 +142,18 @@ export const appointmentApi = createApi({
       ],
     }),
 
+    // Accept appointment -------------------------------------------------------------------
+    acceptAppointment: builder.mutation<ApiResponse<Appointment>, string>({
+      query: (id) => ({
+        url: `/appointments/${id}/accept`,
+        method: "PATCH",
+      }),
+      invalidatesTags: (_result, _error, id) => [
+        { type: "Appointment", id: "LIST" },
+        { type: "Appointment", id },
+      ],
+    }),
+
     // Delete appointment -------------------------------------------------------------------
     deleteAppointment: builder.mutation<ApiResponse<{}>, string>({
       query: (id) => ({
@@ -156,11 +168,12 @@ export const appointmentApi = createApi({
   }),
 });
 
-export const { 
-  useGetAppointmentsQuery, 
+export const {
+  useGetAppointmentsQuery,
   useGetAppointmentByIdQuery,
   useCreateAppointmentMutation,
   useUpdateAppointmentMutation,
   useUpdateAppointmentStatusMutation,
+  useAcceptAppointmentMutation,
   useDeleteAppointmentMutation
 } = appointmentApi;

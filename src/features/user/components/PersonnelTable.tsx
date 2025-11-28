@@ -348,12 +348,14 @@ const PersonnelTable = () => {
             size="medium"
             onClick={() => setIsAddPersonnelModalOpen(true)}
           />
-          <ButtonsIcon
-            icon={<ExportCurve size={24} />}
-            variant="secondary"
-            size="large"
-            onClick={openExportModal}
-          />
+          <div title="Generate report">
+            <ButtonsIcon
+              icon={<ExportCurve size={24} />}
+              variant="secondary"
+              size="large"
+              onClick={openExportModal}
+            />
+          </div>
         </div>
       </div>
 

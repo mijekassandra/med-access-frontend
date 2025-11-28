@@ -6,10 +6,13 @@ import Inputs from "../../../global-components/Inputs";
 import Button from "../../../global-components/Button";
 import SnackbarAlert from "../../../global-components/SnackbarAlert";
 
+// API
+import { useForgotPasswordMutation } from "../../user/api/userApi";
+
 const ForgotPassword = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [forgotPassword, { isLoading }] = useForgotPasswordMutation();
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarType, setSnackbarType] = useState<"success" | "error">(
@@ -37,38 +40,79 @@ const ForgotPassword = () => {
       return;
     }
 
-    setIsLoading(true);
-
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const result = await forgotPassword({ email }).unwrap();
 
-      setSnackbarMessage("Password reset email sent successfully!");
-      setSnackbarType("success");
-      setShowSnackbar(true);
+      // Debug: Log the full response
+      console.log("Forgot Password API Response:", result);
+      console.log("Environment Mode:", import.meta.env.MODE);
+      console.log(
+        "Is Dev:",
+        import.meta.env.MODE === "development" || import.meta.env.DEV
+      );
+      console.log("Has resetToken:", !!result.resetToken);
 
-      // Navigate to reset password page after success
-      setTimeout(() => {
-        navigate("/reset-password", { state: { email } });
-      }, 2000);
-    } catch (error) {
-      setSnackbarMessage("Failed to send reset email. Please try again.");
+      if (result.success) {
+        // In development, log the token if available
+        const isDev =
+          import.meta.env.MODE === "development" || import.meta.env.DEV;
+
+        if (isDev && result.resetToken) {
+          const resetToken = result.resetToken; // Store token to avoid TS issues
+          console.log("Reset Token (Dev only):", resetToken);
+
+          setSnackbarMessage(
+            "Password reset token received. Redirecting to reset password page..."
+          );
+          setSnackbarType("success");
+          setShowSnackbar(true);
+
+          // Navigate to reset password page with token in dev mode
+          setTimeout(() => {
+            navigate(`/reset-password?token=${encodeURIComponent(resetToken)}`);
+          }, 1500);
+        } else {
+          // No token available
+          if (isDev && !result.resetToken) {
+            console.warn(
+              "Development mode but no resetToken in response. Backend might not be configured to return token in dev mode."
+            );
+            setSnackbarMessage(
+              "Note: Email sending is not implemented. In development mode, the reset token should be returned in the API response. Please check the console for the token or configure your backend to return it."
+            );
+          } else {
+            // Production mode - email should be sent (but not implemented yet)
+            setSnackbarMessage(
+              result.message ||
+                "If an account with that email exists, a password reset link has been sent. Note: Email sending is currently not implemented on the backend."
+            );
+          }
+          setSnackbarType("success");
+          setShowSnackbar(true);
+        }
+      }
+    } catch (err: any) {
+      const errorMessage =
+        err?.data?.message ||
+        err?.message ||
+        "Failed to send reset email. Please try again.";
+      setSnackbarMessage(errorMessage);
       setSnackbarType("error");
       setShowSnackbar(true);
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const handleBackToLogin = () => {
-    navigate("/login");
+    navigate("/");
   };
 
   return (
     <div className="flex flex-col gap-10 w-[330px] sm:w-[360px]">
       {/* Back Button */}
-      <div className="flex items-center gap-3 mb-4">
-        <h1 className="text-h2 font-bold text-szWhite100">Forgot Password?</h1>
+      <div className="flex items-center justify-center gap-2">
+        <h3 className="text-h3 font-bold text-szWhite100 text-center">
+          Forgot Password?
+        </h3>
       </div>
 
       <section className="space-y-6">

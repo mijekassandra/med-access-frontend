@@ -41,6 +41,7 @@ import {
   type Appointment as ApiAppointment,
 } from "../api/appointmentApi";
 import UpdateAppointmentModal from "../components/UpdateAppointmentModal";
+import AppointmentDetail from "../components/AppointmentDetail";
 
 // Appointment data interface for component
 interface Appointment {
@@ -56,8 +57,47 @@ interface Appointment {
   queueNumber?: number | null;
 }
 
+// Helper function to assign proper queue numbers based on appointments grouped by date
+const assignQueueNumbers = (appointments: ApiAppointment[]) => {
+  const queueNumberMap: { [key: string]: number } = {};
+
+  // Group appointments by date
+  const appointmentsByDate: { [date: string]: ApiAppointment[] } = {};
+  appointments.forEach((apt) => {
+    const date = apt.date.split("T")[0]; // Extract date part only
+    if (!appointmentsByDate[date]) {
+      appointmentsByDate[date] = [];
+    }
+    appointmentsByDate[date].push(apt);
+  });
+
+  // For each date, assign sequential queue numbers to accepted/serving/completed appointments
+  Object.keys(appointmentsByDate).forEach((date) => {
+    const dateAppointments = appointmentsByDate[date]
+      .filter(
+        (apt) =>
+          apt.status === "accepted" ||
+          apt.status === "serving" ||
+          apt.status === "completed"
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+
+    dateAppointments.forEach((apt, index) => {
+      queueNumberMap[apt._id] = index + 1;
+    });
+  });
+
+  return queueNumberMap;
+};
+
 // Helper function to convert API appointment to component format
-const mapApiAppointmentToComponent = (apiAppt: ApiAppointment): Appointment => {
+const mapApiAppointmentToComponent = (
+  apiAppt: ApiAppointment,
+  queueNumberMap: { [key: string]: number }
+): Appointment => {
   const appointmentDate = new Date(apiAppt.date);
   const scheduledDate = appointmentDate.toISOString().split("T")[0];
   const scheduledTime = appointmentDate.toLocaleTimeString("en-US", {
@@ -65,6 +105,9 @@ const mapApiAppointmentToComponent = (apiAppt: ApiAppointment): Appointment => {
     minute: "2-digit",
     hour12: false,
   });
+
+  // Use calculated queue number instead of backend's potentially incorrect one
+  const calculatedQueueNumber = queueNumberMap[apiAppt._id];
 
   return {
     id: apiAppt._id,
@@ -76,7 +119,7 @@ const mapApiAppointmentToComponent = (apiAppt: ApiAppointment): Appointment => {
     scheduledDate,
     scheduledTime,
     reason: apiAppt.reason,
-    queueNumber: apiAppt.queueNumber,
+    queueNumber: calculatedQueueNumber || apiAppt.queueNumber,
   };
 };
 
@@ -147,14 +190,27 @@ const AllAppointment: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [appointmentToEdit, setAppointmentToEdit] =
     useState<ApiAppointment | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] =
+    useState<Appointment | null>(null);
 
-  // Convert API appointments to component format
+  // Assign proper queue numbers based on appointments
+  const queueNumberMap = useMemo(() => {
+    if (appointmentsResponse?.data) {
+      return assignQueueNumbers(appointmentsResponse.data);
+    }
+    return {};
+  }, [appointmentsResponse]);
+
+  // Convert API appointments to component format with correct queue numbers
   const appointments = useMemo(() => {
     if (appointmentsResponse?.data) {
-      return appointmentsResponse.data.map(mapApiAppointmentToComponent);
+      return appointmentsResponse.data.map((apt) =>
+        mapApiAppointmentToComponent(apt, queueNumberMap)
+      );
     }
     return [];
-  }, [appointmentsResponse]);
+  }, [appointmentsResponse, queueNumberMap]);
 
   // Handle API errors
   useEffect(() => {
@@ -438,7 +494,7 @@ const AllAppointment: React.FC = () => {
     {
       key: "scheduledDate",
       header: "Date",
-      width: "120px",
+      width: "100px",
       sortable: true,
       render: (value) => (
         <span className="text-body-small-reg text-szBlack700">
@@ -454,6 +510,14 @@ const AllAppointment: React.FC = () => {
       key: "reason",
       header: "Reason",
       sortable: true,
+      render: (value) => (
+        <div
+          className="text-body-small-reg text-szBlack700 truncate max-w-[150px] sm:max-w-[200px] md:max-w-[280px] lg:max-w-[200px]"
+          title={value}
+        >
+          {value}
+        </div>
+      ),
     },
   ];
 
@@ -678,17 +742,21 @@ const AllAppointment: React.FC = () => {
             icon={SearchNormal1}
           />
           <div className="flex gap-4 items-center justify-end">
-            <ButtonsIcon
-              icon={<Refresh />}
-              onClick={handleClearFilters}
-              size="medium"
-            />
-            <ButtonsIcon
-              icon={<ExportCurve />}
-              onClick={openExportModal}
-              variant="secondary"
-              size="medium"
-            />
+            <div title="Reset filter">
+              <ButtonsIcon
+                icon={<Refresh />}
+                onClick={handleClearFilters}
+                size="medium"
+              />
+            </div>
+            <div title="Generate report">
+              <ButtonsIcon
+                icon={<ExportCurve />}
+                onClick={openExportModal}
+                variant="secondary"
+                size="medium"
+              />
+            </div>
             <div className="min-w-[120px]">
               <Dropdown
                 options={[
@@ -820,7 +888,8 @@ const AllAppointment: React.FC = () => {
           }}
           emptyMessage="No appointments found"
           onRowClick={(record) => {
-            console.log("Row clicked:", record);
+            setSelectedAppointment(record);
+            setIsDetailModalOpen(true);
           }}
           className="shadow-sm"
         />
@@ -859,6 +928,23 @@ const AllAppointment: React.FC = () => {
           onClose={handleCloseEditModal}
           appointment={appointmentToEdit}
           onSave={handleAppointmentUpdated}
+        />
+
+        {/* Appointment Detail Modal */}
+        <AppointmentDetail
+          isOpen={isDetailModalOpen}
+          onClose={() => {
+            setIsDetailModalOpen(false);
+            setSelectedAppointment(null);
+          }}
+          appointment={
+            selectedAppointment
+              ? {
+                  ...selectedAppointment,
+                  name: selectedAppointment.patientName,
+                }
+              : null
+          }
         />
       </div>
     </ContainerWrapper>

@@ -21,11 +21,51 @@ import CreateAppointmentModal from "../components/CreateAppointmentModal";
 import {
   useGetAppointmentsQuery,
   useUpdateAppointmentStatusMutation,
+  useAcceptAppointmentMutation,
   type Appointment as ApiAppointment,
 } from "../api/appointmentApi";
 
+// Helper function to assign proper queue numbers based on appointments grouped by date
+const assignQueueNumbers = (appointments: ApiAppointment[]) => {
+  const queueNumberMap: { [key: string]: number } = {};
+
+  // Group appointments by date
+  const appointmentsByDate: { [date: string]: ApiAppointment[] } = {};
+  appointments.forEach((apt) => {
+    const date = apt.date.split("T")[0]; // Extract date part only
+    if (!appointmentsByDate[date]) {
+      appointmentsByDate[date] = [];
+    }
+    appointmentsByDate[date].push(apt);
+  });
+
+  // For each date, assign sequential queue numbers to accepted/serving/completed appointments
+  Object.keys(appointmentsByDate).forEach((date) => {
+    const dateAppointments = appointmentsByDate[date]
+      .filter(
+        (apt) =>
+          apt.status === "accepted" ||
+          apt.status === "serving" ||
+          apt.status === "completed"
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+
+    dateAppointments.forEach((apt, index) => {
+      queueNumberMap[apt._id] = index + 1;
+    });
+  });
+
+  return queueNumberMap;
+};
+
 // Helper function to convert API appointment to card format
-const mapApiAppointmentToCard = (apiAppt: ApiAppointment) => {
+const mapApiAppointmentToCard = (
+  apiAppt: ApiAppointment,
+  queueNumberMap: { [key: string]: number }
+) => {
   const appointmentDate = new Date(apiAppt.date);
   const date = appointmentDate.toISOString().split("T")[0];
   const name = `${apiAppt.patient.lastName}, ${apiAppt.patient.firstName}`;
@@ -36,6 +76,9 @@ const mapApiAppointmentToCard = (apiAppt: ApiAppointment) => {
       ? "cancelled"
       : (apiAppt.status as "pending" | "serving" | "accepted" | "completed");
 
+  // Use calculated queue number instead of backend's potentially incorrect one
+  const calculatedQueueNumber = queueNumberMap[apiAppt._id];
+
   return {
     id: apiAppt._id,
     firstName: apiAppt.patient.firstName,
@@ -45,8 +88,9 @@ const mapApiAppointmentToCard = (apiAppt: ApiAppointment) => {
     date,
     appointmentType:
       apiAppt.type === "telemedicine" ? "Telemedicine" : "In-person",
-    queueNumber: apiAppt.queueNumber || undefined,
+    queueNumber: calculatedQueueNumber || apiAppt.queueNumber || undefined,
     patientId: apiAppt.patient._id,
+    createdAt: apiAppt.createdAt,
   };
 };
 
@@ -86,23 +130,35 @@ const Telemedicine = () => {
   } = useGetAppointmentsQuery();
 
   const [updateAppointmentStatus] = useUpdateAppointmentStatusMutation();
+  const [acceptAppointment] = useAcceptAppointmentMutation();
 
   // Store full API appointments for detail view
   const fullAppointments = useMemo(() => {
     return appointmentsResponse?.data || [];
   }, [appointmentsResponse]);
 
-  // Convert API appointments to card format
-  const allAppointments = useMemo(() => {
+  // Assign proper queue numbers based on all appointments for the day
+  const queueNumberMap = useMemo(() => {
     if (appointmentsResponse?.data) {
-      return appointmentsResponse.data.map(mapApiAppointmentToCard);
+      return assignQueueNumbers(appointmentsResponse.data);
     }
-    return [];
+    return {};
   }, [appointmentsResponse]);
 
-  // Filter pending requests
+  // Convert API appointments to card format with correct queue numbers
+  const allAppointments = useMemo(() => {
+    if (appointmentsResponse?.data) {
+      return appointmentsResponse.data.map((apt) =>
+        mapApiAppointmentToCard(apt, queueNumberMap)
+      );
+    }
+    return [];
+  }, [appointmentsResponse, queueNumberMap]);
+
+  // Filter pending requests and reverse order (oldest first - first come, first served)
+  // Backend returns latest first, so we reverse to get oldest first
   const pendingRequests = useMemo(() => {
-    return allAppointments.filter((apt) => apt.status === "pending");
+    return allAppointments.filter((apt) => apt.status === "pending").reverse();
   }, [allAppointments]);
 
   // Filter today's appointments (serving, accepted, completed) - only show appointments for today
@@ -135,16 +191,18 @@ const Telemedicine = () => {
   const handleAccept = async (id: string) => {
     setAcceptingAppointmentId(id);
     try {
-      await updateAppointmentStatus({
-        id,
-        status: "accepted",
-      }).unwrap();
+      const result = await acceptAppointment(id).unwrap();
 
-      // Refetch appointments to get updated data and wait for it to complete
+      // The mutation returns the updated appointment, but we still need to refetch
+      // to ensure the cache is updated properly
       await refetch();
 
-      // Show success notification
-      setSnackbarMessage("Appointment request accepted successfully");
+      // Show success notification with queue number if available
+      const queueNumber = result.data?.queueNumber;
+      const message = queueNumber
+        ? `Appointment request accepted successfully (Queue #${queueNumber})`
+        : "Appointment request accepted successfully";
+      setSnackbarMessage(message);
       setSnackbarType("success");
       setShowSnackbar(true);
     } catch (err: any) {
@@ -209,6 +267,8 @@ const Telemedicine = () => {
     if (fullAppointment) {
       // Map the full appointment data for the detail view
       const appointmentDate = new Date(fullAppointment.date);
+      // Use calculated queue number
+      const calculatedQueueNumber = queueNumberMap[fullAppointment._id];
       const mappedAppointment = {
         id: fullAppointment._id,
         patientId: fullAppointment.patient._id,
@@ -219,7 +279,7 @@ const Telemedicine = () => {
           fullAppointment.status === "denied"
             ? "cancelled"
             : fullAppointment.status,
-        queueNumber: fullAppointment.queueNumber,
+        queueNumber: calculatedQueueNumber || fullAppointment.queueNumber,
         appointmentType:
           fullAppointment.type === "telemedicine"
             ? "Telemedicine"
@@ -248,89 +308,102 @@ const Telemedicine = () => {
   };
 
   const confirmMarkAsDone = async () => {
-    if (appointmentToMarkDone) {
-      setMarkingAsDoneId(appointmentToMarkDone);
-      try {
-        // Find the current appointment being marked as done
-        const currentAppointment = todayAppointments.find(
-          (apt) => apt.id === appointmentToMarkDone
-        );
+    // Prevent double-triggering
+    if (!appointmentToMarkDone || markingAsDoneId !== null) {
+      return;
+    }
 
-        if (!currentAppointment) {
-          setSnackbarMessage("Appointment not found");
-          setSnackbarType("error");
-          setShowSnackbar(true);
-          setIsMarkDoneModalOpen(false);
-          setAppointmentToMarkDone(null);
-          setMarkingAsDoneId(null);
-          return;
-        }
+    // Keep modal open and set loading state
+    const appointmentId = appointmentToMarkDone;
+    setMarkingAsDoneId(appointmentId);
 
-        const currentQueueNumber = currentAppointment.queueNumber || 0;
+    try {
+      // Find the current appointment being marked as done
+      const currentAppointment = todayAppointments.find(
+        (apt) => apt.id === appointmentId
+      );
 
-        // Update the appointment status to completed
-        await updateAppointmentStatus({
-          id: appointmentToMarkDone,
-          status: "completed",
-        }).unwrap();
+      if (!currentAppointment) {
+        setSnackbarMessage("Appointment not found");
+        setSnackbarType("error");
+        setShowSnackbar(true);
+        setIsMarkDoneModalOpen(false);
+        setAppointmentToMarkDone(null);
+        setMarkingAsDoneId(null);
+        return;
+      }
 
-        // Find the next patient in queue (queueNumber = currentQueueNumber + 1)
-        const nextPatient = todayAppointments.find(
+      const currentQueueNumber = currentAppointment.queueNumber || 0;
+
+      // Update the appointment status to completed
+      await updateAppointmentStatus({
+        id: appointmentId,
+        status: "completed",
+      }).unwrap();
+
+      // Find the next patient in queue (lowest queue number greater than current)
+      const nextPatient = todayAppointments
+        .filter(
           (apt) =>
             apt.status === "accepted" &&
-            apt.queueNumber === currentQueueNumber + 1
-        );
+            (apt.queueNumber || 0) > currentQueueNumber
+        )
+        .sort((a, b) => (a.queueNumber || 0) - (b.queueNumber || 0))[0];
 
-        if (nextPatient) {
-          // Update next patient to "serving" status
-          try {
-            await updateAppointmentStatus({
-              id: nextPatient.id,
-              status: "serving",
-            }).unwrap();
+      if (nextPatient) {
+        // Update next patient to "serving" status
+        try {
+          await updateAppointmentStatus({
+            id: nextPatient.id,
+            status: "serving",
+          }).unwrap();
 
-            // Refetch appointments to get updated data and wait for it to complete
-            await refetch();
-
-            // Show success notification
-            setSnackbarMessage(
-              `Appointment marked as done. ${nextPatient.name} (Queue #${nextPatient.queueNumber}) is now being served.`
-            );
-            setSnackbarType("success");
-            setShowSnackbar(true);
-          } catch (err) {
-            // If updating next patient fails, still show success for completing the first one
-            console.error("Failed to update next patient status:", err);
-            await refetch();
-            setSnackbarMessage(
-              "Appointment marked as done. Failed to start serving next patient."
-            );
-            setSnackbarType("warning");
-            setShowSnackbar(true);
-          }
-        } else {
-          // No next patient in queue (last in queue) - just mark as done
           // Refetch appointments to get updated data and wait for it to complete
           await refetch();
 
           // Show success notification
-          setSnackbarMessage("Appointment marked as done.");
+          setSnackbarMessage(
+            `Appointment marked as done. ${nextPatient.name} (Queue #${nextPatient.queueNumber}) is now being served.`
+          );
           setSnackbarType("success");
           setShowSnackbar(true);
+        } catch (err) {
+          // If updating next patient fails, still show success for completing the first one
+          console.error("Failed to update next patient status:", err);
+          await refetch();
+          setSnackbarMessage(
+            "Appointment marked as done. Failed to start serving next patient."
+          );
+          setSnackbarType("warning");
+          setShowSnackbar(true);
         }
-      } catch (err: any) {
-        const errorMessage =
-          err?.data?.message ||
-          "Failed to update appointment status. Please try again.";
-        setSnackbarMessage(errorMessage);
-        setSnackbarType("error");
+      } else {
+        // No next patient in queue (last in queue) - just mark as done
+        // Refetch appointments to get updated data and wait for it to complete
+        await refetch();
+
+        // Show success notification
+        setSnackbarMessage("Appointment marked as done.");
+        setSnackbarType("success");
         setShowSnackbar(true);
-      } finally {
-        setMarkingAsDoneId(null);
       }
+
+      // Close modal after successful completion
+      setIsMarkDoneModalOpen(false);
+      setAppointmentToMarkDone(null);
+    } catch (err: any) {
+      const errorMessage =
+        err?.data?.message ||
+        "Failed to update appointment status. Please try again.";
+      setSnackbarMessage(errorMessage);
+      setSnackbarType("error");
+      setShowSnackbar(true);
+      // Close modal even on error
+      setIsMarkDoneModalOpen(false);
+      setAppointmentToMarkDone(null);
+    } finally {
+      setMarkingAsDoneId(null);
     }
-    setIsMarkDoneModalOpen(false);
-    setAppointmentToMarkDone(null);
   };
 
   const cancelMarkAsDone = () => {
@@ -390,13 +463,13 @@ const Telemedicine = () => {
   };
 
   const handleStartServing = async () => {
-    // Find the appointment with queueNumber 1
+    // Find the next appointment in queue (lowest queue number with status "accepted")
     const nextAppointment = todayAppointments
       .filter((apt) => apt.status === "accepted")
       .sort((a, b) => (a.queueNumber || 0) - (b.queueNumber || 0))[0];
 
-    if (!nextAppointment || nextAppointment.queueNumber !== 1) {
-      setSnackbarMessage("No appointment with queue number 1 found");
+    if (!nextAppointment) {
+      setSnackbarMessage("No accepted appointments found to serve");
       setSnackbarType("error");
       setShowSnackbar(true);
       return;
@@ -541,10 +614,7 @@ const Telemedicine = () => {
                   onClick={handleStartServing}
                   disabled={
                     isStartingServing ||
-                    !todayAppointments.some(
-                      (apt) =>
-                        apt.status === "accepted" && apt.queueNumber === 1
-                    )
+                    !todayAppointments.some((apt) => apt.status === "accepted")
                   }
                   loading={isStartingServing}
                   loadingText="Starting..."

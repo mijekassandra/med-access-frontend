@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 //icons
 import { Eye, EyeSlash } from "iconsax-react";
@@ -9,10 +9,15 @@ import Inputs from "../../../global-components/Inputs";
 import Button from "../../../global-components/Button";
 import SnackbarAlert from "../../../global-components/SnackbarAlert";
 
+// API
+import { useResetPasswordMutation } from "../../user/api/userApi";
+
 const ResetPassword = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get("token");
 
-  const [formData, _setFormData] = useState({
+  const [formData, setFormData] = useState({
     newPassword: "",
     confirmPassword: "",
   });
@@ -20,20 +25,30 @@ const ResetPassword = () => {
     new: false,
     confirm: false,
   });
-  const [isLoading, setIsLoading] = useState(false);
+  const [resetPassword, { isLoading }] = useResetPasswordMutation();
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarType, setSnackbarType] = useState<"success" | "error">(
     "success"
   );
 
-  // const handleInputChange =
-  //   (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-  //     setFormData((prev) => ({
-  //       ...prev,
-  //       [field]: e.target.value,
-  //     }));
-  //   };
+  useEffect(() => {
+    if (!token) {
+      setSnackbarMessage(
+        "Reset token is missing. Please request a new password reset."
+      );
+      setSnackbarType("error");
+      setShowSnackbar(true);
+    }
+  }, [token]);
+
+  const handleInputChange =
+    (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      setFormData((prev) => ({
+        ...prev,
+        [field]: e.target.value,
+      }));
+    };
 
   const togglePasswordVisibility = (field: keyof typeof showPasswords) => {
     setShowPasswords((prev) => ({
@@ -48,8 +63,24 @@ const ResetPassword = () => {
 
   const handleResetPassword = async () => {
     // Validation
+    if (!token) {
+      setSnackbarMessage(
+        "Reset token is missing. Please request a new password reset."
+      );
+      setSnackbarType("error");
+      setShowSnackbar(true);
+      return;
+    }
+
     if (!formData.newPassword || !formData.confirmPassword) {
       setSnackbarMessage("Please fill in all fields");
+      setSnackbarType("error");
+      setShowSnackbar(true);
+      return;
+    }
+
+    if (formData.newPassword.length < 6) {
+      setSnackbarMessage("Password must be at least 6 characters long");
       setSnackbarType("error");
       setShowSnackbar(true);
       return;
@@ -62,45 +93,80 @@ const ResetPassword = () => {
       return;
     }
 
-    if (formData.newPassword.length < 8) {
-      setSnackbarMessage("Password must be at least 8 characters long");
-      setSnackbarType("error");
-      setShowSnackbar(true);
-      return;
-    }
-
-    setIsLoading(true);
-
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const result = await resetPassword({
+        token,
+        password: formData.newPassword,
+      }).unwrap();
 
-      setSnackbarMessage("Password reset successfully!");
-      setSnackbarType("success");
-      setShowSnackbar(true);
+      if (result.success) {
+        setSnackbarMessage(
+          result.message || "Password has been reset successfully"
+        );
+        setSnackbarType("success");
+        setShowSnackbar(true);
 
-      // Navigate to login page after success
-      setTimeout(() => {
-        navigate("/login");
-      }, 2000);
-    } catch (error) {
-      setSnackbarMessage("Failed to reset password. Please try again.");
+        // Navigate to login page after success
+        setTimeout(() => {
+          navigate("/");
+        }, 2000);
+      }
+    } catch (err: any) {
+      const errorMessage =
+        err?.data?.message ||
+        err?.message ||
+        "Failed to reset password. Please try again.";
+      const errors = err?.data?.errors || [];
+
+      if (errors.length > 0) {
+        setSnackbarMessage(errors.join(", "));
+      } else {
+        setSnackbarMessage(errorMessage);
+      }
       setSnackbarType("error");
       setShowSnackbar(true);
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  // const handleBackToForgotPassword = () => {
-  //   navigate("/forgot-password");
-  // };
+  const handleBackToForgotPassword = () => {
+    navigate("/forgot-password");
+  };
 
   const isFormValid =
     formData.newPassword.trim() !== "" &&
     formData.confirmPassword.trim() !== "" &&
     formData.newPassword === formData.confirmPassword &&
-    formData.newPassword.length >= 8;
+    formData.newPassword.length >= 6;
+
+  if (!token) {
+    return (
+      <div className="flex flex-col gap-10 w-[330px] sm:w-[360px]">
+        <h1 className="text-h2 font-bold text-szWhite100 text-center">
+          Reset Password
+        </h1>
+        <div className="text-center">
+          <p className="text-body-base-reg text-szSecondary500 mb-4">
+            Invalid reset link. Please request a new password reset.
+          </p>
+          <Button
+            variant="secondaryDark"
+            label="Request New Reset Link"
+            size="medium"
+            type="button"
+            fullWidth
+            onClick={handleBackToForgotPassword}
+          />
+        </div>
+        <SnackbarAlert
+          isOpen={showSnackbar}
+          message={snackbarMessage}
+          type={snackbarType}
+          onClose={handleCloseSnackbar}
+          duration={5000}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-10 w-[330px] sm:w-[360px]">
@@ -123,7 +189,7 @@ const ResetPassword = () => {
               placeholder="Enter your new password"
               value={formData.newPassword}
               icon={showPasswords.new ? Eye : EyeSlash}
-              // onChange={handleInputChange("newPassword")}
+              onChange={handleInputChange("newPassword")}
               iconClick={() => togglePasswordVisibility("new")}
             />
           </div>
@@ -137,7 +203,7 @@ const ResetPassword = () => {
               placeholder="Confirm your new password"
               value={formData.confirmPassword}
               icon={showPasswords.confirm ? Eye : EyeSlash}
-              // onChange={handleInputChange("confirmPassword")}
+              onChange={handleInputChange("confirmPassword")}
               iconClick={() => togglePasswordVisibility("confirm")}
             />
           </div>
@@ -151,17 +217,17 @@ const ResetPassword = () => {
           <ul className="text-xs text-szSecondary500 space-y-1">
             <li
               className={`flex items-center gap-2 ${
-                formData.newPassword.length >= 8 ? "text-green-400" : ""
+                formData.newPassword.length >= 6 ? "text-green-400" : ""
               }`}
             >
               <div
                 className={`w-1.5 h-1.5 rounded-full ${
-                  formData.newPassword.length >= 8
+                  formData.newPassword.length >= 6
                     ? "bg-green-400"
                     : "bg-gray-400"
                 }`}
               ></div>
-              At least 8 characters long
+              At least 6 characters long
             </li>
             <li
               className={`flex items-center gap-2 ${
@@ -196,10 +262,19 @@ const ResetPassword = () => {
           disabled={!isFormValid || isLoading}
         />
         <p className="text-body-small-reg text-szWhite100 text-center">
+          Don't have a token?{" "}
+          <span
+            className="text-szSecondary500 cursor-pointer hover:underline transition-colors"
+            onClick={handleBackToForgotPassword}
+          >
+            Request a new reset link
+          </span>
+        </p>
+        <p className="text-body-small-reg text-szWhite100 text-center">
           Remember your password?{" "}
           <span
             className="text-szSecondary500 cursor-pointer hover:underline transition-colors"
-            onClick={() => navigate("/login")}
+            onClick={() => navigate("/")}
           >
             Back to Login
           </span>

@@ -12,8 +12,8 @@ import WelcomeSnackbar from "./components/WelcomeSnackbar";
 // pages
 import Login from "./features/auth/pages/Login";
 import VideoCall from "./features/telemedicine/pages/VideoCall";
-// import ForgotPasswordPage from "./features/auth/pages/ForgotPasswordPage";
-// import ResetPasswordPage from "./features/auth/pages/ResetPasswordPage";
+import ForgotPasswordPage from "./features/auth/pages/ForgotPasswordPage";
+import ResetPasswordPage from "./features/auth/pages/ResetPasswordPage";
 // import PatientMobileApp from "./features/patient-mobile/PatientMobileApp";
 // import Register from "./features/auth/pages/Register";
 // import EmailVerificationSuccess from "./features/auth/pages/EmailVerificationSuccess";
@@ -50,7 +50,7 @@ function App() {
               </PublicRoute>
             }
           />
-          {/* <Route
+          <Route
             path="/forgot-password"
             element={
               <PublicRoute>
@@ -66,7 +66,7 @@ function App() {
               </PublicRoute>
             }
           />
-          <Route
+          {/* <Route
             path="/create-account"
             element={
               <PublicRoute>

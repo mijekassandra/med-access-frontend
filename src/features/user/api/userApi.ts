@@ -78,6 +78,27 @@ export interface LoginResponse {
   };
 }
 
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ForgotPasswordResponse {
+  success: boolean;
+  message: string;
+  resetToken?: string; // Only in development
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  password: string;
+}
+
+export interface ResetPasswordResponse {
+  success: boolean;
+  message: string;
+  errors?: string[];
+}
+
 const baseUrl = import.meta.env.VITE_APP_BE_URL || 'http://localhost:3001';
 
 const baseQuery = fetchBaseQuery({
@@ -200,6 +221,30 @@ export const userApi = createApi({
         { type: "User", id },
       ],
     }),
+
+    // Forgot Password
+    forgotPassword: builder.mutation<ForgotPasswordResponse, ForgotPasswordRequest>({
+      query: (body) => ({
+        url: "/users/forgot-password",
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body,
+      }),
+    }),
+
+    // Reset Password
+    resetPassword: builder.mutation<ResetPasswordResponse, ResetPasswordRequest>({
+      query: (body) => ({
+        url: "/users/reset-password",
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body,
+      }),
+    }),
   }),
 });
 
@@ -212,5 +257,7 @@ export const {
   useGetActiveUsersQuery,
   useGetUserByIdQuery,
   useUpdateUserMutation,
-  useDeleteUserMutation
+  useDeleteUserMutation,
+  useForgotPasswordMutation,
+  useResetPasswordMutation
 } = userApi;

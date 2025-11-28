@@ -161,12 +161,12 @@ const LoginForm = () => {
                 {localError}
               </p>
             )}
-            {/* <p
+            <p
               className="text-body-small-reg text-szWhite100 text-right mt-1 cursor-pointer hover:underline transition-colors"
               onClick={() => navigate("/forgot-password")}
             >
               Forgot password?
-            </p> */}
+            </p>
           </div>
         </div>
       </section>
@@ -181,15 +181,6 @@ const LoginForm = () => {
           onClick={handleLogin}
           disabled={isLoading}
         />
-        {/* <p className="text-body-small-reg text-szWhite100 text-center">
-          Don't have an account?{" "}
-          <span
-            className="text-szSecondary500 cursor-pointer hover:underline transition-colors"
-            onClick={() => navigate("/create-account")}
-          >
-            Register
-          </span>
-        </p> */}
       </div>
     </div>
   );
