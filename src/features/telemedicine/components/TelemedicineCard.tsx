@@ -81,10 +81,35 @@ const TelemedicineCard: React.FC<TelemedicineCardProps> = ({
     }
   };
 
+  const handleCardClick = () => {
+    if (status === "pending" && onView) {
+      onView({
+        id,
+        name,
+        firstName,
+        lastName,
+        avatar,
+        status,
+        queueNumber,
+        appointmentType,
+        date,
+        description,
+        patientId,
+      });
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
       <div className="flex items-center justify-between">
-        <div className="flex items-start gap-2 w-full">
+        <div
+          className={`flex items-start gap-2 w-full ${
+            status === "pending" && onView
+              ? "cursor-pointer hover:opacity-80 transition-opacity"
+              : ""
+          }`}
+          onClick={handleCardClick}
+        >
           <Avatar
             firstName={firstName}
             lastName={lastName}
@@ -118,7 +143,10 @@ const TelemedicineCard: React.FC<TelemedicineCardProps> = ({
           </div>
         </div>
 
-        <div className="flex flex-row gap-2">
+        <div
+          className="flex flex-row gap-2"
+          onClick={(e) => e.stopPropagation()}
+        >
           {status === "pending" && (
             <div className="flex items-center gap-[2px] w-fit">
               <Button

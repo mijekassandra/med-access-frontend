@@ -100,7 +100,13 @@ const AppointmentDetail: React.FC<AppointmentDetailProps> = ({
 
             {/* Appointment Information */}
             <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div
+                className={`grid gap-4 ${
+                  appointment.status === "pending"
+                    ? "grid-cols-1"
+                    : "grid-cols-1 md:grid-cols-2"
+                }`}
+              >
                 <div>
                   <p className="appointment-card-label-style">Status</p>
                   <div className="mt-1">
@@ -111,12 +117,14 @@ const AppointmentDetail: React.FC<AppointmentDetailProps> = ({
                     />
                   </div>
                 </div>
-                <div>
-                  <p className="appointment-card-label-style">Queue Number</p>
-                  <p className="mt-1 appointment-card-value-style bold text-success700">
-                    # {appointment.queueNumber}
-                  </p>
-                </div>
+                {appointment.status !== "pending" && (
+                  <div>
+                    <p className="appointment-card-label-style">Queue Number</p>
+                    <p className="mt-1 appointment-card-value-style bold text-success700">
+                      # {appointment.queueNumber}
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

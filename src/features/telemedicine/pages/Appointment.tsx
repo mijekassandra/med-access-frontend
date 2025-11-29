@@ -115,6 +115,9 @@ const Telemedicine = () => {
   >(null);
   const [isStartingServing, setIsStartingServing] = useState(false);
   const [markingAsDoneId, setMarkingAsDoneId] = useState<string | null>(null);
+  const [rejectingAppointmentId, setRejectingAppointmentId] = useState<
+    string | null
+  >(null);
   const navigate = useNavigate();
 
   // Get today's date for filtering
@@ -223,6 +226,7 @@ const Telemedicine = () => {
 
   const confirmDelete = async () => {
     if (requestToDelete) {
+      setRejectingAppointmentId(requestToDelete);
       try {
         await updateAppointmentStatus({
           id: requestToDelete,
@@ -243,6 +247,8 @@ const Telemedicine = () => {
         setSnackbarMessage(errorMessage);
         setSnackbarType("error");
         setShowSnackbar(true);
+      } finally {
+        setRejectingAppointmentId(null);
       }
     }
     setIsDeleteModalOpen(false);
@@ -250,6 +256,9 @@ const Telemedicine = () => {
   };
 
   const cancelDelete = () => {
+    if (rejectingAppointmentId !== null) {
+      return; // Prevent closing during rejection process
+    }
     setIsDeleteModalOpen(false);
     setRequestToDelete(null);
   };
@@ -590,6 +599,7 @@ const Telemedicine = () => {
                   {...request}
                   onAccept={handleAccept}
                   onReject={handleDeleteRequest}
+                  onView={handleViewAppointment}
                   isAccepting={acceptingAppointmentId === request.id}
                   disableAllActions={acceptingAppointmentId !== null}
                 />
@@ -659,6 +669,7 @@ const Telemedicine = () => {
           }?`}
           buttonLabel="Reject Request"
           subDescription="The appointment request will be permanently removed from the pending list."
+          isLoading={rejectingAppointmentId !== null}
         />
 
         {/* Mark as Done Confirmation Modal */}
