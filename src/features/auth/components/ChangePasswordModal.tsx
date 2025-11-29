@@ -1,8 +1,6 @@
 import { useState } from "react";
-import { Eye, EyeSlash } from "iconsax-react";
 
 //components
-import Inputs from "../../../global-components/Inputs";
 import Button from "../../../global-components/Button";
 import SnackbarAlert from "../../../global-components/SnackbarAlert";
 
