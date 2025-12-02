@@ -191,6 +191,9 @@ const VideoCall: React.FC = () => {
     const pc = new RTCPeerConnection(configuration);
     peerConnectionRef.current = pc;
 
+    pc.addTransceiver("audio", { direction: "sendrecv" });
+    pc.addTransceiver("video", { direction: "sendrecv" });
+
     // Handle remote stream
     pc.ontrack = (event) => {
       if (remoteVideoRef.current && event.streams[0]) {
@@ -635,8 +638,19 @@ const VideoCall: React.FC = () => {
           }
 
           // Create offer (for WebRTC signaling)
+          // Create offer (for WebRTC signaling)
           try {
+            // ⭐ IMPORTANT: Prevent WebRTC race condition
+            if (peerConnectionRef.current.signalingState !== "stable") {
+              console.warn(
+                "Skipping createOffer(): signalingState not stable:",
+                peerConnectionRef.current.signalingState
+              );
+              return;
+            }
+
             const offer = await peerConnectionRef.current.createOffer();
+
             if (isMountedRef.current && peerConnectionRef.current) {
               await peerConnectionRef.current.setLocalDescription(offer);
 
