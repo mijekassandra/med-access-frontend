@@ -1,20 +1,21 @@
-import { configureStore } from '@reduxjs/toolkit'
+import { configureStore } from "@reduxjs/toolkit";
 
 // APIs
-import { medicineInventoryApi } from './features/inventory/api/medicineInventoryApi'
-import { healthReportsApi } from './features/reports/api/healthReportsApi'
-import { announcementApi } from './features/announcements/api/announcementApi'
-import { healthEducationApi } from './features/health-education/api/healthEducationApi'
-import { authApi } from './features/auth/api/authApi'
-import { userApi } from './features/user/api/userApi'
-import { serviceApi } from './features/services/api/serviceApi'
-import { medicalRecordsApi } from './features/medical-records/api/medicalRecordsApi'
-import { pregnancyRecordApi } from './features/medical-records/api/pregnancyRecordApi'
-import { appointmentApi } from './features/telemedicine/api/appointmentApi'
-import { videoCallApi } from './features/telemedicine/api/videoCallApi'
+import { medicineInventoryApi } from "./features/inventory/api/medicineInventoryApi";
+import { healthReportsApi } from "./features/reports/api/healthReportsApi";
+import { announcementApi } from "./features/announcements/api/announcementApi";
+import { healthEducationApi } from "./features/health-education/api/healthEducationApi";
+import { authApi } from "./features/auth/api/authApi";
+import { userApi } from "./features/user/api/userApi";
+import { serviceApi } from "./features/services/api/serviceApi";
+import { medicalRecordsApi } from "./features/medical-records/api/medicalRecordsApi";
+import { pregnancyRecordApi } from "./features/medical-records/api/pregnancyRecordApi";
+import { appointmentApi } from "./features/telemedicine/api/appointmentApi";
+import { videoCallApi } from "./features/telemedicine/api/videoCallApi";
+import { notificationApi } from "./features/notification/api/notificationApi";
 
 // Slices
-import authReducer from './features/auth/slice/authSlice'
+import authReducer from "./features/auth/slice/authSlice";
 
 export const store = configureStore({
   reducer: {
@@ -29,7 +30,8 @@ export const store = configureStore({
     [medicalRecordsApi.reducerPath]: medicalRecordsApi.reducer,
     [pregnancyRecordApi.reducerPath]: pregnancyRecordApi.reducer,
     [appointmentApi.reducerPath]: appointmentApi.reducer,
-    [videoCallApi.reducerPath]: videoCallApi.reducer
+    [videoCallApi.reducerPath]: videoCallApi.reducer,
+    [notificationApi.reducerPath]: notificationApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -43,11 +45,12 @@ export const store = configureStore({
       medicalRecordsApi.middleware,
       pregnancyRecordApi.middleware,
       appointmentApi.middleware,
-      videoCallApi.middleware
+      videoCallApi.middleware,
+      notificationApi.middleware
     ),
-})
+});
 
 // Infer the `RootState` and `AppDispatch` types from the store itself
-export type RootState = ReturnType<typeof store.getState>
+export type RootState = ReturnType<typeof store.getState>;
 // Inferred type: {posts: PostsState, comments: CommentsState, users: UsersState}
-export type AppDispatch = typeof store.dispatch
+export type AppDispatch = typeof store.dispatch;

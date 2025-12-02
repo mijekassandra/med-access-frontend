@@ -112,12 +112,14 @@ const ResetPassword = () => {
           navigate("/");
         }, 2000);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       const errorMessage =
-        err?.data?.message ||
-        err?.message ||
+        (err as { data?: { message?: string }; message?: string })?.data
+          ?.message ||
+        (err as { message?: string })?.message ||
         "Failed to reset password. Please try again.";
-      const errors = err?.data?.errors || [];
+      const errors =
+        (err as { data?: { errors?: string[] } })?.data?.errors || [];
 
       if (errors.length > 0) {
         setSnackbarMessage(errors.join(", "));
@@ -141,7 +143,7 @@ const ResetPassword = () => {
 
   if (!token) {
     return (
-      <div className="flex flex-col gap-10 w-[330px] sm:w-[360px]">
+      <div className="flex flex-col gap-10 w-[330px] sm:w-[360px] max-w-full px-4">
         <h1 className="text-h2 font-bold text-szWhite100 text-center">
           Reset Password
         </h1>
@@ -170,7 +172,7 @@ const ResetPassword = () => {
   }
 
   return (
-    <div className="flex flex-col gap-10 w-[330px] sm:w-[360px]">
+    <div className="flex flex-col gap-10 w-[330px] sm:w-[360px] max-w-full px-4">
       <h1 className="text-h2 font-bold text-szWhite100 text-center">
         Reset Password
       </h1>
@@ -262,19 +264,19 @@ const ResetPassword = () => {
           onClick={handleResetPassword}
           disabled={!isFormValid || isLoading}
         />
-        <p className="text-body-small-reg text-szWhite100 text-center">
+        <p className="text-body-small-reg text-szWhite100 text-center break-words px-2">
           Don't have a token?{" "}
           <span
-            className="text-szSecondary500 cursor-pointer hover:underline transition-colors"
+            className="text-szSecondary500 cursor-pointer hover:underline transition-colors break-words"
             onClick={handleBackToForgotPassword}
           >
             Request a new reset link
           </span>
         </p>
-        <p className="text-body-small-reg text-szWhite100 text-center">
+        <p className="text-body-small-reg text-szWhite100 text-center break-words px-2">
           Remember your password?{" "}
           <span
-            className="text-szSecondary500 cursor-pointer hover:underline transition-colors"
+            className="text-szSecondary500 cursor-pointer hover:underline transition-colors break-words"
             onClick={() => navigate("/")}
           >
             Back to Login

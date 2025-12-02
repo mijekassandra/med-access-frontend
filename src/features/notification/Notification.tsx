@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Notification as NotificationIcon,
   CloseCircle,
@@ -9,6 +10,12 @@ import {
 } from "iconsax-react";
 import Badge from "../../global-components/Badge";
 import Button from "../../global-components/Button";
+import {
+  useGetNotificationsQuery,
+  useMarkNotificationReadMutation,
+  useMarkAllNotificationsReadMutation,
+  type Notification as ApiNotification,
+} from "./api/notificationApi";
 
 // Notification types
 export interface NotificationItem {
@@ -19,6 +26,8 @@ export interface NotificationItem {
   timestamp: Date;
   isRead: boolean;
   category?: "system" | "medical" | "appointment" | "inventory" | "user";
+  relatedId?: string | null;
+  relatedType?: string | null;
 }
 
 // Props interface
@@ -41,118 +50,79 @@ const Notification: React.FC<NotificationProps> = ({
   onMarkAllAsRead,
   className = "",
 }) => {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedNotification, setSelectedNotification] =
     useState<NotificationItem | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Sample notifications based on user role
-  const getSampleNotifications = (): NotificationItem[] => {
-    const baseNotifications: NotificationItem[] = [
-      {
-        id: "1",
-        title: "System Update",
-        message:
-          "The system will be under maintenance tonight from 2:00 AM to 4:00 AM.",
-        type: "info",
-        timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
-        isRead: false,
-        category: "system",
-      },
-      {
-        id: "2",
-        title: "Appointment Reminder",
-        message:
-          "You have an upcoming appointment with Patient #12345 in 2 hours.",
-        type: "info",
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-        isRead: false,
-        category: "appointment",
-      },
-    ];
+  // RTK Query hooks
+  const { data: notificationsData, isLoading, error } = useGetNotificationsQuery();
+  const [markNotificationRead, { isLoading: isMarkingRead }] = useMarkNotificationReadMutation();
+  const [markAllNotificationsRead, { isLoading: isMarkingAllRead }] = useMarkAllNotificationsReadMutation();
 
-    if (userRole === "admin") {
-      return [
-        ...baseNotifications,
-        {
-          id: "3",
-          title: "New User Registration",
-          message: "Dr. Sarah Johnson has registered as a new doctor.",
-          type: "success",
-          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4), // 4 hours ago
-          isRead: true,
-          category: "user",
-        },
-        {
-          id: "4",
-          title: "Low Inventory Alert",
-          message: "Paracetamol 500mg is running low. Current stock: 15 units.",
-          type: "warning",
-          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 6), // 6 hours ago
-          isRead: false,
-          category: "inventory",
-        },
-        {
-          id: "5",
-          title: "System Error",
-          message:
-            "Database connection timeout detected. Please check server logs.",
-          type: "error",
-          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8), // 8 hours ago
-          isRead: false,
-          category: "system",
-        },
-      ];
-    } else if (userRole === "doctor") {
-      return [
-        ...baseNotifications,
-        {
-          id: "3",
-          title: "Patient Record Updated",
-          message: "Patient Maria Santos' medical record has been updated.",
-          type: "success",
-          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3), // 3 hours ago
-          isRead: true,
-          category: "medical",
-        },
-        {
-          id: "4",
-          title: "Lab Results Ready",
-          message: "Blood test results for Patient #12345 are now available.",
-          type: "info",
-          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5), // 5 hours ago
-          isRead: false,
-          category: "medical",
-        },
-      ];
-    } else {
-      // Patient role
-      return [
-        {
-          id: "1",
-          title: "Appointment Confirmed",
-          message:
-            "Your appointment with Dr. Smith has been confirmed for tomorrow at 10:00 AM.",
-          type: "success",
-          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 1), // 1 hour ago
-          isRead: false,
-          category: "appointment",
-        },
-        {
-          id: "2",
-          title: "Prescription Ready",
-          message: "Your prescription is ready for pickup at the pharmacy.",
-          type: "info",
-          timestamp: new Date(Date.now() - 1000 * 60 * 60 * 3), // 3 hours ago
-          isRead: true,
-          category: "medical",
-        },
-      ];
+  // Map API notification type to UI notification type
+  const mapNotificationType = (type: ApiNotification['type']): "info" | "success" | "warning" | "error" => {
+    switch (type) {
+      case 'system':
+        return 'info';
+      case 'appointment':
+      case 'announcement':
+      case 'health_education':
+        return 'info';
+      case 'medical':
+        return 'success';
+      case 'inventory':
+        return 'warning';
+      case 'user':
+        return 'success';
+      default:
+        return 'info';
     }
   };
 
+  // Map API notification to UI notification item
+  const mapApiNotificationToItem = (apiNotification: ApiNotification): NotificationItem => {
+    return {
+      id: apiNotification._id,
+      title: apiNotification.title,
+      message: apiNotification.message,
+      type: mapNotificationType(apiNotification.type),
+      timestamp: new Date(apiNotification.createdAt),
+      isRead: apiNotification.status === 'read',
+      category: apiNotification.type === 'health_education' ? undefined : apiNotification.type as any,
+      relatedId: apiNotification.relatedId || null,
+      relatedType: apiNotification.relatedType || null,
+    };
+  };
+
+  // Get navigation path based on relatedType
+  const getNavigationPath = (relatedType: string | null | undefined, relatedId: string | null | undefined): string | null => {
+    if (!relatedType || !relatedId) return null;
+
+    const routeMap: Record<string, string> = {
+      'appointment': '/appointments',
+      'announcement': '/announcements',
+      'health_education': '/health-education',
+      'medical_record': '/medical-records',
+      'pregnancy_record': '/medical-records',
+    };
+
+    const basePath = routeMap[relatedType];
+    if (!basePath) return null;
+
+    // For appointments and medical records, we might want to navigate to a specific item
+    // For now, navigate to the list page. You can enhance this later to navigate to specific items
+    return basePath;
+  };
+
+  // Convert API notifications to display format
+  const apiNotifications: NotificationItem[] = notificationsData?.data
+    ? notificationsData.data.map(mapApiNotificationToItem)
+    : [];
+
   const displayNotifications =
-    notifications.length > 0 ? notifications : getSampleNotifications();
+    notifications.length > 0 ? notifications : apiNotifications;
   const unreadCount = displayNotifications.filter((n) => !n.isRead).length;
 
   // Close dropdown when clicking outside
@@ -222,20 +192,47 @@ const Notification: React.FC<NotificationProps> = ({
   };
 
   // Handle notification click
-  const handleNotificationClick = (notification: NotificationItem) => {
-    if (!notification.isRead && onMarkAsRead) {
-      onMarkAsRead(notification.id);
+  const handleNotificationClick = async (notification: NotificationItem) => {
+    // Mark as read if not already read
+    if (!notification.isRead) {
+      try {
+        await markNotificationRead(notification.id).unwrap();
+      } catch (error) {
+        console.error('Failed to mark notification as read:', error);
+      }
+      // Also call the prop handler if provided
+      if (onMarkAsRead) {
+        onMarkAsRead(notification.id);
+      }
     }
+
+    // Navigate to related page if applicable
+    const navPath = getNavigationPath(notification.relatedType, notification.relatedId);
+    if (navPath) {
+      navigate(navPath);
+      setIsOpen(false);
+      return;
+    }
+
+    // Call custom handler if provided
     if (onNotificationClick) {
       onNotificationClick(notification);
     }
+
+    // Show detail modal
     setSelectedNotification(notification);
   };
 
   // Handle mark all as read
-  const handleMarkAllAsRead = () => {
-    if (onMarkAllAsRead) {
-      onMarkAllAsRead();
+  const handleMarkAllAsRead = async () => {
+    try {
+      await markAllNotificationsRead().unwrap();
+      // Also call the prop handler if provided
+      if (onMarkAllAsRead) {
+        onMarkAllAsRead();
+      }
+    } catch (error) {
+      console.error('Failed to mark all notifications as read:', error);
     }
   };
 
@@ -282,8 +279,9 @@ const Notification: React.FC<NotificationProps> = ({
                 <Button
                   size="small"
                   variant="ghost"
-                  label="Mark all read"
+                  label={isMarkingAllRead ? "Marking..." : "Mark all read"}
                   onClick={handleMarkAllAsRead}
+                  disabled={isMarkingAllRead}
                   className="text-sm text-szPrimary500 hover:text-szPrimary700 font-medium"
                 />
               )}
@@ -292,7 +290,15 @@ const Notification: React.FC<NotificationProps> = ({
 
           {/* Notifications List */}
           <div className="max-h-80 overflow-y-auto">
-            {displayNotifications.length === 0 ? (
+            {isLoading ? (
+              <div className="p-6 text-center text-gray-500">
+                <p>Loading notifications...</p>
+              </div>
+            ) : error ? (
+              <div className="p-6 text-center text-gray-500">
+                <p>Error loading notifications</p>
+              </div>
+            ) : displayNotifications.length === 0 ? (
               <div className="p-6 text-center text-gray-500">
                 <NotificationIcon
                   variant="Linear"
@@ -304,7 +310,7 @@ const Notification: React.FC<NotificationProps> = ({
               displayNotifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`p-4 border-b border-gray-100 cursor-pointer transition-colors ${
+                  className={`p-4 border-b border-gray-100 cursor-pointer transition-colors group ${
                     notification.isRead
                       ? "bg-white hover:bg-szPrimary50"
                       : "bg-szSecondary50 hover:bg-szSecondary100"
@@ -329,19 +335,21 @@ const Notification: React.FC<NotificationProps> = ({
                         >
                           {notification.title}
                         </p>
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={(e) =>
-                              handleDeleteNotification(notification.id, e)
-                            }
-                            className="p-1 hover:bg-gray-200 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <Trash
-                              variant="Linear"
-                              className="w-3 h-3 text-gray-400"
-                            />
-                          </button>
-                        </div>
+                        {onDeleteNotification && (
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={(e) =>
+                                handleDeleteNotification(notification.id, e)
+                              }
+                              className="p-1 hover:bg-gray-200 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <Trash
+                                variant="Linear"
+                                className="w-3 h-3 text-gray-400"
+                              />
+                            </button>
+                          </div>
+                        )}
                       </div>
 
                       <p className="text-body-small-reg text-gray-600 mt-1 line-clamp-2">
@@ -398,11 +406,19 @@ const Notification: React.FC<NotificationProps> = ({
                 <Button
                   size="small"
                   variant="primary"
-                  label="Mark as read"
-                  onClick={() => {
+                  label={isMarkingRead ? "Marking..." : "Mark as read"}
+                  onClick={async () => {
+                    if (!selectedNotification.isRead) {
+                      try {
+                        await markNotificationRead(selectedNotification.id).unwrap();
+                      } catch (error) {
+                        console.error('Failed to mark notification as read:', error);
+                      }
+                    }
                     if (onMarkAsRead) onMarkAsRead(selectedNotification.id);
                     setSelectedNotification(null);
                   }}
+                  disabled={isMarkingRead || selectedNotification.isRead}
                 />
                 <Button
                   size="small"

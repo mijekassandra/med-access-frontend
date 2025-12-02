@@ -43,26 +43,16 @@ const ForgotPassword = () => {
     try {
       const result = await forgotPassword({ email }).unwrap();
 
-      // Debug: Log the full response
-      console.log("Forgot Password API Response:", result);
-      console.log("Environment Mode:", import.meta.env.MODE);
-      console.log(
-        "Is Dev:",
-        import.meta.env.MODE === "development" || import.meta.env.DEV
-      );
-      console.log("Has resetToken:", !!result.resetToken);
-
       if (result.success) {
-        // In development, log the token if available
+        // In development, if token is available, redirect to reset page
         const isDev =
           import.meta.env.MODE === "development" || import.meta.env.DEV;
 
         if (isDev && result.resetToken) {
-          const resetToken = result.resetToken; // Store token to avoid TS issues
-          console.log("Reset Token (Dev only):", resetToken);
+          const resetToken = result.resetToken;
 
           setSnackbarMessage(
-            "Password reset token received. Redirecting to reset password page..."
+            "Password reset link generated. Redirecting to reset password page..."
           );
           setSnackbarType("success");
           setShowSnackbar(true);
@@ -72,29 +62,20 @@ const ForgotPassword = () => {
             navigate(`/reset-password?token=${encodeURIComponent(resetToken)}`);
           }, 1500);
         } else {
-          // No token available
-          if (isDev && !result.resetToken) {
-            console.warn(
-              "Development mode but no resetToken in response. Backend might not be configured to return token in dev mode."
-            );
-            setSnackbarMessage(
-              "Note: Email sending is not implemented. In development mode, the reset token should be returned in the API response. Please check the console for the token or configure your backend to return it."
-            );
-          } else {
-            // Production mode - email should be sent (but not implemented yet)
-            setSnackbarMessage(
-              result.message ||
-                "If an account with that email exists, a password reset link has been sent. Note: Email sending is currently not implemented on the backend."
-            );
-          }
+          // Standard success message - email should be sent
+          setSnackbarMessage(
+            result.message ||
+              "If an account with that email exists, a password reset link has been sent to your email address."
+          );
           setSnackbarType("success");
           setShowSnackbar(true);
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       const errorMessage =
-        err?.data?.message ||
-        err?.message ||
+        (err as { data?: { message?: string }; message?: string })?.data
+          ?.message ||
+        (err as { message?: string })?.message ||
         "Failed to send reset email. Please try again.";
       setSnackbarMessage(errorMessage);
       setSnackbarType("error");
