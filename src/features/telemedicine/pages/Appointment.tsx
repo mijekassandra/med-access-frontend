@@ -624,7 +624,10 @@ const Telemedicine = () => {
                   onClick={handleStartServing}
                   disabled={
                     isStartingServing ||
-                    !todayAppointments.some((apt) => apt.status === "accepted")
+                    !todayAppointments.some(
+                      (apt) => apt.status === "accepted"
+                    ) ||
+                    todayAppointments.some((apt) => apt.status === "serving")
                   }
                   loading={isStartingServing}
                   loadingText="Starting..."
