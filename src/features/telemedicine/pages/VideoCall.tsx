@@ -57,6 +57,7 @@ const VideoCall: React.FC = () => {
   const [callEnded, setCallEnded] = useState(false);
   const [callDuration, setCallDuration] = useState<number | null>(null);
   const [callStartTime, setCallStartTime] = useState<number | null>(null);
+  const [autoCloseCountdown, setAutoCloseCountdown] = useState<number>(5);
 
   // Refs
   const localVideoRef = useRef<HTMLVideoElement>(null);
@@ -1670,6 +1671,49 @@ const VideoCall: React.FC = () => {
     return `${minutes}:${String(secs).padStart(2, "0")}`;
   };
 
+  // Auto-close tab after 5 seconds when call ends
+  useEffect(() => {
+    if (!callEnded) {
+      setAutoCloseCountdown(5);
+      return;
+    }
+
+    // Set up countdown timer
+    const countdownInterval = setInterval(() => {
+      setAutoCloseCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(countdownInterval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    // Set up auto-close timeout
+    const closeTimeout = setTimeout(() => {
+      console.log("⏰ Auto-closing tab after 5 seconds...");
+      // Close the tab/window
+      cleanup();
+      try {
+        window.close();
+        // If window.close() doesn't work (browser security), navigate away as fallback
+        setTimeout(() => {
+          navigate("/appointments");
+        }, 100);
+      } catch {
+        // Fallback: navigate back if close fails
+        navigate("/appointments");
+      }
+    }, 5000);
+
+    // Cleanup
+    return () => {
+      clearInterval(countdownInterval);
+      clearTimeout(closeTimeout);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [callEnded]);
+
   // Show call ended screen
   if (callEnded) {
     return (
@@ -1687,10 +1731,14 @@ const VideoCall: React.FC = () => {
                 Duration: {formatDuration(callDuration)}
               </p>
             )}
+            <p className="text-gray-500 text-sm mb-3">
+              Closing automatically in {autoCloseCountdown} second
+              {autoCloseCountdown !== 1 ? "s" : ""}...
+            </p>
           </div>
           <div className="flex gap-3">
             <Button
-              label="Exit"
+              label="Exit Now"
               variant="primary"
               onClick={handleCloseCall}
               className="flex-1"
