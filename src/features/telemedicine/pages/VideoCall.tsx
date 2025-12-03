@@ -1,23 +1,24 @@
-import React, { useEffect, useRef, useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
 import {
-  Video,
+  CallSlash,
   Microphone2,
   MicrophoneSlash,
+  Video,
   VideoSlash,
-  CallSlash,
 } from "iconsax-react";
-import {
-  useInitiateVideoCallMutation,
-  useUpdateVideoCallStatusMutation,
-  useEndVideoCallMutation,
-  useGetVideoCallByIdQuery,
-  VideoCallStatus,
-} from "../api/videoCallApi";
+import React, { useEffect, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import Avatar from "../../../global-components/Avatar";
 import Button from "../../../global-components/Button";
 import ButtonsIcon from "../../../global-components/ButtonsIcon";
 import Spinner from "../../../global-components/Spinner";
 import { useSocket } from "../../../hooks/useSocket";
+import {
+  useEndVideoCallMutation,
+  useGetVideoCallByIdQuery,
+  useInitiateVideoCallMutation,
+  useUpdateVideoCallStatusMutation,
+  VideoCallStatus,
+} from "../api/videoCallApi";
 
 const VideoCall: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -28,9 +29,21 @@ const VideoCall: React.FC = () => {
   const appointmentId = searchParams.get("appointmentId");
   const patientName = searchParams.get("patientName") || "Patient";
 
+  // ✅ DEBUG: Log URL params on mount
+  useEffect(() => {
+    console.log("🔍 VideoCall component mounted with URL params:", {
+      patientId,
+      appointmentId,
+      patientName,
+      allParams: Object.fromEntries(searchParams.entries()),
+      currentUrl: window.location.href,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // State
   // Using ref (localStreamRef) instead of state to avoid re-renders and flickering
-  const [_localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [isCameraOn, setIsCameraOn] = useState(true);
   const [isMicOn, setIsMicOn] = useState(true);
@@ -40,6 +53,10 @@ const VideoCall: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [waitingForParticipant, setWaitingForParticipant] = useState(false);
   const [waitingTime, setWaitingTime] = useState(0); // in seconds
+  const [isRemoteCameraOff, setIsRemoteCameraOff] = useState(false);
+  const [callEnded, setCallEnded] = useState(false);
+  const [callDuration, setCallDuration] = useState<number | null>(null);
+  const [callStartTime, setCallStartTime] = useState<number | null>(null);
 
   // Refs
   const localVideoRef = useRef<HTMLVideoElement>(null);
@@ -49,6 +66,7 @@ const VideoCall: React.FC = () => {
   const receiverIdRef = useRef<string | null>(null);
   const isInitiatorRef = useRef<boolean>(false);
   const callInitiatedRef = useRef<boolean>(false); // Prevent multiple call initiations
+  const callIdRef = useRef<string | null>(null); // ✅ FIX: Use ref for callId to avoid state timing issues
   const localStreamRef = useRef<MediaStream | null>(null); // Store stream in ref to avoid state updates
   const cameraLoadedRef = useRef<boolean>(false); // Track if camera is already loaded
   const pollingIntervalRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -196,28 +214,204 @@ const VideoCall: React.FC = () => {
 
     // Handle remote stream
     pc.ontrack = (event) => {
-      if (remoteVideoRef.current && event.streams[0]) {
-        remoteVideoRef.current.srcObject = event.streams[0];
-        setRemoteStream(event.streams[0]);
+      console.log("📹 Remote track received:", {
+        streams: event.streams?.length || 0,
+        tracks: event.track?.kind,
+        trackId: event.track?.id,
+        trackEnabled: event.track?.enabled,
+      });
+
+      // Monitor video track state changes
+      if (event.track && event.track.kind === "video") {
+        const videoTrack = event.track;
+
+        // Check initial state - check enabled, muted, and readyState
+        const readyState: MediaStreamTrackState = videoTrack.readyState;
+        const isActive =
+          videoTrack.enabled && !videoTrack.muted && readyState === "live";
+        setIsRemoteCameraOff(!isActive);
+        console.log("📹 Video track state:", {
+          enabled: videoTrack.enabled,
+          muted: videoTrack.muted,
+          readyState: videoTrack.readyState,
+          isActive,
+        });
+
+        // Monitor track state changes
+        videoTrack.onended = () => {
+          console.log("📹 Remote video track ended");
+          setIsRemoteCameraOff(true);
+        };
+
+        videoTrack.onmute = () => {
+          console.log("📹 Remote video track muted");
+          setIsRemoteCameraOff(true);
+        };
+
+        videoTrack.onunmute = () => {
+          console.log("📹 Remote video track unmuted");
+          // Check state after unmute, including readyState and muted
+          setTimeout(() => {
+            const readyState: MediaStreamTrackState = videoTrack.readyState;
+            const isActive =
+              videoTrack.enabled && !videoTrack.muted && readyState === "live";
+            setIsRemoteCameraOff(!isActive);
+            // Force video element to play when track becomes active
+            if (isActive && remoteVideoRef.current) {
+              // Ensure srcObject is set
+              if (remoteVideoRef.current.srcObject !== remoteStream) {
+                remoteVideoRef.current.srcObject = remoteStream;
+              }
+              remoteVideoRef.current.play().catch(console.warn);
+            }
+          }, 200); // Slightly longer delay to ensure state is updated
+        };
+      }
+
+      if (event.streams && event.streams.length > 0) {
+        const stream = event.streams[0];
+        console.log("✅ Setting remote stream:", {
+          id: stream.id,
+          tracks: stream.getTracks().length,
+          videoTracks: stream.getVideoTracks().length,
+          audioTracks: stream.getAudioTracks().length,
+        });
+
+        // Monitor video tracks in the stream
+        stream.getVideoTracks().forEach((track) => {
+          const readyState: MediaStreamTrackState = track.readyState;
+          const isActive =
+            track.enabled && !track.muted && readyState === "live";
+          setIsRemoteCameraOff(!isActive);
+
+          console.log("📹 Stream video track state:", {
+            trackId: track.id,
+            enabled: track.enabled,
+            muted: track.muted,
+            readyState: track.readyState,
+            isActive,
+          });
+
+          track.onended = () => {
+            console.log("📹 Remote video track ended");
+            setIsRemoteCameraOff(true);
+          };
+
+          track.onmute = () => {
+            console.log("📹 Remote video track muted");
+            setIsRemoteCameraOff(true);
+          };
+
+          track.onunmute = () => {
+            console.log("📹 Remote video track unmuted");
+            // Check state after unmute, including readyState and muted
+            setTimeout(() => {
+              const readyState: MediaStreamTrackState = track.readyState;
+              const isActive =
+                track.enabled && !track.muted && readyState === "live";
+              setIsRemoteCameraOff(!isActive);
+              // Force video element to play when track becomes active
+              if (isActive && remoteVideoRef.current) {
+                // Ensure srcObject is set
+                if (remoteVideoRef.current.srcObject !== stream) {
+                  remoteVideoRef.current.srcObject = stream;
+                }
+                remoteVideoRef.current.play().catch(console.warn);
+              }
+            }, 200); // Slightly longer delay to ensure state is updated
+          };
+        });
+
+        // ✅ FIX: Set stream on video element immediately
+        if (remoteVideoRef.current) {
+          // Always update srcObject to ensure we get the latest stream/tracks
+          remoteVideoRef.current.srcObject = stream;
+          console.log("✅ Remote video element srcObject set");
+
+          // Force play in case autoplay is blocked
+          remoteVideoRef.current.play().catch((err) => {
+            console.warn("⚠️ Autoplay blocked, trying to play manually:", err);
+          });
+        }
+
+        setRemoteStream(stream);
+        setIsConnecting(false);
+
+        // Set call start time when remote stream is received
+        if (!callStartTime) {
+          setCallStartTime(Date.now());
+        }
+
         // Stop waiting when remote stream is received
         if (isWaitingRef.current) {
           stopWaitingForParticipant();
         }
+      } else if (event.track) {
+        // ✅ FIX: Handle case where track comes without stream
+        console.log("📹 Track received without stream, creating stream...");
+        const stream = new MediaStream([event.track]);
+
+        if (remoteVideoRef.current) {
+          // If we already have a stream, add track to it
+          if (remoteVideoRef.current.srcObject) {
+            const existingStream = remoteVideoRef.current
+              .srcObject as MediaStream;
+            existingStream.addTrack(event.track);
+            setRemoteStream(existingStream);
+            // Force update and play
+            remoteVideoRef.current.srcObject = existingStream;
+            remoteVideoRef.current.play().catch(console.warn);
+          } else {
+            remoteVideoRef.current.srcObject = stream;
+            setRemoteStream(stream);
+            remoteVideoRef.current.play().catch(console.warn);
+          }
+        } else {
+          setRemoteStream(stream);
+        }
+        setIsConnecting(false);
+
+        // Set call start time when remote stream is received
+        if (!callStartTime) {
+          setCallStartTime(Date.now());
+        }
+      } else {
+        console.warn("⚠️ Track received but no streams or track");
       }
     };
 
     // Handle ICE candidates - send via Socket.io
     pc.onicecandidate = (event) => {
-      if (event.candidate && isConnected && receiverIdRef.current && callId) {
-        emit("webrtc:ice-candidate", {
-          callId,
-          candidate: {
-            candidate: event.candidate.candidate,
-            sdpMLineIndex: event.candidate.sdpMLineIndex,
-            sdpMid: event.candidate.sdpMid,
-          },
-          targetUserId: receiverIdRef.current,
+      if (event.candidate) {
+        console.log("🧊 ICE candidate generated:", {
+          candidate: event.candidate.candidate?.substring(0, 50) + "...",
+          sdpMLineIndex: event.candidate.sdpMLineIndex,
+          sdpMid: event.candidate.sdpMid,
+          isConnected,
+          hasReceiverId: !!receiverIdRef.current,
+          hasCallId: !!callIdRef.current,
         });
+
+        if (isConnected && receiverIdRef.current && callIdRef.current) {
+          emit("webrtc:ice-candidate", {
+            callId: callIdRef.current, // ✅ Use ref
+            candidate: {
+              candidate: event.candidate.candidate,
+              sdpMLineIndex: event.candidate.sdpMLineIndex,
+              sdpMid: event.candidate.sdpMid,
+            },
+            targetUserId: receiverIdRef.current,
+          });
+          console.log("✅ ICE candidate sent");
+        } else {
+          console.warn("⚠️ ICE candidate not sent:", {
+            isConnected,
+            hasReceiverId: !!receiverIdRef.current,
+            hasCallId: !!callIdRef.current,
+          });
+        }
+      } else {
+        console.log("🧊 ICE candidate gathering complete");
       }
     };
 
@@ -225,20 +419,168 @@ const VideoCall: React.FC = () => {
     pc.onconnectionstatechange = () => {
       const state = pc.connectionState;
       setConnectionState(state);
-      console.log("Connection state:", state);
+      console.log("🔗 WebRTC connection state changed:", state);
+
       if (state === "connected") {
+        console.log("✅ WebRTC CONNECTED!");
         setIsConnecting(false);
         // Stop waiting when connection is established
         if (isWaitingRef.current) {
           stopWaitingForParticipant();
         }
-      } else if (state === "failed" || state === "disconnected") {
-        // Don't set error immediately - might be temporary, keep waiting
-        console.warn("Connection state changed to:", state);
+      } else if (state === "connecting") {
+        console.log("🔄 WebRTC connecting...");
+      } else if (state === "failed") {
+        console.error("❌ WebRTC connection FAILED");
+        setError("Connection failed. Please try again.");
+        setIsConnecting(false);
+      } else if (state === "disconnected") {
+        console.warn("⚠️ WebRTC disconnected");
+      } else if (state === "closed") {
+        console.warn("⚠️ WebRTC connection closed");
+      }
+    };
+
+    // Handle ICE connection state changes
+    pc.oniceconnectionstatechange = () => {
+      const iceState = pc.iceConnectionState;
+      console.log("🧊 ICE connection state:", iceState);
+
+      if (iceState === "connected" || iceState === "completed") {
+        console.log("✅ ICE connection established!");
+      } else if (iceState === "failed") {
+        console.error("❌ ICE connection FAILED - may need TURN servers");
+        setError("Connection failed. This may be due to network restrictions.");
       }
     };
 
     return pc;
+  };
+
+  // ✅ FIX: Create and send WebRTC offer (called after call is accepted)
+  const createAndSendOffer = async () => {
+    console.log("🔍 createAndSendOffer check:", {
+      hasPeerConnection: !!peerConnectionRef.current,
+      callId: callId,
+      callIdRef: callIdRef.current,
+      hasReceiverId: !!receiverIdRef.current,
+      receiverId: receiverIdRef.current,
+    });
+
+    // ✅ FIX: Use ref for callId to avoid state timing issues
+    if (
+      !peerConnectionRef.current ||
+      !callIdRef.current ||
+      !receiverIdRef.current
+    ) {
+      console.warn(
+        "❌ Cannot create offer: missing peer connection, callId, or receiverId"
+      );
+      return;
+    }
+
+    try {
+      // Check if peer connection is closed
+      if (
+        peerConnectionRef.current.signalingState === "closed" ||
+        peerConnectionRef.current.connectionState === "closed"
+      ) {
+        console.warn("Peer connection is closed, cannot create offer");
+        setError("Connection was closed. Please try again.");
+        setIsConnecting(false);
+        return;
+      }
+
+      // ⭐ IMPORTANT: Prevent WebRTC race condition
+      if (peerConnectionRef.current.signalingState !== "stable") {
+        console.warn(
+          "Skipping createOffer(): signalingState not stable:",
+          peerConnectionRef.current.signalingState
+        );
+        // Retry after a short delay
+        setTimeout(() => {
+          if (isMountedRef.current && peerConnectionRef.current) {
+            createAndSendOffer();
+          }
+        }, 500);
+        return;
+      }
+
+      console.log("Creating WebRTC offer after call accepted...");
+
+      // ✅ Verify tracks are added before creating offer
+      const senders = peerConnectionRef.current.getSenders();
+      console.log("📊 Peer connection senders:", {
+        count: senders.length,
+        tracks: senders.map((s) => s.track?.kind).filter(Boolean),
+      });
+
+      if (senders.length === 0) {
+        console.error(
+          "❌ No tracks added to peer connection! Adding tracks..."
+        );
+        if (localStreamRef.current) {
+          localStreamRef.current.getTracks().forEach((track) => {
+            peerConnectionRef.current?.addTrack(track, localStreamRef.current!);
+          });
+          console.log("✅ Tracks added to peer connection");
+        }
+      }
+
+      const offer = await peerConnectionRef.current.createOffer();
+      console.log("✅ Offer created:", {
+        type: offer.type,
+        sdpLength: offer.sdp?.length || 0,
+      });
+
+      if (isMountedRef.current && peerConnectionRef.current) {
+        await peerConnectionRef.current.setLocalDescription(offer);
+        console.log(
+          "✅ Local description set, signaling state:",
+          peerConnectionRef.current.signalingState
+        );
+
+        // Send offer via Socket.io
+        if (isConnected) {
+          const offerData = {
+            callId: callIdRef.current, // ✅ Use ref
+            offer: {
+              type: offer.type,
+              sdp: offer.sdp,
+            },
+            receiverId: receiverIdRef.current,
+          };
+
+          console.log("📤 Emitting webrtc:offer:", {
+            callId: offerData.callId,
+            receiverId: offerData.receiverId,
+            offerType: offerData.offer.type,
+            socketConnected: isConnected,
+            socketId: socket?.id,
+          });
+
+          emit("webrtc:offer", offerData);
+          console.log("✅ WebRTC offer sent successfully via Socket.io");
+        } else {
+          console.error("❌ Socket not connected, cannot send offer");
+          console.error("Socket state:", {
+            isConnected,
+            socketExists: !!socket,
+            socketConnected: socket?.connected,
+          });
+          setError("Connection lost. Please try again.");
+        }
+      }
+    } catch (offerError: unknown) {
+      console.error("Error creating/sending offer:", offerError);
+      const error = offerError as { message?: string };
+      if (error.message?.includes("closed")) {
+        setError("Connection was closed. Please try again.");
+        setIsConnecting(false);
+        return;
+      }
+      setError("Failed to establish connection. Please try again.");
+    }
   };
 
   // Get local media stream (only once, never reload)
@@ -309,18 +651,55 @@ const VideoCall: React.FC = () => {
 
     // Handle call accepted
     const handleCallAccepted = async (data: { callId: string }) => {
-      if (data.callId === callId && isInitiatorRef.current) {
-        console.log("Call accepted:", data);
+      console.log("🔔 call:accepted event received:", {
+        receivedCallId: data.callId,
+        currentCallId: callId,
+        callIdRef: callIdRef.current,
+        isInitiator: isInitiatorRef.current,
+        hasPeerConnection: !!peerConnectionRef.current,
+        peerConnectionState: peerConnectionRef.current?.connectionState,
+        signalingState: peerConnectionRef.current?.signalingState,
+      });
+
+      // ✅ FIX: Use ref for callId check to avoid state timing issues
+      if (data.callId === callIdRef.current && isInitiatorRef.current) {
+        console.log("✅ Call accepted - processing...");
         // Stop waiting when call is accepted
         stopWaitingForParticipant();
         try {
           await updateVideoCallStatus({
-            id: callId!,
+            id: callIdRef.current!,
             body: { status: VideoCallStatus.ACTIVE },
           }).unwrap();
+
+          // ✅ FIX: Send WebRTC offer AFTER call is accepted
+          // This ensures patient has created their peer connection
+          if (peerConnectionRef.current) {
+            console.log("📤 Sending WebRTC offer after call accepted...");
+
+            // Wait a bit to ensure patient's peer connection is ready
+            await new Promise((resolve) => setTimeout(resolve, 500));
+
+            await createAndSendOffer();
+          } else {
+            console.error(
+              "❌ Peer connection not available when call accepted"
+            );
+            setError("Connection error. Please try again.");
+          }
         } catch (err) {
-          console.error("Failed to update call status:", err);
+          console.error("❌ Failed to update call status:", err);
         }
+      } else {
+        console.warn("⚠️ Call accepted event ignored:", {
+          reason:
+            data.callId !== callIdRef.current
+              ? "callId mismatch"
+              : "not initiator",
+          dataCallId: data.callId,
+          callIdRef: callIdRef.current,
+          isInitiator: isInitiatorRef.current,
+        });
       }
     };
 
@@ -348,10 +727,19 @@ const VideoCall: React.FC = () => {
 
     // Handle call ended
     const handleCallEnded = (data: { callId: string; duration?: number }) => {
-      if (data.callId === callId) {
+      if (data.callId === callId || data.callId === callIdRef.current) {
         console.log("Call ended:", data);
+
+        // Calculate duration if not provided
+        let finalDuration = data.duration;
+        if (!finalDuration && callStartTime) {
+          finalDuration = Math.floor((Date.now() - callStartTime) / 1000); // in seconds
+        }
+
+        setCallDuration(finalDuration || 0);
+        setCallEnded(true);
+        setIsConnecting(false);
         cleanup();
-        navigate("/appointments");
       }
     };
 
@@ -433,9 +821,24 @@ const VideoCall: React.FC = () => {
       answer: { type: string; sdp: string };
       receiverId: string;
     }) => {
-      if (!peerConnectionRef.current || data.callId !== callId) return;
+      console.log("🔔 WebRTC answer received:", {
+        receivedCallId: data.callId,
+        currentCallId: callId,
+        callIdRef: callIdRef.current,
+        hasPeerConnection: !!peerConnectionRef.current,
+      });
 
-      console.log("Received WebRTC answer:", data);
+      // ✅ FIX: Use ref for callId check to avoid state timing issues
+      if (!peerConnectionRef.current || data.callId !== callIdRef.current) {
+        console.warn("⚠️ Answer ignored:", {
+          reason: !peerConnectionRef.current
+            ? "no peer connection"
+            : "callId mismatch",
+        });
+        return;
+      }
+
+      console.log("✅ Processing WebRTC answer...");
 
       // Stop waiting when we receive the answer (participant has joined)
       if (isWaitingRef.current && isInitiatorRef.current) {
@@ -462,14 +865,32 @@ const VideoCall: React.FC = () => {
       };
       fromUserId: string;
     }) => {
-      if (!peerConnectionRef.current || data.callId !== callId) return;
+      console.log("🧊 ICE candidate received:", {
+        callId: data.callId,
+        currentCallId: callId,
+        callIdRef: callIdRef.current,
+        match: data.callId === callIdRef.current,
+        hasPeerConnection: !!peerConnectionRef.current,
+        candidate: data.candidate?.candidate?.substring(0, 50) + "...",
+      });
+
+      // ✅ FIX: Use ref for callId check
+      if (!peerConnectionRef.current || data.callId !== callIdRef.current) {
+        console.warn("⚠️ ICE candidate ignored:", {
+          reason: !peerConnectionRef.current
+            ? "no peer connection"
+            : "callId mismatch",
+        });
+        return;
+      }
 
       try {
         await peerConnectionRef.current.addIceCandidate(
           new RTCIceCandidate(data.candidate)
         );
+        console.log("✅ ICE candidate added successfully");
       } catch (err) {
-        console.error("Error adding ICE candidate:", err);
+        console.error("❌ Error adding ICE candidate:", err);
       }
     };
 
@@ -496,6 +917,7 @@ const VideoCall: React.FC = () => {
       off("webrtc:answer", handleWebRTCAnswer);
       off("webrtc:ice-candidate", handleICECandidate);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     isConnected,
     socket,
@@ -512,22 +934,290 @@ const VideoCall: React.FC = () => {
     isMountedRef.current = true;
 
     // Load camera immediately, regardless of any connection status
-    getLocalStream();
+    console.log("📹 Loading camera stream...");
+    getLocalStream().then((stream) => {
+      if (stream) {
+        console.log("✅ Camera stream loaded successfully:", {
+          streamId: stream.id,
+          videoTracks: stream.getVideoTracks().length,
+          audioTracks: stream.getAudioTracks().length,
+        });
+      } else {
+        console.error("❌ Failed to load camera stream");
+      }
+    });
 
     return () => {
       isMountedRef.current = false;
     };
   }, []); // Only run once on mount - camera is LOCAL, doesn't need backend
 
+  // ✅ FIX: Monitor connection state to help debug
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (peerConnectionRef.current) {
+        const pc = peerConnectionRef.current;
+        console.log("📊 Connection State Monitor:", {
+          connectionState: pc.connectionState,
+          iceConnectionState: pc.iceConnectionState,
+          signalingState: pc.signalingState,
+          senders: pc.getSenders().length,
+          receivers: pc.getReceivers().length,
+          callId: callIdRef.current,
+        });
+      }
+    }, 3000); // Log every 3 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // ✅ FIX: Ensure remote video element updates when stream changes
+  useEffect(() => {
+    if (remoteStream && remoteVideoRef.current) {
+      console.log("🔄 Updating remote video element with stream:", {
+        streamId: remoteStream.id,
+        tracks: remoteStream.getTracks().length,
+        videoTracks: remoteStream.getVideoTracks().length,
+      });
+
+      // Always update srcObject to ensure we have the latest stream/tracks
+      // This is important when tracks are added/replaced (e.g., camera turned back on)
+      remoteVideoRef.current.srcObject = remoteStream;
+
+      // Check if there are active video tracks
+      const videoTracks = remoteStream.getVideoTracks();
+      const hasActiveVideo = videoTracks.some(
+        (track) => track.enabled && !track.muted && track.readyState === "live"
+      );
+
+      // Only try to play if there's an active video track
+      if (hasActiveVideo) {
+        remoteVideoRef.current.play().catch((err) => {
+          console.warn("⚠️ Failed to play remote video:", err);
+        });
+      }
+    }
+  }, [remoteStream]);
+
+  // Monitor remote video track state changes
+  useEffect(() => {
+    if (!remoteStream) {
+      setIsRemoteCameraOff(false);
+      return;
+    }
+
+    const videoTracks = remoteStream.getVideoTracks();
+
+    if (videoTracks.length === 0) {
+      setIsRemoteCameraOff(true);
+      return;
+    }
+
+    // Store video element reference for cleanup
+    const videoElement = remoteVideoRef.current;
+
+    // Helper function to check if video is actually active
+    const checkVideoState = () => {
+      const hasActiveVideo = videoTracks.some((track) => {
+        // Track is active if: enabled, not muted, and live
+        const readyState: MediaStreamTrackState = track.readyState;
+        const isActive = track.enabled && !track.muted && readyState === "live";
+
+        console.log("📹 Checking video track state:", {
+          trackId: track.id,
+          enabled: track.enabled,
+          muted: track.muted,
+          readyState: track.readyState,
+          isActive,
+        });
+
+        return isActive;
+      });
+
+      const newState = !hasActiveVideo;
+      console.log("📹 Video state check result:", {
+        hasActiveVideo,
+        isRemoteCameraOff: newState,
+      });
+
+      setIsRemoteCameraOff(newState);
+
+      // If video becomes active, ensure video element plays
+      if (!newState && videoElement) {
+        // Make sure srcObject is set
+        if (videoElement.srcObject !== remoteStream) {
+          videoElement.srcObject = remoteStream;
+        }
+        videoElement.play().catch((err) => {
+          console.warn(
+            "⚠️ Failed to play remote video after track activation:",
+            err
+          );
+        });
+      }
+
+      return hasActiveVideo;
+    };
+
+    // Check initial state
+    checkVideoState();
+
+    // Monitor each video track
+    const trackStateHandlers = videoTracks.map((track) => {
+      const handleEnded = () => {
+        console.log("📹 Remote video track ended");
+        setIsRemoteCameraOff(true);
+      };
+
+      const handleMute = () => {
+        console.log("📹 Remote video track muted");
+        setIsRemoteCameraOff(true);
+      };
+
+      const handleUnmute = () => {
+        console.log("📹 Remote video track unmuted");
+        // Check state after a brief delay to allow readyState to update
+        setTimeout(() => {
+          checkVideoState();
+        }, 100);
+      };
+
+      track.addEventListener("ended", handleEnded);
+      track.addEventListener("mute", handleMute);
+      track.addEventListener("unmute", handleUnmute);
+
+      // Monitor readyState and muted changes by polling (since there's no readyStateChange event)
+      // This is important for when camera is turned back on
+      const readyStateInterval = setInterval(() => {
+        const isActive =
+          track.readyState === "live" && track.enabled && !track.muted;
+
+        if (isActive) {
+          // Video is live, enabled, and not muted - make sure we show it
+          setIsRemoteCameraOff(false);
+          if (videoElement) {
+            // Ensure srcObject is set
+            if (videoElement.srcObject !== remoteStream) {
+              videoElement.srcObject = remoteStream;
+            }
+            videoElement.play().catch(console.warn);
+          }
+        } else if (track.muted || !track.enabled) {
+          // Track is muted or disabled - camera is off
+          setIsRemoteCameraOff(true);
+        }
+      }, 300); // Check more frequently (300ms instead of 500ms)
+
+      return {
+        track,
+        handleEnded,
+        handleMute,
+        handleUnmute,
+        readyStateInterval,
+      };
+    });
+
+    // Also monitor the video element for when it starts playing
+    if (videoElement) {
+      const handleVideoPlay = () => {
+        console.log("📹 Remote video started playing");
+        // Check actual track state when video plays
+        checkVideoState();
+      };
+
+      const handleVideoPause = () => {
+        console.log("📹 Remote video paused");
+        // Check if this is because camera is off or just paused
+        checkVideoState();
+      };
+
+      // Also listen for when video element loads/updates
+      const handleLoadedMetadata = () => {
+        console.log("📹 Remote video metadata loaded");
+        checkVideoState();
+      };
+
+      const handleCanPlay = () => {
+        console.log("📹 Remote video can play");
+        checkVideoState();
+        // Try to play if not already playing
+        if (videoElement.paused) {
+          videoElement.play().catch(console.warn);
+        }
+      };
+
+      videoElement.addEventListener("play", handleVideoPlay);
+      videoElement.addEventListener("pause", handleVideoPause);
+      videoElement.addEventListener("loadedmetadata", handleLoadedMetadata);
+      videoElement.addEventListener("canplay", handleCanPlay);
+
+      // Cleanup
+      return () => {
+        trackStateHandlers.forEach(
+          ({
+            track,
+            handleEnded,
+            handleMute,
+            handleUnmute,
+            readyStateInterval,
+          }) => {
+            track.removeEventListener("ended", handleEnded);
+            track.removeEventListener("mute", handleMute);
+            track.removeEventListener("unmute", handleUnmute);
+            clearInterval(readyStateInterval);
+          }
+        );
+        if (videoElement) {
+          videoElement.removeEventListener("play", handleVideoPlay);
+          videoElement.removeEventListener("pause", handleVideoPause);
+          videoElement.removeEventListener(
+            "loadedmetadata",
+            handleLoadedMetadata
+          );
+          videoElement.removeEventListener("canplay", handleCanPlay);
+        }
+      };
+    } else {
+      // Cleanup without video element listeners
+      return () => {
+        trackStateHandlers.forEach(
+          ({
+            track,
+            handleEnded,
+            handleMute,
+            handleUnmute,
+            readyStateInterval,
+          }) => {
+            track.removeEventListener("ended", handleEnded);
+            track.removeEventListener("mute", handleMute);
+            track.removeEventListener("unmute", handleUnmute);
+            clearInterval(readyStateInterval);
+          }
+        );
+      };
+    }
+  }, [remoteStream]);
+
   // Initialize call (only if patientId is provided - means we're initiating)
   useEffect(() => {
+    console.log("🔍 Call Initiation useEffect triggered:", {
+      patientId,
+      appointmentId,
+      isConnected,
+      hasLocalStream: !!localStreamRef.current,
+      callInitiated: callInitiatedRef.current,
+      searchParams: Object.fromEntries(searchParams.entries()),
+    });
+
     // Prevent multiple initializations
     if (callInitiatedRef.current) {
+      console.log("⚠️ Call already initiated, skipping...");
       return;
     }
 
     // Only initiate call if patientId is provided (we're the caller)
     if (!patientId) {
+      console.log("ℹ️ No patientId - might be receiving a call, waiting...");
       // If no patientId, we might be receiving a call, so don't show error
       // The incoming call handler will set up the connection
       return;
@@ -535,19 +1225,20 @@ const VideoCall: React.FC = () => {
 
     // Wait for Socket.io connection before initiating call
     if (!isConnected) {
-      console.log("Waiting for Socket.io connection...");
+      console.log("⏳ Waiting for Socket.io connection...");
       return;
     }
 
     // Camera should already be loaded (it loads on mount independently)
     // Just check if we have the stream reference
     if (!localStreamRef.current) {
-      console.log("Waiting for camera stream...");
+      console.log("⏳ Waiting for camera stream...");
       return;
     }
 
     // Mark as initiated to prevent re-running
     callInitiatedRef.current = true;
+    console.log("✅ Starting call initiation process...");
 
     const initializeCall = async () => {
       try {
@@ -577,9 +1268,12 @@ const VideoCall: React.FC = () => {
         }
 
         // Initiate video call via API
-        console.log("Initiating video call with:", {
+        console.log("📞 Initiating video call via API:", {
           receiverId: patientId,
           appointmentId,
+          hasPeerConnection: !!peerConnectionRef.current,
+          hasLocalStream: !!localStreamRef.current,
+          socketConnected: isConnected,
         });
 
         const result = await initiateVideoCallRef
@@ -599,6 +1293,7 @@ const VideoCall: React.FC = () => {
         if (result.data?._id) {
           const videoCallId = result.data._id;
           setCallId(videoCallId);
+          callIdRef.current = videoCallId; // ✅ FIX: Also set ref
 
           // Update status to ringing
           await updateVideoCallStatusRef
@@ -613,94 +1308,72 @@ const VideoCall: React.FC = () => {
           startWaitingForParticipant();
 
           // Notify via Socket.io
-          if (isConnected) {
+          if (isConnected && socket?.connected) {
+            console.log("📤 Emitting call:initiate via Socket.io:", {
+              receiverId: patientId,
+              callId: videoCallId,
+              appointmentId: appointmentId || undefined,
+              socketId: socket?.id,
+              socketConnected: socket?.connected,
+              note: "Backend will look up receiverId in userSockets map. Patient must be connected with matching userId.",
+            });
             emitRef.current("call:initiate", {
               receiverId: patientId,
               callId: videoCallId,
               appointmentId: appointmentId || undefined,
             });
-          }
-
-          // Check again before creating offer
-          if (!isMountedRef.current || !peerConnectionRef.current) {
-            return;
-          }
-
-          // Check if peer connection is closed before creating offer
-          if (
-            peerConnectionRef.current.signalingState === "closed" ||
-            peerConnectionRef.current.connectionState === "closed"
-          ) {
-            console.warn("Peer connection is closed, cannot create offer");
-            setError("Connection was closed. Please try again.");
-            setIsConnecting(false);
-            return;
-          }
-
-          // Create offer (for WebRTC signaling)
-          // Create offer (for WebRTC signaling)
-          try {
-            // ⭐ IMPORTANT: Prevent WebRTC race condition
-            if (peerConnectionRef.current.signalingState !== "stable") {
-              console.warn(
-                "Skipping createOffer(): signalingState not stable:",
-                peerConnectionRef.current.signalingState
-              );
-              return;
-            }
-
-            const offer = await peerConnectionRef.current.createOffer();
-
-            if (isMountedRef.current && peerConnectionRef.current) {
-              await peerConnectionRef.current.setLocalDescription(offer);
-
-              // Send offer via Socket.io
-              if (isConnected) {
-                emit("webrtc:offer", {
-                  callId: videoCallId,
-                  offer: {
-                    type: offer.type,
-                    sdp: offer.sdp,
-                  },
-                  receiverId: patientId,
-                });
+            console.log("✅ call:initiate event emitted successfully");
+            console.log(
+              "⏳ Waiting for backend to find patient's socket and send call:incoming..."
+            );
+          } else {
+            console.error(
+              "❌ Socket not connected, cannot emit call:initiate:",
+              {
+                isConnected,
+                socketExists: !!socket,
+                socketConnected: socket?.connected,
               }
-            }
-          } catch (offerError: any) {
-            console.error("Error creating offer:", offerError);
-            if (offerError.message?.includes("closed")) {
-              setError("Connection was closed. Please try again.");
-              setIsConnecting(false);
-              return;
-            }
-            throw offerError;
+            );
+            setError(
+              "Socket connection lost. Please check your connection and try again."
+            );
           }
+
+          // ✅ FIX: Don't send offer here - wait for call:accepted event
+          // Offer will be sent in handleCallAccepted after patient accepts
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         // Log full error for debugging
+        const error = err as {
+          status?: number | string;
+          data?: unknown;
+          message?: string;
+        };
         console.error("Failed to initiate call - Full error:", err);
-        console.error("Error status:", err?.status);
-        console.error("Error data:", err?.data);
-        console.error("Error message:", err?.message);
+        console.error("Error status:", error?.status);
+        console.error("Error data:", error?.data);
+        console.error("Error message:", error?.message);
 
         // Extract error message from RTK Query error format
         let errorMessage = "Failed to start video call. Please try again.";
 
         // RTK Query error format: err.data.message or err.data
-        if (err?.data) {
-          if (typeof err.data === "object") {
-            if (err.data.message) {
-              errorMessage = err.data.message;
-            } else if (err.data.error) {
-              errorMessage = err.data.error;
+        if (error?.data) {
+          if (typeof error.data === "object" && error.data !== null) {
+            const data = error.data as { message?: string; error?: string };
+            if (data.message) {
+              errorMessage = data.message;
+            } else if (data.error) {
+              errorMessage = data.error;
             }
-          } else if (typeof err.data === "string") {
-            errorMessage = err.data;
+          } else if (typeof error.data === "string") {
+            errorMessage = error.data;
           }
         }
         // Standard error format
-        else if (err?.message) {
-          errorMessage = err.message;
+        else if (error?.message) {
+          errorMessage = error.message;
         }
 
         // Check if this is an "offline" error - if so, don't show error, just wait
@@ -718,21 +1391,21 @@ const VideoCall: React.FC = () => {
         }
 
         // Add more context based on error status
-        if (err?.status === 401) {
+        if (error?.status === 401) {
           errorMessage = "Authentication failed. Please log in again.";
-        } else if (err?.status === 403) {
+        } else if (error?.status === 403) {
           errorMessage = "You don't have permission to start this call.";
-        } else if (err?.status === 404) {
+        } else if (error?.status === 404) {
           errorMessage = "Patient not found. Please check the appointment.";
-        } else if (err?.status === 400) {
+        } else if (error?.status === 400) {
           errorMessage =
             errorMessage || "Invalid request. Please check the patient ID.";
-        } else if (err?.status === 500) {
+        } else if (error?.status === 500) {
           errorMessage = "Server error. Please try again in a few seconds.";
-        } else if (err?.status === "FETCH_ERROR") {
+        } else if (error?.status === "FETCH_ERROR") {
           errorMessage =
             "Network error. Please check your connection and the backend URL (VITE_APP_BE_URL).";
-        } else if (err?.status === "PARSING_ERROR") {
+        } else if (error?.status === "PARSING_ERROR") {
           errorMessage = "Server response error. Please check the backend API.";
         }
 
@@ -755,6 +1428,7 @@ const VideoCall: React.FC = () => {
       stopWaitingForParticipant(); // Stop polling
       cleanup();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run cleanup on unmount
 
   // Cleanup function
@@ -789,23 +1463,111 @@ const VideoCall: React.FC = () => {
   };
 
   // Toggle camera
-  const toggleCamera = () => {
-    if (localStreamRef.current) {
+  const toggleCamera = async () => {
+    if (localStreamRef.current && peerConnectionRef.current) {
       const videoTrack = localStreamRef.current.getVideoTracks()[0];
       if (videoTrack) {
-        videoTrack.enabled = !isCameraOn;
-        setIsCameraOn(!isCameraOn);
+        const newEnabledState = !isCameraOn;
+
+        // ✅ FIX: Update peer connection sender to reflect camera state
+        // This ensures the patient sees the camera turn off
+        // Find video sender - check transceivers to find the video sender even if track is null
+        const transceivers = peerConnectionRef.current.getTransceivers();
+        const videoTransceiver = transceivers.find(
+          (t) =>
+            t.receiver.track?.kind === "video" ||
+            t.sender.track?.kind === "video"
+        );
+        const videoSender =
+          videoTransceiver?.sender ||
+          peerConnectionRef.current
+            .getSenders()
+            .find((sender) => sender.track?.kind === "video");
+
+        if (videoSender) {
+          try {
+            if (newEnabledState) {
+              // Camera turned on - enable track and replace in sender
+              videoTrack.enabled = true;
+              await videoSender.replaceTrack(videoTrack);
+              console.log(
+                "✅ Camera track enabled and replaced in peer connection"
+              );
+            } else {
+              // Camera turned off - replace with null to stop sending video
+              // First disable the track locally
+              videoTrack.enabled = false;
+              // Then remove it from the peer connection
+              await videoSender.replaceTrack(null);
+              console.log("✅ Camera track removed from peer connection");
+            }
+          } catch (err) {
+            console.error("❌ Error updating video track:", err);
+            // Fallback: just enable/disable the track locally
+            videoTrack.enabled = newEnabledState;
+          }
+        } else {
+          // Fallback: just enable/disable the track if no sender found
+          console.warn("⚠️ No video sender found, only toggling track locally");
+          videoTrack.enabled = newEnabledState;
+        }
+
+        setIsCameraOn(newEnabledState);
       }
     }
   };
 
   // Toggle microphone
-  const toggleMic = () => {
-    if (localStreamRef.current) {
+  const toggleMic = async () => {
+    if (localStreamRef.current && peerConnectionRef.current) {
       const audioTrack = localStreamRef.current.getAudioTracks()[0];
       if (audioTrack) {
-        audioTrack.enabled = !isMicOn;
-        setIsMicOn(!isMicOn);
+        const newEnabledState = !isMicOn;
+
+        // ✅ FIX: Update peer connection sender to reflect microphone state
+        // This ensures the patient hears the microphone turn off
+        // Find audio sender - check transceivers to find the audio sender even if track is null
+        const transceivers = peerConnectionRef.current.getTransceivers();
+        const audioTransceiver = transceivers.find(
+          (t) =>
+            t.receiver.track?.kind === "audio" ||
+            t.sender.track?.kind === "audio"
+        );
+        const audioSender =
+          audioTransceiver?.sender ||
+          peerConnectionRef.current
+            .getSenders()
+            .find((sender) => sender.track?.kind === "audio");
+
+        if (audioSender) {
+          try {
+            if (newEnabledState) {
+              // Microphone turned on - enable track and replace in sender
+              audioTrack.enabled = true;
+              await audioSender.replaceTrack(audioTrack);
+              console.log(
+                "✅ Audio track enabled and replaced in peer connection"
+              );
+            } else {
+              // Microphone turned off - replace with null to stop sending audio
+              // First disable the track locally
+              audioTrack.enabled = false;
+              // Then remove it from the peer connection
+              await audioSender.replaceTrack(null);
+              console.log("✅ Audio track removed from peer connection");
+            }
+          } catch (err) {
+            console.error("❌ Error updating audio track:", err);
+            // Fallback: just enable/disable the track locally
+            audioTrack.enabled = newEnabledState;
+          }
+        } else {
+          // Fallback: just enable/disable the track if no sender found
+          console.warn("⚠️ No audio sender found, only toggling track locally");
+          audioTrack.enabled = newEnabledState;
+        }
+
+        setIsMicOn(newEnabledState);
       }
     }
   };
@@ -813,11 +1575,17 @@ const VideoCall: React.FC = () => {
   // End call
   const handleEndCall = async () => {
     try {
+      // Calculate duration
+      let duration = 0;
+      if (callStartTime) {
+        duration = Math.floor((Date.now() - callStartTime) / 1000); // in seconds
+      }
+
       if (callId && isConnected) {
         // Emit call:end event via Socket.io
         emit("call:end", {
           callId,
-          duration: 0, // Calculate actual duration if needed
+          duration,
         });
 
         // Also call REST API
@@ -827,14 +1595,111 @@ const VideoCall: React.FC = () => {
       console.error("Failed to end call:", err);
     } finally {
       cleanup();
-      // Close the tab/window
+      // ✅ FIX: Properly close the tab/window
+      // Try to close the window (works if opened via window.open)
+      try {
+        window.close();
+        // If window.close() doesn't work (browser security), navigate away as fallback
+        setTimeout(() => {
+          navigate("/appointments");
+        }, 100);
+      } catch {
+        // Fallback: navigate back if close fails
+        navigate("/appointments");
+      }
+    }
+  };
+
+  // Close call (used when patient ends call)
+  const handleCloseCall = () => {
+    cleanup();
+    // Try to close the window
+    try {
       window.close();
-      // Fallback: navigate back if window.close() doesn't work
+      // If window.close() doesn't work (browser security), navigate away as fallback
       setTimeout(() => {
         navigate("/appointments");
       }, 100);
+    } catch {
+      // Fallback: navigate back if close fails
+      navigate("/appointments");
     }
   };
+
+  // Parse patient name for avatar initials
+  const parsePatientName = () => {
+    if (!patientName) return { firstName: "", lastName: "" };
+
+    // Handle "Last, First" format
+    if (patientName.includes(",")) {
+      const parts = patientName.split(",").map((p) => p.trim());
+      return {
+        lastName: parts[0] || "",
+        firstName: parts[1] || "",
+      };
+    }
+
+    // Handle "First Last" format
+    const parts = patientName.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return {
+        firstName: parts[0],
+        lastName: parts.slice(1).join(" "),
+      };
+    }
+
+    return {
+      firstName: parts[0] || "",
+      lastName: "",
+    };
+  };
+
+  const patientNameParts = parsePatientName();
+
+  // Format duration for display
+  const formatDuration = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    if (hours > 0) {
+      return `${hours}:${String(minutes).padStart(2, "0")}:${String(
+        secs
+      ).padStart(2, "0")}`;
+    }
+    return `${minutes}:${String(secs).padStart(2, "0")}`;
+  };
+
+  // Show call ended screen
+  if (callEnded) {
+    return (
+      <div className="fixed inset-0 bg-black flex items-center justify-center">
+        <div className="flex flex-col items-center justify-center bg-white rounded-lg p-6 mx-4 text-center w-[300px] h-[300px]">
+          <div className="mb-4">
+            <div className="w-fit flex justify-center items-center mx-auto bg-gray-100 mb-3 rounded-full p-4">
+              <CallSlash className="text-gray-600 icon-lg" />
+            </div>
+            <h3 className="text-h3 font-semibold mb-2 text-red-500">
+              Call Ended
+            </h3>
+            {callDuration !== null && (
+              <p className="text-gray-600 mb-3 text-md">
+                Duration: {formatDuration(callDuration)}
+              </p>
+            )}
+          </div>
+          <div className="flex gap-3">
+            <Button
+              label="Exit"
+              variant="primary"
+              onClick={handleCloseCall}
+              className="flex-1"
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (error && !isConnecting) {
     return (
@@ -842,7 +1707,7 @@ const VideoCall: React.FC = () => {
         <div className="bg-white rounded-lg p-6 max-w-md mx-4 text-center">
           <div className="mb-4">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CallSlash className="text-red-600 icon-lg" />
+              <CallSlash className="text-red-500 icon-lg" />
             </div>
             <h2 className="text-xl font-semibold mb-2 text-gray-900">
               Call Error
@@ -876,13 +1741,29 @@ const VideoCall: React.FC = () => {
   return (
     <div className="fixed inset-0 bg-black flex flex-col">
       {/* Remote Video (Full Screen) */}
-      <div className="flex-1 relative">
-        <video
-          ref={remoteVideoRef}
-          autoPlay
-          playsInline
-          className="w-full h-full object-cover"
-        />
+      <div className="flex-1 relative bg-black flex items-center justify-center">
+        {isRemoteCameraOff ? (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-gray-900">
+            <Avatar
+              size="large"
+              firstName={patientNameParts.firstName}
+              lastName={patientNameParts.lastName}
+            />
+            <p className="text-white text-lg font-semibold mt-4">
+              {patientName}'s camera is turned off
+            </p>
+          </div>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-black">
+            <video
+              ref={remoteVideoRef}
+              autoPlay
+              playsInline
+              className="max-w-full max-h-full object-contain"
+              style={{ width: "auto", height: "auto" }}
+            />
+          </div>
+        )}
         {isConnecting && (
           <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
             <div className="text-center text-white">
@@ -895,15 +1776,17 @@ const VideoCall: React.FC = () => {
             </div>
           </div>
         )}
-        {(!remoteStream || connectionState !== "connected") &&
-          !isConnecting && (
+        {!remoteStream &&
+          (isConnecting || connectionState === "connecting") && (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
               <div className="text-center text-white">
                 <div className="mb-4 flex justify-center">
                   <Spinner size="large" className="text-white" />
                 </div>
                 <p className="text-lg font-semibold text-white">
-                  Waiting for patient to join call
+                  {connectionState === "connecting"
+                    ? "Connecting..."
+                    : "Waiting for patient to join call"}
                 </p>
                 <p className="text-sm text-gray-300 mt-2">{patientName}</p>
                 {waitingForParticipant && waitingTime > 0 && (
@@ -912,6 +1795,10 @@ const VideoCall: React.FC = () => {
                     {String(waitingTime % 60).padStart(2, "0")}
                   </p>
                 )}
+                <p className="text-xs text-gray-500 mt-4">
+                  Connection: {connectionState} | ICE:{" "}
+                  {peerConnectionRef.current?.iceConnectionState || "unknown"}
+                </p>
               </div>
             </div>
           )}
