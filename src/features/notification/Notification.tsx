@@ -42,7 +42,6 @@ interface NotificationProps {
 }
 
 const Notification: React.FC<NotificationProps> = ({
-  userRole = "doctor",
   notifications = [],
   onNotificationClick,
   onMarkAsRead,
@@ -57,55 +56,71 @@ const Notification: React.FC<NotificationProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // RTK Query hooks
-  const { data: notificationsData, isLoading, error } = useGetNotificationsQuery();
-  const [markNotificationRead, { isLoading: isMarkingRead }] = useMarkNotificationReadMutation();
-  const [markAllNotificationsRead, { isLoading: isMarkingAllRead }] = useMarkAllNotificationsReadMutation();
+  const {
+    data: notificationsData,
+    isLoading,
+    error,
+  } = useGetNotificationsQuery();
+  const [markNotificationRead, { isLoading: isMarkingRead }] =
+    useMarkNotificationReadMutation();
+  const [markAllNotificationsRead, { isLoading: isMarkingAllRead }] =
+    useMarkAllNotificationsReadMutation();
 
   // Map API notification type to UI notification type
-  const mapNotificationType = (type: ApiNotification['type']): "info" | "success" | "warning" | "error" => {
+  const mapNotificationType = (
+    type: ApiNotification["type"]
+  ): "info" | "success" | "warning" | "error" => {
     switch (type) {
-      case 'system':
-        return 'info';
-      case 'appointment':
-      case 'announcement':
-      case 'health_education':
-        return 'info';
-      case 'medical':
-        return 'success';
-      case 'inventory':
-        return 'warning';
-      case 'user':
-        return 'success';
+      case "system":
+        return "info";
+      case "appointment":
+      case "announcement":
+      case "health_education":
+        return "info";
+      case "medical":
+        return "success";
+      case "inventory":
+        return "warning";
+      case "user":
+        return "success";
       default:
-        return 'info';
+        return "info";
     }
   };
 
   // Map API notification to UI notification item
-  const mapApiNotificationToItem = (apiNotification: ApiNotification): NotificationItem => {
+  const mapApiNotificationToItem = (
+    apiNotification: ApiNotification
+  ): NotificationItem => {
     return {
       id: apiNotification._id,
       title: apiNotification.title,
       message: apiNotification.message,
       type: mapNotificationType(apiNotification.type),
       timestamp: new Date(apiNotification.createdAt),
-      isRead: apiNotification.status === 'read',
-      category: apiNotification.type === 'health_education' ? undefined : apiNotification.type as any,
+      isRead: apiNotification.status === "read",
+      category:
+        apiNotification.type === "health_education"
+          ? undefined
+          : (apiNotification.type as any),
       relatedId: apiNotification.relatedId || null,
       relatedType: apiNotification.relatedType || null,
     };
   };
 
   // Get navigation path based on relatedType
-  const getNavigationPath = (relatedType: string | null | undefined, relatedId: string | null | undefined): string | null => {
+  const getNavigationPath = (
+    relatedType: string | null | undefined,
+    relatedId: string | null | undefined
+  ): string | null => {
     if (!relatedType || !relatedId) return null;
 
     const routeMap: Record<string, string> = {
-      'appointment': '/appointments',
-      'announcement': '/announcements',
-      'health_education': '/health-education',
-      'medical_record': '/medical-records',
-      'pregnancy_record': '/medical-records',
+      appointment: "/appointments",
+      announcement: "/announcements",
+      health_education: "/health-education",
+      medical_record: "/medical-records",
+      pregnancy_record: "/medical-records",
     };
 
     const basePath = routeMap[relatedType];
@@ -198,7 +213,7 @@ const Notification: React.FC<NotificationProps> = ({
       try {
         await markNotificationRead(notification.id).unwrap();
       } catch (error) {
-        console.error('Failed to mark notification as read:', error);
+        console.error("Failed to mark notification as read:", error);
       }
       // Also call the prop handler if provided
       if (onMarkAsRead) {
@@ -207,7 +222,10 @@ const Notification: React.FC<NotificationProps> = ({
     }
 
     // Navigate to related page if applicable
-    const navPath = getNavigationPath(notification.relatedType, notification.relatedId);
+    const navPath = getNavigationPath(
+      notification.relatedType,
+      notification.relatedId
+    );
     if (navPath) {
       navigate(navPath);
       setIsOpen(false);
@@ -232,7 +250,7 @@ const Notification: React.FC<NotificationProps> = ({
         onMarkAllAsRead();
       }
     } catch (error) {
-      console.error('Failed to mark all notifications as read:', error);
+      console.error("Failed to mark all notifications as read:", error);
     }
   };
 
@@ -410,9 +428,14 @@ const Notification: React.FC<NotificationProps> = ({
                   onClick={async () => {
                     if (!selectedNotification.isRead) {
                       try {
-                        await markNotificationRead(selectedNotification.id).unwrap();
+                        await markNotificationRead(
+                          selectedNotification.id
+                        ).unwrap();
                       } catch (error) {
-                        console.error('Failed to mark notification as read:', error);
+                        console.error(
+                          "Failed to mark notification as read:",
+                          error
+                        );
                       }
                     }
                     if (onMarkAsRead) onMarkAsRead(selectedNotification.id);
