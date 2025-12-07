@@ -14,7 +14,7 @@ export interface Checkup {
 
 export interface PregnancyRecord {
   _id: string;
-  patient: Patient;
+  patient: Patient | null; // Can be null if patient was deleted
   firstDayOfLastPeriod: string;
   numberOfWeeks: number;
   status: string;

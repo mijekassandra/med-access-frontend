@@ -9,7 +9,7 @@ export interface Patient {
 
 export interface MedicalRecord {
   _id: string;
-  patient: Patient;
+  patient: Patient | null; // Can be null if patient was deleted
   diagnosis: string;
   dateOfRecord: string;
   treatmentPlan: string;

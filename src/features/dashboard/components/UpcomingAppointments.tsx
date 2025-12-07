@@ -33,9 +33,12 @@ const UpcomingAppointments = () => {
   const appointments: Appointment[] = useMemo(() => {
     if (!appointmentsResponse?.data) return [];
 
-    // Filter for accepted status and today's date, then limit to 5
+    // Filter for accepted status, today's date, and valid patient (not deleted)
     const todayAppointments = appointmentsResponse.data
       .filter((apt) => {
+        // Skip appointments where patient was deleted
+        if (!apt.patient) return false;
+
         const appointmentDate = new Date(apt.date).toISOString().split("T")[0];
         return apt.status === "accepted" && appointmentDate === today;
       })
@@ -49,11 +52,14 @@ const UpcomingAppointments = () => {
           hour12: true,
         });
 
+        // Patient is guaranteed to exist due to filter above
+        const patient = apt.patient!;
+
         return {
           id: apt._id,
-          name: `${apt.patient.lastName}, ${apt.patient.firstName}`,
-          firstName: apt.patient.firstName,
-          lastName: apt.patient.lastName,
+          name: `${patient.lastName}, ${patient.firstName}`,
+          firstName: patient.firstName,
+          lastName: patient.lastName,
           status: apt.status as "accepted" | "pending" | "cancelled",
           date: dateString,
           time: timeString,

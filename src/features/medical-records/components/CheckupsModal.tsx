@@ -149,7 +149,9 @@ const CheckupsModal = ({
         isOpen={isOpen}
         onClose={onClose}
         showButton={false}
-        title={`CHECKUPS - ${pregnancyRecord?.patient.firstName} ${pregnancyRecord?.patient.lastName}`}
+        title={`CHECKUPS - ${pregnancyRecord?.patient 
+          ? `${pregnancyRecord.patient.firstName} ${pregnancyRecord.patient.lastName}`
+          : "Unknown Patient"}`}
         modalWidth="w-[640px]"
         contentHeight="h-[70vh]"
         headerOptions="left"

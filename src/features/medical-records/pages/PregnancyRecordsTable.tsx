@@ -84,17 +84,24 @@ const PregnancyRecordsTable: React.FC = () => {
   const [deletePregnancyRecord, { isLoading: isDeleting }] =
     useDeletePregnancyRecordMutation();
 
-  // Convert backend data to display format
+  // Convert backend data to display format (filter out deleted patients)
   const records: PregnancyRecordDisplay[] =
-    pregnancyRecordsResponse?.data?.map((record) => ({
-      id: record._id,
-      patientName: `${record.patient.firstName} ${record.patient.lastName}`,
-      startDate: record.firstDayOfLastPeriod,
-      weeksOfPregnancy: record.numberOfWeeks,
-      status: record.status || "",
-      dateRecorded: record.createdAt,
-      hasCheckups: record.checkups && record.checkups.length > 0,
-    })) || [];
+    pregnancyRecordsResponse?.data
+      ?.filter((record) => record.patient !== null && record.patient !== undefined) // Filter out deleted patients
+      ?.map((record) => {
+        // Patient is guaranteed to exist due to filter above
+        const patient = record.patient!;
+        
+        return {
+          id: record._id,
+          patientName: `${patient.firstName} ${patient.lastName}`,
+          startDate: record.firstDayOfLastPeriod,
+          weeksOfPregnancy: record.numberOfWeeks,
+          status: record.status || "",
+          dateRecorded: record.createdAt,
+          hasCheckups: record.checkups && record.checkups.length > 0,
+        };
+      }) || [];
 
   // Handle fetch errors
   useEffect(() => {

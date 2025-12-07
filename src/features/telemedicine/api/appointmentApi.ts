@@ -10,7 +10,7 @@ export interface AppointmentPatient {
 
 export interface Appointment {
   _id: string;
-  patient: AppointmentPatient;
+  patient: AppointmentPatient | null; // Can be null if patient was deleted
   type: "telemedicine" | "in-person";
   status: "pending" | "accepted" | "serving" | "completed" | "denied";
   date: string; // ISO 8601 date string

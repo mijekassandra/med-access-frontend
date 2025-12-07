@@ -68,19 +68,27 @@ const MedicalRecordTable: React.FC = () => {
   const [deleteMedicalRecord, { isLoading: isDeleting }] =
     useDeleteMedicalRecordMutation();
 
-  // Transform API data to display format
+  // Transform API data to display format (filter out deleted patients)
   const records: MedicalRecordDisplay[] =
     medicalRecordsData?.data
-      ?.filter((record) => record.isPublished)
-      ?.map((record) => ({
-        id: record._id,
-        _id: record._id,
-        patientName: `${record.patient.firstName} ${record.patient.lastName}`,
-        patientId: record.patient._id, // Store patient ID for edit mode
-        diagnosis: record.diagnosis,
-        treatmentPlan: record.treatmentPlan,
-        dateOfRecord: record.dateOfRecord,
-      })) || [];
+      ?.filter((record) => {
+        // Only include published records with valid (non-deleted) patients
+        return record.isPublished && record.patient !== null && record.patient !== undefined;
+      })
+      ?.map((record) => {
+        // Patient is guaranteed to exist due to filter above
+        const patient = record.patient!;
+        
+        return {
+          id: record._id,
+          _id: record._id,
+          patientName: `${patient.firstName} ${patient.lastName}`,
+          patientId: patient._id, // Store patient ID for edit mode
+          diagnosis: record.diagnosis,
+          treatmentPlan: record.treatmentPlan,
+          dateOfRecord: record.dateOfRecord,
+        };
+      }) || [];
 
   //sample only
   const user = {

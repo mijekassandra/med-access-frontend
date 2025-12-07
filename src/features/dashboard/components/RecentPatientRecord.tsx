@@ -15,26 +15,32 @@ const RecentPatientRecord = () => {
   const patientRecords: PatientRecord[] = useMemo(() => {
     if (!data?.data) return [];
 
-    // Sort by createdAt (latest first) and limit to 5
+    // Sort by createdAt (latest first), filter out deleted patients, and limit to 5
     const sortedRecords = [...data.data]
+      .filter((record) => record.patient !== null && record.patient !== undefined) // Filter out deleted patients
       .sort((a, b) => {
         const dateA = new Date(a.createdAt).getTime();
         const dateB = new Date(b.createdAt).getTime();
         return dateB - dateA; // Latest first
       })
       .slice(0, 5)
-      .map((record) => ({
-        id: record._id,
-        name: `${record.patient.lastName}, ${record.patient.firstName}`,
-        dateOfRecord: new Date(record.dateOfRecord).toLocaleDateString(
-          "en-US",
-          {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          }
-        ),
-      }));
+      .map((record) => {
+        // Patient is guaranteed to exist due to filter above
+        const patient = record.patient!;
+        
+        return {
+          id: record._id,
+          name: `${patient.lastName}, ${patient.firstName}`,
+          dateOfRecord: new Date(record.dateOfRecord).toLocaleDateString(
+            "en-US",
+            {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            }
+          ),
+        };
+      });
 
     return sortedRecords;
   }, [data]);

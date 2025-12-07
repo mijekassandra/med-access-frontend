@@ -272,7 +272,9 @@ const AddPregnancyRecordModal = ({
             {mode === "view" && pregnancyRecord ? (
               <Inputs
                 label="PATIENT"
-                value={`${pregnancyRecord.patient.firstName} ${pregnancyRecord.patient.lastName}`}
+                value={pregnancyRecord.patient
+                  ? `${pregnancyRecord.patient.firstName} ${pregnancyRecord.patient.lastName}`
+                  : "Unknown Patient"}
                 disabled={true}
               />
             ) : (

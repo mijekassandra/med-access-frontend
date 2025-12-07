@@ -66,9 +66,15 @@ const mapApiAppointmentToCard = (
   apiAppt: ApiAppointment,
   queueNumberMap: { [key: string]: number }
 ) => {
+  // Skip appointments with deleted patients
+  if (!apiAppt.patient) {
+    return null;
+  }
+
   const appointmentDate = new Date(apiAppt.date);
   const date = appointmentDate.toISOString().split("T")[0];
-  const name = `${apiAppt.patient.lastName}, ${apiAppt.patient.firstName}`;
+  const patient = apiAppt.patient;
+  const name = `${patient.lastName}, ${patient.firstName}`;
 
   // Map "denied" status to "cancelled" for the card component
   const status: "pending" | "accepted" | "serving" | "completed" | "cancelled" =
@@ -81,15 +87,15 @@ const mapApiAppointmentToCard = (
 
   return {
     id: apiAppt._id,
-    firstName: apiAppt.patient.firstName,
-    lastName: apiAppt.patient.lastName,
+    firstName: patient.firstName,
+    lastName: patient.lastName,
     name,
     status,
     date,
     appointmentType:
       apiAppt.type === "telemedicine" ? "Telemedicine" : "In-person",
     queueNumber: calculatedQueueNumber || apiAppt.queueNumber || undefined,
-    patientId: apiAppt.patient._id,
+    patientId: patient._id,
     createdAt: apiAppt.createdAt,
   };
 };
@@ -135,25 +141,28 @@ const Telemedicine = () => {
   const [updateAppointmentStatus] = useUpdateAppointmentStatusMutation();
   const [acceptAppointment] = useAcceptAppointmentMutation();
 
-  // Store full API appointments for detail view
+  // Store full API appointments for detail view (filter out deleted patients)
   const fullAppointments = useMemo(() => {
-    return appointmentsResponse?.data || [];
+    return (appointmentsResponse?.data || []).filter((apt) => apt.patient !== null && apt.patient !== undefined);
   }, [appointmentsResponse]);
 
-  // Assign proper queue numbers based on all appointments for the day
+  // Assign proper queue numbers based on all appointments for the day (only valid patients)
   const queueNumberMap = useMemo(() => {
     if (appointmentsResponse?.data) {
-      return assignQueueNumbers(appointmentsResponse.data);
+      const validAppointments = appointmentsResponse.data.filter(
+        (apt) => apt.patient !== null && apt.patient !== undefined
+      );
+      return assignQueueNumbers(validAppointments);
     }
     return {};
   }, [appointmentsResponse]);
 
-  // Convert API appointments to card format with correct queue numbers
+  // Convert API appointments to card format with correct queue numbers (filter out deleted patients)
   const allAppointments = useMemo(() => {
     if (appointmentsResponse?.data) {
-      return appointmentsResponse.data.map((apt) =>
-        mapApiAppointmentToCard(apt, queueNumberMap)
-      );
+      return appointmentsResponse.data
+        .map((apt) => mapApiAppointmentToCard(apt, queueNumberMap))
+        .filter((apt): apt is NonNullable<typeof apt> => apt !== null);
     }
     return [];
   }, [appointmentsResponse, queueNumberMap]);
@@ -273,17 +282,18 @@ const Telemedicine = () => {
       (apt) => apt._id === appointment.id
     );
 
-    if (fullAppointment) {
+    if (fullAppointment && fullAppointment.patient) {
       // Map the full appointment data for the detail view
       const appointmentDate = new Date(fullAppointment.date);
       // Use calculated queue number
       const calculatedQueueNumber = queueNumberMap[fullAppointment._id];
+      const patient = fullAppointment.patient;
       const mappedAppointment = {
         id: fullAppointment._id,
-        patientId: fullAppointment.patient._id,
-        name: `${fullAppointment.patient.lastName}, ${fullAppointment.patient.firstName}`,
-        firstName: fullAppointment.patient.firstName,
-        lastName: fullAppointment.patient.lastName,
+        patientId: patient._id,
+        name: `${patient.lastName}, ${patient.firstName}`,
+        firstName: patient.firstName,
+        lastName: patient.lastName,
         status:
           fullAppointment.status === "denied"
             ? "cancelled"
@@ -455,14 +465,15 @@ const Telemedicine = () => {
     const appointment = fullAppointments.find(
       (apt) => apt._id === appointmentId
     );
-    if (appointment) {
+    if (appointment && appointment.patient) {
+      const patient = appointment.patient;
       // Open video call page in a new tab with query parameters
       const params = new URLSearchParams({
         patientId,
         appointmentId,
-        patientName: `${appointment.patient.lastName}, ${appointment.patient.firstName}`,
-        patientFirstName: appointment.patient.firstName,
-        patientLastName: appointment.patient.lastName,
+        patientName: `${patient.lastName}, ${patient.firstName}`,
+        patientFirstName: patient.firstName,
+        patientLastName: patient.lastName,
       });
       const url = `${
         window.location.origin

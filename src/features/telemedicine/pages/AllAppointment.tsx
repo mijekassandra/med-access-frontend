@@ -97,7 +97,12 @@ const assignQueueNumbers = (appointments: ApiAppointment[]) => {
 const mapApiAppointmentToComponent = (
   apiAppt: ApiAppointment,
   queueNumberMap: { [key: string]: number }
-): Appointment => {
+): Appointment | null => {
+  // Skip appointments with deleted patients
+  if (!apiAppt.patient) {
+    return null;
+  }
+
   const appointmentDate = new Date(apiAppt.date);
   const scheduledDate = appointmentDate.toISOString().split("T")[0];
   const scheduledTime = appointmentDate.toLocaleTimeString("en-US", {
@@ -108,11 +113,12 @@ const mapApiAppointmentToComponent = (
 
   // Use calculated queue number instead of backend's potentially incorrect one
   const calculatedQueueNumber = queueNumberMap[apiAppt._id];
+  const patient = apiAppt.patient;
 
   return {
     id: apiAppt._id,
-    patientName: `${apiAppt.patient.lastName}, ${apiAppt.patient.firstName}`,
-    patientId: apiAppt.patient._id,
+    patientName: `${patient.lastName}, ${patient.firstName}`,
+    patientId: patient._id,
     appointmentType:
       apiAppt.type === "telemedicine" ? "telemedicine" : "in-person",
     status: apiAppt.status,
@@ -194,10 +200,13 @@ const AllAppointment: React.FC = () => {
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null);
 
-  // Assign proper queue numbers based on appointments
+  // Assign proper queue numbers based on appointments (only valid patients)
   const queueNumberMap = useMemo(() => {
     if (appointmentsResponse?.data) {
-      return assignQueueNumbers(appointmentsResponse.data);
+      const validAppointments = appointmentsResponse.data.filter(
+        (apt) => apt.patient !== null && apt.patient !== undefined
+      );
+      return assignQueueNumbers(validAppointments);
     }
     return {};
   }, [appointmentsResponse]);
@@ -205,9 +214,9 @@ const AllAppointment: React.FC = () => {
   // Convert API appointments to component format with correct queue numbers
   const appointments = useMemo(() => {
     if (appointmentsResponse?.data) {
-      return appointmentsResponse.data.map((apt) =>
-        mapApiAppointmentToComponent(apt, queueNumberMap)
-      );
+      return appointmentsResponse.data
+        .map((apt) => mapApiAppointmentToComponent(apt, queueNumberMap))
+        .filter((apt): apt is Appointment => apt !== null); // Filter out appointments with deleted patients
     }
     return [];
   }, [appointmentsResponse, queueNumberMap]);
