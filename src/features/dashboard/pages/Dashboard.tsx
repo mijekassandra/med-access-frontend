@@ -17,6 +17,8 @@ import SnackbarAlert from "../../../global-components/SnackbarAlert";
 import LatestAnnouncement from "../components/LatestAnnouncement";
 import UpcomingAppointments from "../components/UpcomingAppointments";
 import LowStockMedicine from "../components/LowStockMedicine";
+import GenderDistributionChart from "../components/GenderDistributionChart";
+import AgeRangeChart from "../components/AgeRangeChart";
 // import MedicalRecordsPieChart from "../../../components/MedicalRecordsPieChart";
 // import GenericFilteredChart from "../../../components/GenericFilteredChart";
 // import UserMedicalRecordTable from "../components/UserMedicalRecordTable";
@@ -42,7 +44,7 @@ const Dashboard: React.FC = () => {
 
   // Fetch data for dashboard cards
   const { data: usersData } = useGetAllUsersQuery(undefined, {
-    skip: userRole === "doctor", // Skip if doctor role
+    // Allow both admin and doctor to fetch users for charts
   });
   const { data: medicinesData } = useGetMedicinesQuery();
   const { data: servicesData } = useGetServicesQuery(undefined, {
@@ -143,6 +145,14 @@ const Dashboard: React.FC = () => {
             <LatestAnnouncement />
           </div>
         </div>
+
+        {/* Patient Statistics Charts - Available for both admin and doctor */}
+        {(userRole === "admin" || userRole === "doctor") && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <GenderDistributionChart />
+            <AgeRangeChart />
+          </div>
+        )}
 
         {userRole === "admin" && (
           <>
