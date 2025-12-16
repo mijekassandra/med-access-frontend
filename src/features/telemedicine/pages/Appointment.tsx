@@ -522,15 +522,20 @@ const Telemedicine = () => {
     }
   };
 
-  const filteredPendingRequests = pendingRequests.filter((request) =>
-    request.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredPendingRequests = pendingRequests.filter((request) => {
+    if (!request.name) return false;
+    return request.name.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   const filteredTodayAppointments = todayAppointments
     .filter(
-      (appointment) =>
-        appointment.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        (appointment.status === "serving" || appointment.status === "accepted")
+      (appointment) => {
+        if (!appointment.name) return false;
+        return (
+          appointment.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+          (appointment.status === "serving" || appointment.status === "accepted")
+        );
+      }
     )
     .sort((a, b) => {
       // Sort serving appointments first, then accepted

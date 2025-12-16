@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 
 //icons
-import { Edit, Trash, SearchNormal1, Add, ExportCurve } from "iconsax-react";
+import { Edit, Trash, SearchNormal1, Add, ExportCurve, Printer } from "iconsax-react";
 
 //components
 import Table, {
@@ -19,6 +19,9 @@ import DeleteConfirmation from "../../../components/DeleteConfirmation";
 import ExportModal from "../../../components/ExportModal";
 import { type ExportColumn } from "../../../types/export";
 import { useExport } from "../../../hooks/useExport";
+
+// PDF utility
+import { generateMedicalRecordPDF } from "../../../utils/pdfUtils";
 
 // API
 import {
@@ -204,6 +207,23 @@ const MedicalRecordTable: React.FC = () => {
 
   // Define actions
   const actions: TableAction<MedicalRecordDisplay>[] = [
+    {
+      label: "Print Record",
+      icon: <Printer size={16} />,
+      onClick: async (record) => {
+        try {
+          await generateMedicalRecordPDF({
+            patientName: record.patientName,
+            diagnosis: record.diagnosis,
+            treatmentPlan: record.treatmentPlan,
+            dateOfRecord: record.dateOfRecord,
+          });
+        } catch (error) {
+          console.error('Error generating PDF:', error);
+          showError('Failed to generate PDF. Please try again.');
+        }
+      },
+    },
     {
       label: "Edit Record",
       icon: <Edit size={16} />,

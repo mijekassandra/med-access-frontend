@@ -11,7 +11,10 @@ import Dropdown, { type Option } from "../../../global-components/Dropdown";
 import type { AppointmentCreate, Appointment } from "../api/appointmentApi";
 
 // RTK Query
-import { useCreateAppointmentMutation } from "../api/appointmentApi";
+import {
+  useCreateAppointmentMutation,
+  useGetAppointmentsQuery,
+} from "../api/appointmentApi";
 import { useGetAllUsersQuery } from "../../user/api/userApi";
 
 interface CreateAppointmentModalProps {
@@ -64,6 +67,15 @@ const CreateAppointmentModal: React.FC<CreateAppointmentModalProps> = ({
   } = useGetAllUsersQuery(undefined, {
     skip: !isOpen, // Only fetch when modal is open
   });
+
+  // Fetch appointments for the selected date to check for duplicates
+  const { data: existingAppointmentsData, isLoading: checkingAppointments } =
+    useGetAppointmentsQuery(
+      { date: formData.date },
+      {
+        skip: !formData.date || !isOpen, // Only fetch when date is selected and modal is open
+      }
+    );
 
   // Transform users data into dropdown options (only users with role "user")
   const userOptions: Option[] =
@@ -163,6 +175,49 @@ const CreateAppointmentModal: React.FC<CreateAppointmentModalProps> = ({
       setSnackbarType("error");
       setShowSnackbar(true);
       return;
+    }
+
+    // Wait for appointments data to load if still checking
+    if (checkingAppointments) {
+      setSnackbarMessage(
+        "Please wait while we check for existing appointments..."
+      );
+      setSnackbarType("error");
+      setShowSnackbar(true);
+      return;
+    }
+
+    // Check if patient already has an appointment on the selected date
+    if (existingAppointmentsData?.data && formData.patient && formData.date) {
+      const selectedDate = formData.date; // YYYY-MM-DD format
+
+      // Check if there's an existing appointment for this patient on this date
+      const existingAppointment = existingAppointmentsData.data.find((apt) => {
+        // Skip appointments with deleted patients
+        if (!apt.patient) return false;
+
+        // Compare patient IDs
+        const isSamePatient = apt.patient._id === formData.patient;
+
+        // Compare dates (extract date part from ISO string)
+        const appointmentDate = new Date(apt.date).toISOString().split("T")[0];
+        const isSameDate = appointmentDate === selectedDate;
+
+        return isSamePatient && isSameDate;
+      });
+
+      if (existingAppointment) {
+        setSnackbarMessage(
+          "This patient already has an appointment on the selected date. Please choose a different date."
+        );
+        setSnackbarType("error");
+        setShowSnackbar(true);
+        setFormErrors((prev) => ({
+          ...prev,
+          date: "An appointment already exists for this date",
+        }));
+        return;
+      }
     }
 
     try {
@@ -326,7 +381,7 @@ const CreateAppointmentModal: React.FC<CreateAppointmentModalProps> = ({
               type="date"
               value={formData.date}
               onChange={(e) => handleInputChange("date", e.target.value)}
-              disabled={isCreating}
+              disabled={isCreating || checkingAppointments}
               error={!!formErrors.date}
             />
 

@@ -595,9 +595,25 @@ const AllAppointment: React.FC = () => {
   // Filter appointments based on search term, status, type, and date
   const filteredAppointments = useMemo(() => {
     return appointments.filter((appointment) => {
-      const matchesSearch = Object.values(appointment).some((value) =>
-        value.toString().toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      // Safe search - only search in specific string fields, handle null/undefined values
+      const matchesSearch = searchTerm.trim() === "" || (() => {
+        const searchLower = searchTerm.toLowerCase();
+        const searchableFields = [
+          appointment.patientName,
+          appointment.reason,
+          appointment.scheduledDate,
+          appointment.scheduledTime,
+          appointment.status,
+          appointment.appointmentType,
+          appointment.id,
+          appointment.queueNumber?.toString() || "",
+        ];
+        
+        return searchableFields.some((field) => {
+          if (field == null || field === undefined) return false;
+          return String(field).toLowerCase().includes(searchLower);
+        });
+      })();
 
       const statusValue = Array.isArray(statusFilter)
         ? statusFilter[0]?.value
