@@ -13,9 +13,9 @@ import SnackbarAlert from "../../../global-components/SnackbarAlert";
 import ButtonsIcon from "../../../global-components/ButtonsIcon";
 import DeleteConfirmation from "../../../components/DeleteConfirmation";
 import AppointmentDetail from "../components/AppointmentDetail";
-import ConfirmationModal from "../../../components/ConfirmationModal";
 import Loading from "../../../components/Loading";
 import CreateAppointmentModal from "../components/CreateAppointmentModal";
+import AddUserMedicalModal from "../../medical-records/components/AddUserMedicalModal";
 
 // RTK Query
 import {
@@ -116,6 +116,14 @@ const Telemedicine = () => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isMedicalRecordModalOpen, setIsMedicalRecordModalOpen] =
+    useState(false);
+  const [appointmentForMedicalRecord, setAppointmentForMedicalRecord] =
+    useState<{
+      appointmentId: string;
+      patientId: string;
+      appointmentDate: string; // Date in YYYY-MM-DD format
+    } | null>(null);
   const [acceptingAppointmentId, setAcceptingAppointmentId] = useState<
     string | null
   >(null);
@@ -143,7 +151,9 @@ const Telemedicine = () => {
 
   // Store full API appointments for detail view (filter out deleted patients)
   const fullAppointments = useMemo(() => {
-    return (appointmentsResponse?.data || []).filter((apt) => apt.patient !== null && apt.patient !== undefined);
+    return (appointmentsResponse?.data || []).filter(
+      (apt) => apt.patient !== null && apt.patient !== undefined
+    );
   }, [appointmentsResponse]);
 
   // Assign proper queue numbers based on all appointments for the day (only valid patients)
@@ -322,18 +332,50 @@ const Telemedicine = () => {
   };
 
   const handleMarkAsDone = (appointmentId: string) => {
-    setAppointmentToMarkDone(appointmentId);
-    setIsMarkDoneModalOpen(true);
-  };
+    // Find the appointment to get patient ID
+    const appointment = todayAppointments.find(
+      (apt) => apt.id === appointmentId
+    );
 
-  const confirmMarkAsDone = async () => {
-    // Prevent double-triggering
-    if (!appointmentToMarkDone || markingAsDoneId !== null) {
+    if (!appointment) {
+      setSnackbarMessage("Appointment not found");
+      setSnackbarType("error");
+      setShowSnackbar(true);
       return;
     }
 
-    // Keep modal open and set loading state
-    const appointmentId = appointmentToMarkDone;
+    // Get the full appointment data to access patient ID
+    const fullAppointment = fullAppointments.find(
+      (apt) => apt._id === appointmentId
+    );
+
+    if (!fullAppointment || !fullAppointment.patient) {
+      setSnackbarMessage("Patient information not found");
+      setSnackbarType("error");
+      setShowSnackbar(true);
+      return;
+    }
+
+    // Convert appointment date to YYYY-MM-DD format for the date input
+    const appointmentDate = new Date(fullAppointment.date);
+    const formattedDate = appointmentDate.toISOString().split("T")[0];
+
+    // Open medical record modal with patient ID and appointment date
+    setAppointmentForMedicalRecord({
+      appointmentId: appointmentId,
+      patientId: fullAppointment.patient._id,
+      appointmentDate: formattedDate,
+    });
+    setIsMedicalRecordModalOpen(true);
+  };
+
+  // Handle medical record creation success - update appointment status
+  const handleMedicalRecordCreated = async (message?: string) => {
+    if (!appointmentForMedicalRecord) {
+      return;
+    }
+
+    const appointmentId = appointmentForMedicalRecord.appointmentId;
     setMarkingAsDoneId(appointmentId);
 
     try {
@@ -346,8 +388,8 @@ const Telemedicine = () => {
         setSnackbarMessage("Appointment not found");
         setSnackbarType("error");
         setShowSnackbar(true);
-        setIsMarkDoneModalOpen(false);
-        setAppointmentToMarkDone(null);
+        setIsMedicalRecordModalOpen(false);
+        setAppointmentForMedicalRecord(null);
         setMarkingAsDoneId(null);
         return;
       }
@@ -382,7 +424,7 @@ const Telemedicine = () => {
 
           // Show success notification
           setSnackbarMessage(
-            `Appointment marked as done. ${nextPatient.name} (Queue #${nextPatient.queueNumber}) is now being served.`
+            `Medical record created and appointment marked as done. ${nextPatient.name} (Queue #${nextPatient.queueNumber}) is now being served.`
           );
           setSnackbarType("success");
           setShowSnackbar(true);
@@ -391,7 +433,7 @@ const Telemedicine = () => {
           console.error("Failed to update next patient status:", err);
           await refetch();
           setSnackbarMessage(
-            "Appointment marked as done. Failed to start serving next patient."
+            "Medical record created and appointment marked as done. Failed to start serving next patient."
           );
           setSnackbarType("warning");
           setShowSnackbar(true);
@@ -402,14 +444,16 @@ const Telemedicine = () => {
         await refetch();
 
         // Show success notification
-        setSnackbarMessage("Appointment marked as done.");
+        setSnackbarMessage(
+          "Medical record created and appointment marked as done."
+        );
         setSnackbarType("success");
         setShowSnackbar(true);
       }
 
       // Close modal after successful completion
-      setIsMarkDoneModalOpen(false);
-      setAppointmentToMarkDone(null);
+      setIsMedicalRecordModalOpen(false);
+      setAppointmentForMedicalRecord(null);
     } catch (err: any) {
       const errorMessage =
         err?.data?.message ||
@@ -418,16 +462,16 @@ const Telemedicine = () => {
       setSnackbarType("error");
       setShowSnackbar(true);
       // Close modal even on error
-      setIsMarkDoneModalOpen(false);
-      setAppointmentToMarkDone(null);
+      setIsMedicalRecordModalOpen(false);
+      setAppointmentForMedicalRecord(null);
     } finally {
       setMarkingAsDoneId(null);
     }
   };
 
-  const cancelMarkAsDone = () => {
-    setIsMarkDoneModalOpen(false);
-    setAppointmentToMarkDone(null);
+  const handleCloseMedicalRecordModal = () => {
+    setIsMedicalRecordModalOpen(false);
+    setAppointmentForMedicalRecord(null);
   };
 
   const handleViewAllAppointments = () => {
@@ -528,15 +572,13 @@ const Telemedicine = () => {
   });
 
   const filteredTodayAppointments = todayAppointments
-    .filter(
-      (appointment) => {
-        if (!appointment.name) return false;
-        return (
-          appointment.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-          (appointment.status === "serving" || appointment.status === "accepted")
-        );
-      }
-    )
+    .filter((appointment) => {
+      if (!appointment.name) return false;
+      return (
+        appointment.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        (appointment.status === "serving" || appointment.status === "accepted")
+      );
+    })
     .sort((a, b) => {
       // Sort serving appointments first, then accepted
       if (a.status === "serving" && b.status === "accepted") return -1;
@@ -691,21 +733,19 @@ const Telemedicine = () => {
           isLoading={rejectingAppointmentId !== null}
         />
 
-        {/* Mark as Done Confirmation Modal */}
-        <ConfirmationModal
-          isOpen={isMarkDoneModalOpen}
-          onClose={cancelMarkAsDone}
-          onClick={confirmMarkAsDone}
-          description={`Are you sure you want to mark the appointment as done for ${
-            appointmentToMarkDone
-              ? todayAppointments.find(
-                  (apt) => apt.id === appointmentToMarkDone
-                )?.name || "this patient"
-              : "this patient"
-          }?`}
-          buttonLabel="Mark as Done"
-          isLoading={markingAsDoneId !== null}
-          isLoadingText="Marking..."
+        {/* Medical Record Modal (opened when marking appointment as done) */}
+        <AddUserMedicalModal
+          isOpen={isMedicalRecordModalOpen}
+          onClose={handleCloseMedicalRecordModal}
+          mode="add"
+          prefilledPatientId={appointmentForMedicalRecord?.patientId}
+          prefilledDate={appointmentForMedicalRecord?.appointmentDate}
+          onSuccess={handleMedicalRecordCreated}
+          onError={(error) => {
+            setSnackbarMessage(error);
+            setSnackbarType("error");
+            setShowSnackbar(true);
+          }}
         />
 
         {/* Snackbar Alert */}

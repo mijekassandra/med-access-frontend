@@ -25,6 +25,8 @@ interface AddUserMedicalModalProps {
   onClose: () => void;
   mode: "add" | "edit" | "view";
   medicalRecord?: MedicalRecord;
+  prefilledPatientId?: string; // Patient ID to auto-fill and disable the full name field
+  prefilledDate?: string; // Date to auto-fill the date of record field (YYYY-MM-DD format)
   onSave?: (medicalRecord: MedicalRecord) => void;
   onError?: (error: string) => void;
   onSuccess?: (message: string) => void;
@@ -35,6 +37,8 @@ const AddUserMedicalModal = ({
   onClose,
   mode,
   medicalRecord,
+  prefilledPatientId,
+  prefilledDate,
   onSave,
   onError,
   onSuccess,
@@ -116,10 +120,12 @@ const AddUserMedicalModal = ({
         treatmentPlan: medicalRecord.treatmentPlan,
       });
     } else if (mode === "add") {
+      // If prefilledPatientId is provided, use it; otherwise start with empty
+      // If prefilledDate is provided, use it; otherwise start with empty
       setFormData({
-        fullName: "",
+        fullName: prefilledPatientId || "",
         diagnosis: "",
-        dateOfRecord: "",
+        dateOfRecord: prefilledDate || "",
         treatmentPlan: "",
       });
     }
@@ -131,7 +137,14 @@ const AddUserMedicalModal = ({
       dateOfRecord: "",
       treatmentPlan: "",
     });
-  }, [medicalRecord, mode, isOpen, usersData]);
+  }, [
+    medicalRecord,
+    mode,
+    isOpen,
+    usersData,
+    prefilledPatientId,
+    prefilledDate,
+  ]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
@@ -401,6 +414,7 @@ const AddUserMedicalModal = ({
               disabled={
                 mode === "view" ||
                 mode === "edit" ||
+                !!prefilledPatientId || // Disable if patient is prefilled (from appointment)
                 usersLoading ||
                 !!usersError ||
                 isLoading
@@ -427,7 +441,7 @@ const AddUserMedicalModal = ({
                 onChange={(e) =>
                   handleInputChange("dateOfRecord", e.target.value)
                 }
-                disabled={mode === "view" || isLoading}
+                disabled={mode === "view" || !!prefilledDate || isLoading}
                 error={!!formErrors.dateOfRecord}
               />
             </div>
