@@ -2,7 +2,14 @@ import React, { useState } from "react";
 import { useSelector } from "react-redux";
 
 //icons
-import { Add, SearchNormal1, Edit, Trash, ExportCurve } from "iconsax-react";
+import {
+  Add,
+  SearchNormal1,
+  Edit,
+  Trash,
+  ExportCurve,
+  Printer,
+} from "iconsax-react";
 
 // components
 import type { RootState } from "../../../store";
@@ -29,6 +36,10 @@ import {
   useUpdateUserMutation,
   type User,
 } from "../api/userApi";
+import { useGetMedicalRecordsQuery } from "../../medical-records/api/medicalRecordsApi";
+
+// PDF utility
+import { generateAllPatientRecordsPDF } from "../../../utils/pdfUtils";
 
 // Convert User to Patient format for display
 const convertUserToPatient = (user: User) => ({
@@ -56,6 +67,7 @@ const PatientsTable = () => {
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] =
     useState(false);
   const [selectedPatient, setSelectedPatient] = useState<User | null>(null);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [snackbar, setSnackbar] = useState<{
     isOpen: boolean;
     message: string;
@@ -68,6 +80,7 @@ const PatientsTable = () => {
 
   // API hooks
   const { data: usersData, isLoading, error } = useGetAllUsersQuery();
+  const { data: medicalRecordsData } = useGetMedicalRecordsQuery();
 
   const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
   const [updateUser] = useUpdateUserMutation();
@@ -196,6 +209,76 @@ const PatientsTable = () => {
 
   // Define actions
   const actions: TableAction<ReturnType<typeof convertUserToPatient>>[] = [
+    {
+      label: "Print Medical Records",
+      icon: <Printer size={16} />,
+      onClick: async (record) => {
+        if (isGeneratingPDF) return; // Prevent multiple clicks
+
+        try {
+          setIsGeneratingPDF(true);
+
+          // Find the original user data to get the patient ID
+          const originalUser = usersData?.data?.find(
+            (user) => user.id === record.id
+          );
+
+          if (!originalUser) {
+            showError("Patient not found");
+            setIsGeneratingPDF(false);
+            return;
+          }
+
+          // Filter medical records for this patient
+          const patientRecords =
+            medicalRecordsData?.data
+              ?.filter((medicalRecord) => {
+                // Only include published records with valid patient
+                return (
+                  medicalRecord.isPublished &&
+                  medicalRecord.patient !== null &&
+                  medicalRecord.patient !== undefined &&
+                  medicalRecord.patient._id === originalUser.id
+                );
+              })
+              ?.map((medicalRecord) => {
+                return {
+                  patientName: record.fullName,
+                  diagnosis: medicalRecord.diagnosis,
+                  treatmentPlan: medicalRecord.treatmentPlan,
+                  dateOfRecord: medicalRecord.dateOfRecord,
+                };
+              }) || [];
+
+          // Sort by date (latest first)
+          patientRecords.sort((a, b) => {
+            const dateA = new Date(a.dateOfRecord).getTime();
+            const dateB = new Date(b.dateOfRecord).getTime();
+            return dateB - dateA; // Descending order (latest first)
+          });
+
+          if (patientRecords.length === 0) {
+            showError("No medical records found for this patient");
+            setIsGeneratingPDF(false);
+            return;
+          }
+
+          // Generate PDF with all records
+          await generateAllPatientRecordsPDF(record.fullName, patientRecords);
+          showSuccess(
+            `PDF generated successfully with ${patientRecords.length} record${
+              patientRecords.length > 1 ? "s" : ""
+            }`
+          );
+        } catch (error) {
+          console.error("Error generating PDF:", error);
+          showError("Failed to generate PDF. Please try again.");
+        } finally {
+          setIsGeneratingPDF(false);
+        }
+      },
+      disabled: () => isGeneratingPDF,
+    },
     {
       label: "Edit Patient",
       icon: <Edit size={16} />,

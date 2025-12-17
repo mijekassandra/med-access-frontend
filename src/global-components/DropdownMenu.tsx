@@ -4,6 +4,7 @@ export interface DropdownMenuItem {
   label: string;
   onClick: () => void;
   icon?: React.ReactNode;
+  disabled?: boolean;
 }
 
 interface DropdownMenuProps {
@@ -53,13 +54,18 @@ const DropdownMenu = forwardRef<HTMLDivElement, DropdownMenuProps>(
       {items.map((item, idx) => (
         <button
           key={idx}
-          onClick={item.onClick}
-          className="flex gap-[4px] px-[12px] py-[8px] w-full text-left text-szBlack800 hover:bg-szGrey150"
+          onClick={item.disabled ? undefined : item.onClick}
+          disabled={item.disabled}
+          className={`flex gap-[4px] px-[12px] py-[8px] w-full text-left ${
+            item.disabled
+              ? "text-szGrey400 cursor-not-allowed opacity-60"
+              : "text-szBlack800 hover:bg-szGrey150"
+          }`}
         >
           {item.icon && (
             <span>
               {React.cloneElement(item.icon as React.ReactElement, {
-                className: `icon-sm`,
+                className: `icon-sm ${item.disabled ? "opacity-50" : ""}`,
               })}
             </span>
           )}
