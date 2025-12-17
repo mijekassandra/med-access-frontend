@@ -31,6 +31,15 @@ interface Patient {
   gender: "male" | "female" | "other" | "";
   dateOfBirth: string;
   dateRegistered: string;
+  // Patient-specific fields
+  contactPerson?: string;
+  age?: number;
+  sex?: string;
+  bloodType?: string;
+  religion?: string;
+  civilStatus?: string;
+  height?: number;
+  occupation?: string;
 }
 
 interface AddPatientModalProps {
@@ -58,6 +67,15 @@ const AddPatientModal = ({
     password: "",
     gender: "" as "male" | "female" | "other" | "",
     dateOfBirth: "",
+    // Patient-specific fields
+    contactPerson: "",
+    age: "",
+    sex: "",
+    bloodType: "",
+    religion: "",
+    civilStatus: "",
+    height: "",
+    occupation: "",
   });
   const [formErrors, setFormErrors] = useState({
     username: "",
@@ -69,6 +87,15 @@ const AddPatientModal = ({
     password: "",
     gender: "",
     dateOfBirth: "",
+    // Patient-specific fields
+    contactPerson: "",
+    age: "",
+    sex: "",
+    bloodType: "",
+    religion: "",
+    civilStatus: "",
+    height: "",
+    occupation: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [showSnackbar, setShowSnackbar] = useState(false);
@@ -81,9 +108,42 @@ const AddPatientModal = ({
   // API hooks
   const [registerUser] = useRegisterUserMutation();
 
+  // Calculate age from date of birth
+  const calculateAge = (dateOfBirth: string): string => {
+    if (!dateOfBirth) return "";
+    const birthDate = new Date(dateOfBirth);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    ) {
+      age--;
+    }
+    return age >= 0 ? age.toString() : "";
+  };
+
+  // Auto-calculate age when date of birth changes
+  useEffect(() => {
+    if (formData.dateOfBirth) {
+      const calculatedAge = calculateAge(formData.dateOfBirth);
+      setFormData((prev) => ({
+        ...prev,
+        age: calculatedAge,
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        age: "",
+      }));
+    }
+  }, [formData.dateOfBirth]);
+
   // Initialize form data when editing or viewing
   useEffect(() => {
     if (patient && (mode === "edit" || mode === "view")) {
+      const dob = convertIsoToDateInput(patient.dateOfBirth);
       setFormData({
         username: patient.username,
         firstname: patient.firstname,
@@ -93,7 +153,15 @@ const AddPatientModal = ({
         contactNumber: patient.contactNumber,
         password: "",
         gender: patient.gender || "",
-        dateOfBirth: convertIsoToDateInput(patient.dateOfBirth),
+        dateOfBirth: dob,
+        contactPerson: patient.contactPerson || "",
+        age: dob ? calculateAge(dob) : "", // Recalculate age from date of birth
+        sex: patient.sex || "",
+        bloodType: patient.bloodType || "",
+        religion: patient.religion || "",
+        civilStatus: patient.civilStatus || "",
+        height: patient.height?.toString() || "",
+        occupation: patient.occupation || "",
       });
     } else if (mode === "add") {
       setFormData({
@@ -106,6 +174,14 @@ const AddPatientModal = ({
         password: "",
         gender: "",
         dateOfBirth: "",
+        contactPerson: "",
+        age: "",
+        sex: "",
+        bloodType: "",
+        religion: "",
+        civilStatus: "",
+        height: "",
+        occupation: "",
       });
     }
 
@@ -120,6 +196,14 @@ const AddPatientModal = ({
       password: "",
       gender: "",
       dateOfBirth: "",
+      contactPerson: "",
+      age: "",
+      sex: "",
+      bloodType: "",
+      religion: "",
+      civilStatus: "",
+      height: "",
+      occupation: "",
     });
 
     // Reset password visibility
@@ -153,6 +237,14 @@ const AddPatientModal = ({
       password: "",
       gender: "",
       dateOfBirth: "",
+      contactPerson: "",
+      age: "",
+      sex: "",
+      bloodType: "",
+      religion: "",
+      civilStatus: "",
+      height: "",
+      occupation: "",
     };
 
     // Check if username is empty
@@ -223,6 +315,69 @@ const AddPatientModal = ({
       }
     }
 
+    // Age is auto-calculated from date of birth, so no manual validation needed
+    // The date of birth validation already ensures a valid age
+
+    // Validate contact person (required)
+    if (!formData.contactPerson.trim()) {
+      errors.contactPerson = "This field is required";
+    } else if (formData.contactPerson.trim().length < 2) {
+      errors.contactPerson = "Contact person must be at least 2 characters";
+    } else if (formData.contactPerson.trim().length > 100) {
+      errors.contactPerson = "Contact person cannot exceed 100 characters";
+    }
+
+    // Validate blood type (required)
+    if (!formData.bloodType.trim()) {
+      errors.bloodType = "This field is required";
+    } else if (formData.bloodType.trim().length > 10) {
+      errors.bloodType = "Blood type cannot exceed 10 characters";
+    }
+
+    // Validate religion (required)
+    if (!formData.religion.trim()) {
+      errors.religion = "This field is required";
+    } else if (formData.religion.trim().length < 2) {
+      errors.religion = "Religion must be at least 2 characters";
+    } else if (formData.religion.trim().length > 100) {
+      errors.religion = "Religion cannot exceed 100 characters";
+    }
+
+    // Validate civil status (required)
+    if (!formData.civilStatus || formData.civilStatus.trim() === "") {
+      errors.civilStatus = "This field is required";
+    } else {
+      const validCivilStatuses = [
+        "single",
+        "married",
+        "widowed",
+        "legally separated",
+        "annulled",
+      ];
+      if (!validCivilStatuses.includes(formData.civilStatus.toLowerCase())) {
+        errors.civilStatus = "Please select a valid civil status";
+      }
+    }
+
+    // Validate height (required)
+    if (!formData.height || formData.height.trim() === "") {
+      errors.height = "This field is required";
+    } else {
+      const heightNum = parseFloat(formData.height);
+      if (isNaN(heightNum) || heightNum < 0) {
+        errors.height = "Height must be a positive number";
+      }
+    }
+
+    // Validate occupation (required)
+    if (!formData.occupation.trim()) {
+      errors.occupation = "This field is required";
+    } else if (formData.occupation.trim().length < 2) {
+      errors.occupation = "Occupation must be at least 2 characters";
+    } else if (formData.occupation.trim().length > 100) {
+      errors.occupation = "Occupation cannot exceed 100 characters";
+    }
+
     setFormErrors(errors);
 
     // Return true if no errors
@@ -253,6 +408,15 @@ const AddPatientModal = ({
           gender: formData.gender as "male" | "female" | "other",
           dateOfBirth: new Date(formData.dateOfBirth).toISOString(),
           role: "user" as "user" | "admin" | "doctor",
+          // Patient-specific fields
+          contactPerson: formData.contactPerson.trim() || undefined,
+          age: formData.age ? parseInt(formData.age, 10) : undefined,
+          sex: "", // Send empty string, using gender instead
+          bloodType: formData.bloodType.trim() || undefined,
+          religion: formData.religion.trim() || undefined,
+          civilStatus: formData.civilStatus.trim() || undefined,
+          height: formData.height ? parseFloat(formData.height) : undefined,
+          occupation: formData.occupation.trim() || undefined,
         };
 
         await registerUser(registrationData).unwrap();
@@ -277,6 +441,8 @@ const AddPatientModal = ({
       onSave({
         id: patient?.id || "",
         ...formData,
+        age: formData.age ? parseInt(formData.age, 10) : undefined,
+        height: formData.height ? parseFloat(formData.height) : undefined,
         dateRegistered: patient?.dateRegistered || new Date().toISOString(),
       });
       onClose();
@@ -294,6 +460,14 @@ const AddPatientModal = ({
       password: "",
       gender: "",
       dateOfBirth: "",
+      contactPerson: "",
+      age: "",
+      sex: "",
+      bloodType: "",
+      religion: "",
+      civilStatus: "",
+      height: "",
+      occupation: "",
     });
     setFormErrors({
       username: "",
@@ -305,6 +479,14 @@ const AddPatientModal = ({
       password: "",
       gender: "",
       dateOfBirth: "",
+      contactPerson: "",
+      age: "",
+      sex: "",
+      bloodType: "",
+      religion: "",
+      civilStatus: "",
+      height: "",
+      occupation: "",
     });
     onClose();
   };
@@ -367,7 +549,7 @@ const AddPatientModal = ({
         footerOptions={mode === "view" ? "left" : "stacked-left"}
         footerButtons={getFooterButtons()}
         content={
-          <div className="space-y-4 mt-2">
+          <div className="space-y-4 mt-2 mb-2">
             {/* 2-column grid for email and contact number */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">
               <Inputs
@@ -467,6 +649,110 @@ const AddPatientModal = ({
                 }
                 disabled={mode === "view"}
                 error={!!formErrors.dateOfBirth}
+              />
+              <Inputs
+                label="AGE"
+                placeholder="Auto-calculated"
+                type="number"
+                value={formData.age}
+                onChange={(e) => handleInputChange("age", e.target.value)}
+                disabled={true}
+                error={!!formErrors.age}
+              />
+            </div>
+            {/* Patient Information Section */}
+            <div className="flex items-center gap-2 pt-2 pb-1">
+              <h6 className="text-h6 text-szBlack700 w-[300px]">
+                ADDITIONAL PATIENT INFORMATION
+              </h6>
+              <Divider className="w-full" />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">
+              <Inputs
+                label="BLOOD TYPE"
+                placeholder="Enter Blood Type (e.g., O+, A-, B+)"
+                value={formData.bloodType}
+                onChange={(e) => handleInputChange("bloodType", e.target.value)}
+                disabled={mode === "view"}
+                error={!!formErrors.bloodType}
+              />
+              <Inputs
+                label="HEIGHT (cm)"
+                placeholder="Enter Height in cm"
+                type="number"
+                value={formData.height}
+                onChange={(e) => handleInputChange("height", e.target.value)}
+                disabled={mode === "view"}
+                error={!!formErrors.height}
+              />
+              <Inputs
+                label="RELIGION"
+                placeholder="Enter Religion"
+                value={formData.religion}
+                onChange={(e) => handleInputChange("religion", e.target.value)}
+                disabled={mode === "view"}
+                error={!!formErrors.religion}
+              />
+              <Dropdown
+                label="CIVIL STATUS"
+                size="small"
+                placeholder="Select Civil Status"
+                options={[
+                  { label: "Single", value: "single" },
+                  { label: "Married", value: "married" },
+                  { label: "Widowed", value: "widowed" },
+                  { label: "Legally Separated", value: "legally separated" },
+                  { label: "Annulled", value: "annulled" },
+                ]}
+                value={
+                  formData.civilStatus
+                    ? {
+                        label:
+                          formData.civilStatus === "single"
+                            ? "Single"
+                            : formData.civilStatus === "married"
+                            ? "Married"
+                            : formData.civilStatus === "widowed"
+                            ? "Widowed"
+                            : formData.civilStatus === "legally separated"
+                            ? "Legally Separated"
+                            : formData.civilStatus === "annulled"
+                            ? "Annulled"
+                            : formData.civilStatus,
+                        value: formData.civilStatus,
+                      }
+                    : undefined
+                }
+                onSelectionChange={(selected) => {
+                  const civilStatusValue = Array.isArray(selected)
+                    ? selected[0]?.value
+                    : selected?.value;
+                  handleInputChange("civilStatus", civilStatusValue || "");
+                }}
+                disabled={mode === "view"}
+                error={!!formErrors.civilStatus}
+                usePortal={true}
+              />
+
+              <Inputs
+                label="OCCUPATION"
+                placeholder="Enter Occupation"
+                value={formData.occupation}
+                onChange={(e) =>
+                  handleInputChange("occupation", e.target.value)
+                }
+                disabled={mode === "view"}
+                error={!!formErrors.occupation}
+              />
+              <Inputs
+                label="CONTACT PERSON"
+                placeholder="Enter Contact Person"
+                value={formData.contactPerson}
+                onChange={(e) =>
+                  handleInputChange("contactPerson", e.target.value)
+                }
+                disabled={mode === "view"}
+                error={!!formErrors.contactPerson}
               />
             </div>
             {/* Additional fields for registration */}

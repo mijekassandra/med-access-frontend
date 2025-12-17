@@ -19,7 +19,15 @@ export interface User {
   isActive: boolean;
   lastLogin?: string;
   createdAt: string;
-  
+  // Patient-specific fields
+  contactPerson?: string;
+  age?: number;
+  sex?: string;
+  bloodType?: string;
+  religion?: string;
+  civilStatus?: string;
+  height?: number;
+  occupation?: string;
 }
 
 export interface UserRegistration {
@@ -35,6 +43,15 @@ export interface UserRegistration {
   gender: "male" | "female" | "other";
   dateOfBirth: string;
   role?: "user" | "admin" | "doctor";
+  // Patient-specific fields (optional)
+  contactPerson?: string;
+  age?: number;
+  sex?: string;
+  bloodType?: string;
+  religion?: string;
+  civilStatus?: string;
+  height?: number;
+  occupation?: string;
 }
 
 export interface UserUpdate {
@@ -49,6 +66,15 @@ export interface UserUpdate {
   profilePicture?: string;
   role?: "user" | "admin" | "doctor";
   isActive?: boolean;
+  // Patient-specific fields (optional)
+  contactPerson?: string;
+  age?: number;
+  sex?: string;
+  bloodType?: string;
+  religion?: string;
+  civilStatus?: string;
+  height?: number;
+  occupation?: string;
 }
 
 export interface UserLogin {

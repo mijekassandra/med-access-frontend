@@ -54,6 +54,15 @@ const convertUserToPatient = (user: User) => ({
   email: user.email || "",
   contactNumber: user.phone,
   dateRegistered: new Date(user.createdAt).toLocaleString(),
+  // Patient-specific fields
+  contactPerson: user.contactPerson,
+  age: user.age,
+  sex: user.sex,
+  bloodType: user.bloodType,
+  religion: user.religion,
+  civilStatus: user.civilStatus,
+  height: user.height,
+  occupation: user.occupation,
 });
 
 const PatientsTable = () => {
@@ -91,13 +100,24 @@ const PatientsTable = () => {
       ?.filter((user) => user.role === "user")
       ?.map(convertUserToPatient) || [];
 
-  // Export functionality
+  // Export functionality - include all patient fields
   const exportColumns: ExportColumn[] = [
     { key: "fullName", header: "Full Name" },
+    { key: "firstname", header: "First Name" },
+    { key: "lastname", header: "Last Name" },
     { key: "username", header: "Username" },
-    { key: "address", header: "Address" },
     { key: "email", header: "Email" },
+    { key: "address", header: "Address" },
     { key: "contactNumber", header: "Contact No." },
+    { key: "gender", header: "Gender" },
+    { key: "dateOfBirth", header: "Date of Birth" },
+    { key: "age", header: "Age" },
+    { key: "contactPerson", header: "Contact Person" },
+    { key: "bloodType", header: "Blood Type" },
+    { key: "religion", header: "Religion" },
+    { key: "civilStatus", header: "Civil Status" },
+    { key: "height", header: "Height (cm)" },
+    { key: "occupation", header: "Occupation" },
     { key: "dateRegistered", header: "Date Registered" },
   ];
 
@@ -326,6 +346,25 @@ const PatientsTable = () => {
           address: updatedPatient.address,
           email: updatedPatient.email,
           phone: updatedPatient.contactNumber,
+          // Patient-specific fields
+          contactPerson: updatedPatient.contactPerson?.trim() || undefined,
+          age:
+            updatedPatient.age !== undefined && updatedPatient.age !== ""
+              ? typeof updatedPatient.age === "number"
+                ? updatedPatient.age
+                : parseInt(updatedPatient.age, 10)
+              : undefined,
+          sex: "", // Send empty string, using gender instead
+          bloodType: updatedPatient.bloodType?.trim() || undefined,
+          religion: updatedPatient.religion?.trim() || undefined,
+          civilStatus: updatedPatient.civilStatus?.trim() || undefined,
+          height:
+            updatedPatient.height !== undefined && updatedPatient.height !== ""
+              ? typeof updatedPatient.height === "number"
+                ? updatedPatient.height
+                : parseFloat(updatedPatient.height)
+              : undefined,
+          occupation: updatedPatient.occupation?.trim() || undefined,
         },
       }).unwrap();
 
@@ -368,8 +407,11 @@ const PatientsTable = () => {
 
   const filteredPatients = patients.filter((patient) => {
     // Search filter
-    const matchesSearch = Object.values(patient).some((value) =>
-      value.toString().toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = Object.values(patient).some(
+      (value) =>
+        value !== undefined &&
+        value !== null &&
+        value.toString().toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return matchesSearch;
@@ -493,6 +535,15 @@ const PatientsTable = () => {
                 dateRegistered: new Date(
                   selectedPatient.createdAt
                 ).toLocaleString(),
+                // Patient-specific fields
+                contactPerson: selectedPatient.contactPerson,
+                age: selectedPatient.age,
+                sex: selectedPatient.sex,
+                bloodType: selectedPatient.bloodType,
+                religion: selectedPatient.religion,
+                civilStatus: selectedPatient.civilStatus,
+                height: selectedPatient.height,
+                occupation: selectedPatient.occupation,
               }
             : undefined
         }
@@ -519,6 +570,15 @@ const PatientsTable = () => {
                 dateRegistered: new Date(
                   selectedPatient.createdAt
                 ).toLocaleString(),
+                // Patient-specific fields
+                contactPerson: selectedPatient.contactPerson,
+                age: selectedPatient.age,
+                sex: selectedPatient.sex,
+                bloodType: selectedPatient.bloodType,
+                religion: selectedPatient.religion,
+                civilStatus: selectedPatient.civilStatus,
+                height: selectedPatient.height,
+                occupation: selectedPatient.occupation,
               }
             : undefined
         }
