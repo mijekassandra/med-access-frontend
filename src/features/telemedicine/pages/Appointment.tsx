@@ -39,14 +39,14 @@ const assignQueueNumbers = (appointments: ApiAppointment[]) => {
     appointmentsByDate[date].push(apt);
   });
 
-  // For each date, assign sequential queue numbers to accepted/serving/completed appointments
+  // For each date, assign sequential queue numbers to accepted/serving appointments only
+  // Completed appointments are excluded, so remaining appointments are renumbered starting from 1
   Object.keys(appointmentsByDate).forEach((date) => {
     const dateAppointments = appointmentsByDate[date]
       .filter(
         (apt) =>
           apt.status === "accepted" ||
-          apt.status === "serving" ||
-          apt.status === "completed"
+          apt.status === "serving"
       )
       .sort(
         (a, b) =>
