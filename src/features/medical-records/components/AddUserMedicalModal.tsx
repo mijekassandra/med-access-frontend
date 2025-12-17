@@ -171,7 +171,12 @@ const AddUserMedicalModal = ({
     };
 
     // Check if patient is selected
-    if (!formData.fullName || !formData.fullName.trim()) {
+    // When prefilledPatientId is provided, formData.fullName contains the patient ID
+    // We need to check if it's a valid non-empty string
+    if (
+      !formData.fullName ||
+      (typeof formData.fullName === "string" && !formData.fullName.trim())
+    ) {
       errors.fullName = "This field is required";
     }
 
@@ -186,12 +191,30 @@ const AddUserMedicalModal = ({
     if (!formData.dateOfRecord) {
       errors.dateOfRecord = "This field is required";
     } else {
-      const recordDate = new Date(formData.dateOfRecord);
-      const today = new Date();
-      today.setHours(23, 59, 59, 999); // Set to end of today
+      // Parse date in local timezone to avoid UTC issues
+      // When date is in YYYY-MM-DD format, create date at local midnight
+      const dateParts = formData.dateOfRecord.split("-");
+      if (dateParts.length === 3) {
+        const year = parseInt(dateParts[0], 10);
+        const month = parseInt(dateParts[1], 10) - 1; // Month is 0-indexed
+        const day = parseInt(dateParts[2], 10);
+        const recordDate = new Date(year, month, day);
+        recordDate.setHours(23, 59, 59, 999); // Set to end of the day
+        const today = new Date();
+        today.setHours(23, 59, 59, 999); // Set to end of today
 
-      if (recordDate > today) {
-        errors.dateOfRecord = "Date of record cannot be in the future";
+        if (recordDate > today) {
+          errors.dateOfRecord = "Date of record cannot be in the future";
+        }
+      } else {
+        // Fallback to original validation if date format is unexpected
+        const recordDate = new Date(formData.dateOfRecord);
+        const today = new Date();
+        today.setHours(23, 59, 59, 999); // Set to end of today
+
+        if (isNaN(recordDate.getTime()) || recordDate > today) {
+          errors.dateOfRecord = "Date of record cannot be in the future";
+        }
       }
     }
 
