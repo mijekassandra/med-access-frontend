@@ -327,10 +327,8 @@ const AddPatientModal = ({
       errors.contactPerson = "Contact person cannot exceed 100 characters";
     }
 
-    // Validate blood type (required)
-    if (!formData.bloodType.trim()) {
-      errors.bloodType = "This field is required";
-    } else if (formData.bloodType.trim().length > 10) {
+    // Validate blood type (optional)
+    if (formData.bloodType.trim() && formData.bloodType.trim().length > 10) {
       errors.bloodType = "Blood type cannot exceed 10 characters";
     }
 
