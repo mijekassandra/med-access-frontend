@@ -6,6 +6,22 @@ interface MedicalRecordForPDF {
   diagnosis: string;
   treatmentPlan: string;
   dateOfRecord: string;
+  // Optional patient details
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  fullName?: string;
+  address?: string;
+  phone?: string;
+  gender?: string;
+  dateOfBirth?: string;
+  age?: number;
+  contactPerson?: string;
+  bloodType?: string;
+  religion?: string;
+  civilStatus?: string;
+  height?: number;
+  occupation?: string;
 }
 
 /**
@@ -113,6 +129,199 @@ export const generateMedicalRecordPDF = async (
     return sectionHeight;
   };
 
+  // Helper function to add patient details section in two-column format
+  const addPatientDetailsSection = (
+    record: MedicalRecordForPDF,
+    yPos: number
+  ): number => {
+    const hasPatientDetails =
+      record.email ||
+      record.address ||
+      record.phone ||
+      record.gender ||
+      record.dateOfBirth ||
+      record.age !== undefined ||
+      record.bloodType ||
+      record.height !== undefined ||
+      record.religion ||
+      record.civilStatus ||
+      record.occupation ||
+      record.contactPerson;
+
+    if (!hasPatientDetails) {
+      return 0; // No patient details to display
+    }
+
+    // Draw border around patient details section
+    doc.setDrawColor(borderGray[0], borderGray[1], borderGray[2]);
+    doc.setLineWidth(0.5);
+    const sectionStartY = yPos - 2;
+    const leftColX = 15;
+    const rightColX = 110;
+    const colWidth = 85;
+    const lineHeight = 6;
+
+    // Helper to format date
+    const formatDate = (dateString?: string): string => {
+      if (!dateString) return "";
+      try {
+        return new Date(dateString).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+      } catch {
+        return dateString;
+      }
+    };
+
+    // Left column - Personal Information
+    let leftY = yPos + 5; // Add space above
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(80, 80, 80);
+    doc.text("Personal Information", leftColX, leftY);
+    leftY += 5;
+
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+
+    if (record.fullName) {
+      doc.setFont("helvetica", "bold");
+      doc.text("Full Name:", leftColX, leftY);
+      doc.setFont("helvetica", "normal");
+      doc.text(record.fullName, leftColX + 25, leftY);
+      leftY += lineHeight;
+    }
+
+    if (record.email) {
+      doc.setFont("helvetica", "bold");
+      doc.text("Email:", leftColX, leftY);
+      doc.setFont("helvetica", "normal");
+      doc.text(record.email, leftColX + 25, leftY);
+      leftY += lineHeight;
+    }
+
+    if (record.phone) {
+      doc.setFont("helvetica", "bold");
+      doc.text("Phone:", leftColX, leftY);
+      doc.setFont("helvetica", "normal");
+      doc.text(record.phone, leftColX + 25, leftY);
+      leftY += lineHeight;
+    }
+
+    if (record.address) {
+      doc.setFont("helvetica", "bold");
+      doc.text("Address:", leftColX, leftY);
+      doc.setFont("helvetica", "normal");
+      const addressLines = doc.splitTextToSize(record.address, colWidth - 25);
+      doc.text(addressLines, leftColX + 25, leftY);
+      leftY += addressLines.length * lineHeight;
+    }
+
+    // Right column - Medical/Demographic Information
+    let rightY = yPos + 5; // Add space above
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(80, 80, 80);
+    doc.text("Medical/Demographic Information", rightColX, rightY);
+    rightY += 5;
+
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+
+    if (record.gender) {
+      doc.setFont("helvetica", "bold");
+      doc.text("Gender:", rightColX, rightY);
+      doc.setFont("helvetica", "normal");
+      doc.text(
+        record.gender.charAt(0).toUpperCase() + record.gender.slice(1),
+        rightColX + 25,
+        rightY
+      );
+      rightY += lineHeight;
+    }
+
+    if (record.age !== undefined) {
+      doc.setFont("helvetica", "bold");
+      doc.text("Age:", rightColX, rightY);
+      doc.setFont("helvetica", "normal");
+      doc.text(`${record.age} years old`, rightColX + 25, rightY);
+      rightY += lineHeight;
+    }
+
+    if (record.dateOfBirth) {
+      doc.setFont("helvetica", "bold");
+      doc.text("Date of Birth:", rightColX, rightY);
+      doc.setFont("helvetica", "normal");
+      doc.text(formatDate(record.dateOfBirth), rightColX + 25, rightY);
+      rightY += lineHeight;
+    }
+
+    if (record.bloodType) {
+      doc.setFont("helvetica", "bold");
+      doc.text("Blood Type:", rightColX, rightY);
+      doc.setFont("helvetica", "normal");
+      doc.text(record.bloodType, rightColX + 25, rightY);
+      rightY += lineHeight;
+    }
+
+    if (record.height !== undefined) {
+      doc.setFont("helvetica", "bold");
+      doc.text("Height:", rightColX, rightY);
+      doc.setFont("helvetica", "normal");
+      doc.text(`${record.height} cm`, rightColX + 25, rightY);
+      rightY += lineHeight;
+    }
+
+    if (record.religion) {
+      doc.setFont("helvetica", "bold");
+      doc.text("Religion:", rightColX, rightY);
+      doc.setFont("helvetica", "normal");
+      doc.text(record.religion, rightColX + 25, rightY);
+      rightY += lineHeight;
+    }
+
+    if (record.civilStatus) {
+      doc.setFont("helvetica", "bold");
+      doc.text("Civil Status:", rightColX, rightY);
+      doc.setFont("helvetica", "normal");
+      doc.text(record.civilStatus, rightColX + 25, rightY);
+      rightY += lineHeight;
+    }
+
+    if (record.occupation) {
+      doc.setFont("helvetica", "bold");
+      doc.text("Occupation:", rightColX, rightY);
+      doc.setFont("helvetica", "normal");
+      doc.text(record.occupation, rightColX + 25, rightY);
+      rightY += lineHeight;
+    }
+
+    if (record.contactPerson) {
+      doc.setFont("helvetica", "bold");
+      doc.text("Contact Person:", rightColX, rightY);
+      doc.setFont("helvetica", "normal");
+      doc.text(record.contactPerson, rightColX + 25, rightY);
+      rightY += lineHeight;
+    }
+
+    // Calculate section height (use the taller column)
+    const maxY = Math.max(leftY, rightY);
+    const sectionHeight = maxY - sectionStartY + 8;
+
+    // Draw border around the section
+    doc.rect(leftColX - 5, sectionStartY - 2, 190, sectionHeight, "S");
+
+    return sectionHeight;
+  };
+
+  // Add patient details section if available
+  const patientDetailsHeight = addPatientDetailsSection(record, yPosition);
+  if (patientDetailsHeight > 0) {
+    yPosition += patientDetailsHeight + 8;
+  }
+
   // Patient Name section
   const patientNameHeight = addSection(
     "Patient Name",
@@ -185,7 +394,8 @@ export const generateMedicalRecordPDF = async (
  */
 export const generateAllPatientRecordsPDF = async (
   patientName: string,
-  records: MedicalRecordForPDF[]
+  records: MedicalRecordForPDF[],
+  patientDetails?: Partial<MedicalRecordForPDF>
 ): Promise<void> => {
   const doc = new jsPDF();
 
@@ -226,18 +436,204 @@ export const generateAllPatientRecordsPDF = async (
   // Start content section
   let yPosition = headerHeight + 20;
 
-  // Add Patient Name section with better styling
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(100, 100, 100); // Darker gray for label
-  doc.text("Name of the Patient", 10, yPosition);
-  yPosition += 6;
+  // Helper function to add patient details section (reuse from above scope)
+  const addPatientDetailsSection = (
+    record: MedicalRecordForPDF,
+    yPos: number
+  ): number => {
+    const hasPatientDetails =
+      record.email ||
+      record.address ||
+      record.phone ||
+      record.gender ||
+      record.dateOfBirth ||
+      record.age !== undefined ||
+      record.bloodType ||
+      record.height !== undefined ||
+      record.religion ||
+      record.civilStatus ||
+      record.occupation ||
+      record.contactPerson;
 
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(textColor[0], textColor[1], textColor[2]); // Reset to dark text
-  doc.text(patientName, 10, yPosition);
-  yPosition += 8;
+    if (!hasPatientDetails) {
+      return 0;
+    }
+
+    const sectionStartY = yPos;
+    const leftColX = 15;
+    const rightColX = 110;
+    const colWidth = 85;
+    const lineHeight = 6;
+
+    const formatDate = (dateString?: string): string => {
+      if (!dateString) return "";
+      try {
+        return new Date(dateString).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+      } catch {
+        return dateString;
+      }
+    };
+
+    let leftY = yPos + 5; // Add space above
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(80, 80, 80);
+    doc.text("Personal Information", leftColX, leftY);
+    leftY += 5;
+
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+
+    if (record.fullName) {
+      doc.setFont("helvetica", "bold");
+      doc.text("Full Name:", leftColX, leftY);
+      doc.setFont("helvetica", "normal");
+      doc.text(record.fullName, leftColX + 25, leftY);
+      leftY += lineHeight;
+    }
+
+    if (record.email) {
+      doc.setFont("helvetica", "bold");
+      doc.text("Email:", leftColX, leftY);
+      doc.setFont("helvetica", "normal");
+      doc.text(record.email, leftColX + 25, leftY);
+      leftY += lineHeight;
+    }
+
+    if (record.phone) {
+      doc.setFont("helvetica", "bold");
+      doc.text("Phone:", leftColX, leftY);
+      doc.setFont("helvetica", "normal");
+      doc.text(record.phone, leftColX + 25, leftY);
+      leftY += lineHeight;
+    }
+
+    if (record.address) {
+      doc.setFont("helvetica", "bold");
+      doc.text("Address:", leftColX, leftY);
+      doc.setFont("helvetica", "normal");
+      const addressLines = doc.splitTextToSize(record.address, colWidth - 25);
+      doc.text(addressLines, leftColX + 25, leftY);
+      leftY += addressLines.length * lineHeight;
+    }
+
+    let rightY = yPos + 5; // Add space above
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(80, 80, 80);
+    doc.text("Medical/Demographic Information", rightColX, rightY);
+    rightY += 5;
+
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+
+    if (record.gender) {
+      doc.setFont("helvetica", "bold");
+      doc.text("Gender:", rightColX, rightY);
+      doc.setFont("helvetica", "normal");
+      doc.text(
+        record.gender.charAt(0).toUpperCase() + record.gender.slice(1),
+        rightColX + 25,
+        rightY
+      );
+      rightY += lineHeight;
+    }
+
+    if (record.age !== undefined) {
+      doc.setFont("helvetica", "bold");
+      doc.text("Age:", rightColX, rightY);
+      doc.setFont("helvetica", "normal");
+      doc.text(`${record.age} years old`, rightColX + 25, rightY);
+      rightY += lineHeight;
+    }
+
+    if (record.dateOfBirth) {
+      doc.setFont("helvetica", "bold");
+      doc.text("Date of Birth:", rightColX, rightY);
+      doc.setFont("helvetica", "normal");
+      doc.text(formatDate(record.dateOfBirth), rightColX + 25, rightY);
+      rightY += lineHeight;
+    }
+
+    if (record.bloodType) {
+      doc.setFont("helvetica", "bold");
+      doc.text("Blood Type:", rightColX, rightY);
+      doc.setFont("helvetica", "normal");
+      doc.text(record.bloodType, rightColX + 25, rightY);
+      rightY += lineHeight;
+    }
+
+    if (record.height !== undefined) {
+      doc.setFont("helvetica", "bold");
+      doc.text("Height:", rightColX, rightY);
+      doc.setFont("helvetica", "normal");
+      doc.text(`${record.height} cm`, rightColX + 25, rightY);
+      rightY += lineHeight;
+    }
+
+    if (record.religion) {
+      doc.setFont("helvetica", "bold");
+      doc.text("Religion:", rightColX, rightY);
+      doc.setFont("helvetica", "normal");
+      doc.text(record.religion, rightColX + 25, rightY);
+      rightY += lineHeight;
+    }
+
+    if (record.civilStatus) {
+      doc.setFont("helvetica", "bold");
+      doc.text("Civil Status:", rightColX, rightY);
+      doc.setFont("helvetica", "normal");
+      doc.text(record.civilStatus, rightColX + 25, rightY);
+      rightY += lineHeight;
+    }
+
+    if (record.occupation) {
+      doc.setFont("helvetica", "bold");
+      doc.text("Occupation:", rightColX, rightY);
+      doc.setFont("helvetica", "normal");
+      doc.text(record.occupation, rightColX + 25, rightY);
+      rightY += lineHeight;
+    }
+
+    if (record.contactPerson) {
+      doc.setFont("helvetica", "bold");
+      doc.text("Contact Person:", rightColX, rightY);
+      doc.setFont("helvetica", "normal");
+      doc.text(record.contactPerson, rightColX + 25, rightY);
+      rightY += lineHeight;
+    }
+
+    const maxY = Math.max(leftY, rightY);
+    const sectionHeight = maxY - sectionStartY + 8;
+
+    doc.setDrawColor(borderGray[0], borderGray[1], borderGray[2]);
+    doc.setLineWidth(0.5);
+    doc.rect(leftColX - 5, sectionStartY - 2, 190, sectionHeight, "S");
+
+    return sectionHeight;
+  };
+
+  // Add patient details section if available
+  if (patientDetails) {
+    const patientDetailsRecord: MedicalRecordForPDF = {
+      patientName,
+      diagnosis: "",
+      treatmentPlan: "",
+      dateOfRecord: "",
+      ...patientDetails,
+    };
+    const patientDetailsHeight = addPatientDetailsSection(
+      patientDetailsRecord,
+      yPosition
+    );
+    if (patientDetailsHeight > 0) {
+      yPosition += patientDetailsHeight + 8;
+    }
+  }
 
   // Add summary info (total records)
   doc.setFontSize(9);

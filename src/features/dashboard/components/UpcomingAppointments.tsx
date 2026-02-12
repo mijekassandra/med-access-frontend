@@ -18,6 +18,7 @@ interface Appointment {
   status: "accepted" | "pending" | "cancelled";
   date: string;
   time: string;
+  type: "telemedicine" | "in-person";
 }
 
 const UpcomingAppointments = () => {
@@ -63,10 +64,33 @@ const UpcomingAppointments = () => {
           status: apt.status as "accepted" | "pending" | "cancelled",
           date: dateString,
           time: timeString,
+          type: apt.type,
         };
       });
 
     return todayAppointments;
+  }, [appointmentsResponse, today]);
+
+  // Calculate counts for In-Person and Telemedicine appointments
+  const appointmentCounts = useMemo(() => {
+    if (!appointmentsResponse?.data) {
+      return { inPerson: 0, telemedicine: 0 };
+    }
+
+    const todayAppointments = appointmentsResponse.data.filter((apt) => {
+      if (!apt.patient) return false;
+      const appointmentDate = new Date(apt.date).toISOString().split("T")[0];
+      return apt.status === "accepted" && appointmentDate === today;
+    });
+
+    const inPerson = todayAppointments.filter(
+      (apt) => apt.type === "in-person"
+    ).length;
+    const telemedicine = todayAppointments.filter(
+      (apt) => apt.type === "telemedicine"
+    ).length;
+
+    return { inPerson, telemedicine };
   }, [appointmentsResponse, today]);
 
   const getStatusColor = (status: string) => {
@@ -91,7 +115,7 @@ const UpcomingAppointments = () => {
             <Calendar size={16} className="text-white" />
           </div>
           <h6 className="text-h6 font-bold text-szPrimary700">
-            Upcoming Appointments
+            Appointments Today
           </h6>
         </div>
       </div>
@@ -118,10 +142,15 @@ const UpcomingAppointments = () => {
                       />
                     </div>
 
-                    {/* Name */}
+                    {/* Name and Type */}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 truncate">
                         {appointment.name}
+                      </p>
+                      <p className="text-xs text-szDarkGrey600 mt-0.5">
+                        {appointment.type === "telemedicine"
+                          ? "Telemedicine"
+                          : "In-Person"}
                       </p>
                     </div>
                   </div>
@@ -156,14 +185,36 @@ const UpcomingAppointments = () => {
             {/* Empty State */}
             {appointments.length === 0 && !isLoading && (
               <div className="min-h-[200px] flex items-center justify-center">
-                <p className="text-sm text-gray-500">
-                  No upcoming appointments
-                </p>
+                <p className="text-sm text-gray-500">No appointments today</p>
               </div>
             )}
           </>
         )}
       </div>
+
+      {/* Appointment Type Counts */}
+      {!isLoading && (
+        <div className="border-t border-gray-200 px-4 py-3 bg-gray-50">
+          <div className="flex items-center justify-end gap-4">
+            <div className="flex items-center gap-2">
+              <p className="text-body-small-strong text-szBlack700">
+                In-Person:
+              </p>
+              <p className="body-small-strong text-szPrimary700">
+                {appointmentCounts.inPerson}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <p className="text-body-small-strong text-szBlack700">
+                Telemedicine:
+              </p>
+              <p className="text-body-small-strong text-szPrimary700">
+                {appointmentCounts.telemedicine}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

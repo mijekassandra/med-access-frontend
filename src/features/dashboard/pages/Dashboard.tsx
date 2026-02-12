@@ -35,8 +35,23 @@ import { useGetServicesQuery } from "../../services/api/serviceApi";
 import { useGetAppointmentsQuery } from "../../telemedicine/api/appointmentApi";
 import { useGetHealthEducationQuery } from "../../health-education/api/healthEducationApi";
 
+// Greeting utility function
+const getGreeting = (): string => {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) {
+    return "Good morning";
+  } else if (hour >= 12 && hour < 17) {
+    return "Good afternoon";
+  } else if (hour >= 17 && hour < 21) {
+    return "Good evening";
+  } else {
+    return "Good day";
+  }
+};
+
 const Dashboard: React.FC = () => {
   const [showWelcomeSnackbar, setShowWelcomeSnackbar] = useState(false);
+  const [currentDateTime, setCurrentDateTime] = useState(new Date());
 
   // Get user data from Redux store
   const { user } = useSelector((state: RootState) => state.auth);
@@ -64,6 +79,15 @@ const Dashboard: React.FC = () => {
   const appointmentsCount = appointmentsData?.count || 0;
   const healthEducationCount = healthEducationData?.count || 0;
 
+  // Update clock every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
   useEffect(() => {
     // Check if we should show welcome snackbar
     const shouldShowWelcome = sessionStorage.getItem("showWelcomeSnackbar");
@@ -75,9 +99,59 @@ const Dashboard: React.FC = () => {
     }
   }, [userRole]);
 
+  // Format date and time
+  const formattedDate = currentDateTime.toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  const formattedTime = currentDateTime.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  });
+
   return (
     <>
       <ContainerWrapper className="space-y-4">
+        {/* Greeting and Time/Date Header */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            {/* Greeting Section */}
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-szPrimary100 rounded-lg">
+                <Profile2User size={24} className="text-szPrimary700" />
+              </div>
+              <div>
+                <h2 className="text-h5 font-bold text-szBlack700">
+                  {getGreeting()}, {user?.firstName || "User"}!
+                </h2>
+                <p className="text-body-small-reg text-szDarkGrey600 mt-1">
+                  Welcome back to your dashboard
+                </p>
+              </div>
+            </div>
+
+            {/* Time and Date Section */}
+            <div className="flex flex-col items-center sm:items-end text-center sm:text-right">
+              {/* Time - Large and Bold */}
+              <div className="text-szBlack700">
+                <p className="text-xl sm:text-2xl font-bold">{formattedTime}</p>
+              </div>
+
+              {/* Date - Smaller but readable */}
+              <div className="text-szBlack700 mt-1">
+                <p className="text-base sm:text-lg font-medium">
+                  {formattedDate}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Dashboard Content */}
         <div className="flex flex-col sm:flex-row h-fit sm:h-96 gap-4 w-full">
           {/* Left Column ----------------------------------------------------*/}

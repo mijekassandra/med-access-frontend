@@ -283,8 +283,31 @@ const PatientsTable = () => {
             return;
           }
 
-          // Generate PDF with all records
-          await generateAllPatientRecordsPDF(record.fullName, patientRecords);
+          // Prepare patient details for PDF
+          const patientDetails = {
+            fullName: originalUser.fullName,
+            firstName: originalUser.firstName,
+            lastName: originalUser.lastName,
+            email: originalUser.email,
+            address: originalUser.address,
+            phone: originalUser.phone,
+            gender: originalUser.gender,
+            dateOfBirth: originalUser.dateOfBirth,
+            age: originalUser.age,
+            contactPerson: originalUser.contactPerson,
+            bloodType: originalUser.bloodType,
+            religion: originalUser.religion,
+            civilStatus: originalUser.civilStatus,
+            height: originalUser.height,
+            occupation: originalUser.occupation,
+          };
+
+          // Generate PDF with all records and patient details
+          await generateAllPatientRecordsPDF(
+            record.fullName,
+            patientRecords,
+            patientDetails
+          );
           showSuccess(
             `PDF generated successfully with ${patientRecords.length} record${
               patientRecords.length > 1 ? "s" : ""

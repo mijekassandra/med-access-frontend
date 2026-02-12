@@ -28,6 +28,7 @@ import {
   useGetMedicalRecordsQuery,
   useDeleteMedicalRecordMutation,
 } from "../api/medicalRecordsApi";
+import { useGetAllUsersQuery } from "../../user/api/userApi";
 
 // Table display type for compatibility with existing table component
 interface MedicalRecordDisplay {
@@ -70,6 +71,9 @@ const MedicalRecordTable: React.FC = () => {
 
   const [deleteMedicalRecord, { isLoading: isDeleting }] =
     useDeleteMedicalRecordMutation();
+
+  // Fetch all users to get patient details for PDF
+  const { data: usersData } = useGetAllUsersQuery();
 
   // Transform API data to display format (filter out deleted patients)
   const records: MedicalRecordDisplay[] =
@@ -212,15 +216,42 @@ const MedicalRecordTable: React.FC = () => {
       icon: <Printer size={16} />,
       onClick: async (record) => {
         try {
+          // Find patient details from users data
+          const patientUser = usersData?.data?.find(
+            (user) => user.id === record.patientId
+          );
+
+          // Prepare patient details if available
+          const patientDetails = patientUser
+            ? {
+                fullName: patientUser.fullName,
+                firstName: patientUser.firstName,
+                lastName: patientUser.lastName,
+                email: patientUser.email,
+                address: patientUser.address,
+                phone: patientUser.phone,
+                gender: patientUser.gender,
+                dateOfBirth: patientUser.dateOfBirth,
+                age: patientUser.age,
+                contactPerson: patientUser.contactPerson,
+                bloodType: patientUser.bloodType,
+                religion: patientUser.religion,
+                civilStatus: patientUser.civilStatus,
+                height: patientUser.height,
+                occupation: patientUser.occupation,
+              }
+            : undefined;
+
           await generateMedicalRecordPDF({
             patientName: record.patientName,
             diagnosis: record.diagnosis,
             treatmentPlan: record.treatmentPlan,
             dateOfRecord: record.dateOfRecord,
+            ...patientDetails,
           });
         } catch (error) {
-          console.error('Error generating PDF:', error);
-          showError('Failed to generate PDF. Please try again.');
+          console.error("Error generating PDF:", error);
+          showError("Failed to generate PDF. Please try again.");
         }
       },
     },
