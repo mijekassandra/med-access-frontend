@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from "react";
 
 //icons
-import { Edit, Trash, SearchNormal1, Add, ExportCurve, Printer } from "iconsax-react";
+import {
+  Edit,
+  Trash,
+  SearchNormal1,
+  Add,
+  ExportCurve,
+  Printer,
+} from "iconsax-react";
 
 //components
 import Table, {
@@ -80,12 +87,16 @@ const MedicalRecordTable: React.FC = () => {
     medicalRecordsData?.data
       ?.filter((record) => {
         // Only include published records with valid (non-deleted) patients
-        return record.isPublished && record.patient !== null && record.patient !== undefined;
+        return (
+          record.isPublished &&
+          record.patient !== null &&
+          record.patient !== undefined
+        );
       })
       ?.map((record) => {
         // Patient is guaranteed to exist due to filter above
         const patient = record.patient!;
-        
+
         return {
           id: record._id,
           _id: record._id,
