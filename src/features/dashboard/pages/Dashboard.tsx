@@ -221,12 +221,12 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Patient Statistics Charts - Available for both admin and doctor */}
-        {(userRole === "admin" || userRole === "doctor") && (
+        {/* {(userRole === "admin" || userRole === "doctor") && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <GenderDistributionChart />
             <AgeRangeChart />
           </div>
-        )}
+        )} */}
 
         {userRole === "admin" && (
           <>

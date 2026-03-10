@@ -43,6 +43,7 @@ const AppointmentDetail: React.FC<AppointmentDetailProps> = ({
       case "completed":
         return "blue";
       case "cancelled":
+      case "denied":
         return "red";
       default:
         return "gray";
@@ -60,11 +61,15 @@ const AppointmentDetail: React.FC<AppointmentDetailProps> = ({
       case "completed":
         return "Completed";
       case "cancelled":
+      case "denied":
         return "Cancelled";
       default:
         return "Unknown";
     }
   };
+
+  const isCancelledStatus =
+    appointment?.status === "cancelled" || appointment?.status === "denied";
 
   return (
     <Modal
@@ -153,6 +158,20 @@ const AppointmentDetail: React.FC<AppointmentDetailProps> = ({
                 </p>
               </div>
             </div>
+
+            {/* Cancellation Remarks - only when status is cancelled or denied */}
+            {isCancelledStatus && (
+              <div className="space-y-1">
+                <p className="appointment-card-label-style">
+                  Cancellation Remarks
+                </p>
+                <p className="mt-1 appointment-card-value-style">
+                  {appointment.cancellationRemarks ||
+                    appointment.cancellation_remarks ||
+                    "No remarks provided"}
+                </p>
+              </div>
+            )}
 
             {/* Action Buttons */}
             {/* {appointment?.status === "serving" && onMarkAsDone && (

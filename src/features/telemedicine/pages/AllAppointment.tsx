@@ -11,6 +11,7 @@ import {
   Refresh,
   ExportCurve,
   ArrowLeft2,
+  CloseCircle,
 } from "iconsax-react";
 
 //components
@@ -42,6 +43,7 @@ import {
 } from "../api/appointmentApi";
 import UpdateAppointmentModal from "../components/UpdateAppointmentModal";
 import AppointmentDetail from "../components/AppointmentDetail";
+import CancelAppointmentModal from "../components/CancelAppointmentModal";
 
 // Appointment data interface for component
 interface Appointment {
@@ -78,11 +80,11 @@ const assignQueueNumbers = (appointments: ApiAppointment[]) => {
         (apt) =>
           apt.status === "accepted" ||
           apt.status === "serving" ||
-          apt.status === "completed"
+          apt.status === "completed",
       )
       .sort(
         (a, b) =>
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
       );
 
     dateAppointments.forEach((apt, index) => {
@@ -96,7 +98,7 @@ const assignQueueNumbers = (appointments: ApiAppointment[]) => {
 // Helper function to convert API appointment to component format
 const mapApiAppointmentToComponent = (
   apiAppt: ApiAppointment,
-  queueNumberMap: { [key: string]: number }
+  queueNumberMap: { [key: string]: number },
 ): Appointment | null => {
   // Skip appointments with deleted patients
   if (!apiAppt.patient) {
@@ -181,7 +183,7 @@ const AllAppointment: React.FC = () => {
     error,
     refetch,
   } = useGetAppointmentsQuery(
-    dateFilterValue ? { date: dateFilterValue } : undefined
+    dateFilterValue ? { date: dateFilterValue } : undefined,
   );
 
   // const [updateAppointmentStatus] = useUpdateAppointmentStatusMutation();
@@ -191,8 +193,11 @@ const AllAppointment: React.FC = () => {
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [appointmentToDelete, setAppointmentToDelete] = useState<string | null>(
-    null
+    null,
   );
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [appointmentToCancel, setAppointmentToCancel] =
+    useState<Appointment | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [appointmentToEdit, setAppointmentToEdit] =
     useState<ApiAppointment | null>(null);
@@ -204,7 +209,7 @@ const AllAppointment: React.FC = () => {
   const queueNumberMap = useMemo(() => {
     if (appointmentsResponse?.data) {
       const validAppointments = appointmentsResponse.data.filter(
-        (apt) => apt.patient !== null && apt.patient !== undefined
+        (apt) => apt.patient !== null && apt.patient !== undefined,
       );
       return assignQueueNumbers(validAppointments);
     }
@@ -294,7 +299,7 @@ const AllAppointment: React.FC = () => {
 
   const handleDateRangeChange = (
     startDate: Date | null,
-    endDate: Date | null
+    endDate: Date | null,
   ) => {
     setDateRange({ startDate, endDate });
     setSelectedDate(null); // Clear specific date when selecting range
@@ -395,7 +400,7 @@ const AllAppointment: React.FC = () => {
   const handleEditAppointment = (record: Appointment) => {
     // Find the full API appointment data
     const fullAppointment = appointmentsResponse?.data?.find(
-      (apt) => apt._id === record.id
+      (apt) => apt._id === record.id,
     );
     if (fullAppointment) {
       setAppointmentToEdit(fullAppointment);
@@ -424,7 +429,7 @@ const AllAppointment: React.FC = () => {
     {
       key: "patientName",
       header: "Patient Name",
-      width: "180px",
+      width: "250px",
       sortable: true,
       render: (value) => (
         <span className="text-body-small-reg text-szBlack700 font-medium">
@@ -485,7 +490,7 @@ const AllAppointment: React.FC = () => {
             case "completed":
               return "Completed";
             case "denied":
-              return "Denied";
+              return "Cancelled";
             default:
               return "Unknown";
           }
@@ -518,6 +523,7 @@ const AllAppointment: React.FC = () => {
     {
       key: "reason",
       header: "Reason",
+      width: "450px",
       sortable: true,
       render: (value) => (
         <div
@@ -540,6 +546,15 @@ const AllAppointment: React.FC = () => {
       },
       visible: (record) => record.status === "pending",
       disabled: (record) => record.status !== "pending",
+    },
+    {
+      label: "Cancel Appointment",
+      icon: <CloseCircle size={16} />,
+      onClick: (record) => {
+        setAppointmentToCancel(record);
+        setIsCancelModalOpen(true);
+      },
+      visible: (record) => record.status === "accepted",
     },
 
     // {
@@ -596,24 +611,26 @@ const AllAppointment: React.FC = () => {
   const filteredAppointments = useMemo(() => {
     return appointments.filter((appointment) => {
       // Safe search - only search in specific string fields, handle null/undefined values
-      const matchesSearch = searchTerm.trim() === "" || (() => {
-        const searchLower = searchTerm.toLowerCase();
-        const searchableFields = [
-          appointment.patientName,
-          appointment.reason,
-          appointment.scheduledDate,
-          appointment.scheduledTime,
-          appointment.status,
-          appointment.appointmentType,
-          appointment.id,
-          appointment.queueNumber?.toString() || "",
-        ];
-        
-        return searchableFields.some((field) => {
-          if (field == null || field === undefined) return false;
-          return String(field).toLowerCase().includes(searchLower);
-        });
-      })();
+      const matchesSearch =
+        searchTerm.trim() === "" ||
+        (() => {
+          const searchLower = searchTerm.toLowerCase();
+          const searchableFields = [
+            appointment.patientName,
+            appointment.reason,
+            appointment.scheduledDate,
+            appointment.scheduledTime,
+            appointment.status,
+            appointment.appointmentType,
+            appointment.id,
+            appointment.queueNumber?.toString() || "",
+          ];
+
+          return searchableFields.some((field) => {
+            if (field == null || field === undefined) return false;
+            return String(field).toLowerCase().includes(searchLower);
+          });
+        })();
 
       const statusValue = Array.isArray(statusFilter)
         ? statusFilter[0]?.value
@@ -626,7 +643,9 @@ const AllAppointment: React.FC = () => {
         : dateFilter?.value;
 
       const matchesStatus =
-        statusValue === "all" || appointment.status === statusValue;
+        statusValue === "all" ||
+        appointment.status === statusValue ||
+        (statusValue === "cancelled" && appointment.status === "denied");
       const matchesType =
         typeValue === "all" || appointment.appointmentType === typeValue;
 
@@ -650,24 +669,24 @@ const AllAppointment: React.FC = () => {
         (dateRange.startDate || dateRange.endDate)
       ) {
         const appointmentDate = new Date(
-          appointment.scheduledDate + "T00:00:00"
+          appointment.scheduledDate + "T00:00:00",
         );
 
         if (dateRange.startDate && dateRange.endDate) {
           const startDate = new Date(
             dateRange.startDate.getFullYear(),
             dateRange.startDate.getMonth(),
-            dateRange.startDate.getDate()
+            dateRange.startDate.getDate(),
           );
           const endDate = new Date(
             dateRange.endDate.getFullYear(),
             dateRange.endDate.getMonth(),
-            dateRange.endDate.getDate()
+            dateRange.endDate.getDate(),
           );
           const appointmentDateOnly = new Date(
             appointmentDate.getFullYear(),
             appointmentDate.getMonth(),
-            appointmentDate.getDate()
+            appointmentDate.getDate(),
           );
 
           matchesDate =
@@ -676,24 +695,24 @@ const AllAppointment: React.FC = () => {
           const startDate = new Date(
             dateRange.startDate.getFullYear(),
             dateRange.startDate.getMonth(),
-            dateRange.startDate.getDate()
+            dateRange.startDate.getDate(),
           );
           const appointmentDateOnly = new Date(
             appointmentDate.getFullYear(),
             appointmentDate.getMonth(),
-            appointmentDate.getDate()
+            appointmentDate.getDate(),
           );
           matchesDate = appointmentDateOnly >= startDate;
         } else if (dateRange.endDate) {
           const endDate = new Date(
             dateRange.endDate.getFullYear(),
             dateRange.endDate.getMonth(),
-            dateRange.endDate.getDate()
+            dateRange.endDate.getDate(),
           );
           const appointmentDateOnly = new Date(
             appointmentDate.getFullYear(),
             appointmentDate.getMonth(),
-            appointmentDate.getDate()
+            appointmentDate.getDate(),
           );
           matchesDate = appointmentDateOnly <= endDate;
         }
@@ -720,7 +739,7 @@ const AllAppointment: React.FC = () => {
   const endIndex = startIndex + itemsPerPage;
   const paginatedAppointments = filteredAppointments.slice(
     startIndex,
-    endIndex
+    endIndex,
   );
 
   // Reset to page 1 when search term or filters change
@@ -873,7 +892,7 @@ const AllAppointment: React.FC = () => {
                   { label: "Accepted", value: "accepted" },
                   { label: "Serving", value: "serving" },
                   { label: "Completed", value: "completed" },
-                  { label: "Denied", value: "denied" },
+                  { label: "Cancelled", value: "cancelled" },
                 ]}
                 size="small"
                 label="Status:"
@@ -942,6 +961,21 @@ const AllAppointment: React.FC = () => {
           buttonLabel={isDeleting ? "Deleting..." : "Delete"}
           isLoading={isDeleting}
           subDescription="This action cannot be undone."
+        />
+
+        {/* Cancel Appointment Modal */}
+        <CancelAppointmentModal
+          isOpen={isCancelModalOpen}
+          onClose={() => {
+            setIsCancelModalOpen(false);
+            setAppointmentToCancel(null);
+          }}
+          appointment={appointmentToCancel}
+          onSubmit={() => {
+            setSnackbarMessage("Appointment cancel request submitted");
+            setSnackbarType("success");
+            setShowSnackbar(true);
+          }}
         />
 
         {/* Export Modal */}
