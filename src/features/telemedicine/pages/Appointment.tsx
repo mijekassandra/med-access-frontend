@@ -13,6 +13,7 @@ import SnackbarAlert from "../../../global-components/SnackbarAlert";
 import ButtonsIcon from "../../../global-components/ButtonsIcon";
 import AppointmentDetail from "../components/AppointmentDetail";
 import CancelAppointmentModal from "../components/CancelAppointmentModal";
+import UploadPrescriptionModal from "../components/UploadPrescriptionModal";
 import Loading from "../../../components/Loading";
 import CreateAppointmentModal from "../components/CreateAppointmentModal";
 import AddUserMedicalModal from "../../medical-records/components/AddUserMedicalModal";
@@ -43,14 +44,10 @@ const assignQueueNumbers = (appointments: ApiAppointment[]) => {
   // Completed appointments are excluded, so remaining appointments are renumbered starting from 1
   Object.keys(appointmentsByDate).forEach((date) => {
     const dateAppointments = appointmentsByDate[date]
-      .filter(
-        (apt) =>
-          apt.status === "accepted" ||
-          apt.status === "serving"
-      )
+      .filter((apt) => apt.status === "accepted" || apt.status === "serving")
       .sort(
         (a, b) =>
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
       );
 
     dateAppointments.forEach((apt, index) => {
@@ -64,7 +61,7 @@ const assignQueueNumbers = (appointments: ApiAppointment[]) => {
 // Helper function to convert API appointment to card format
 const mapApiAppointmentToCard = (
   apiAppt: ApiAppointment,
-  queueNumberMap: { [key: string]: number }
+  queueNumberMap: { [key: string]: number },
 ) => {
   // Skip appointments with deleted patients
   if (!apiAppt.patient) {
@@ -129,6 +126,10 @@ const Telemedicine = () => {
   >(null);
   const [isStartingServing, setIsStartingServing] = useState(false);
   const [markingAsDoneId, setMarkingAsDoneId] = useState<string | null>(null);
+  const [isUploadPrescriptionModalOpen, setIsUploadPrescriptionModalOpen] =
+    useState(false);
+  const [appointmentIdForPrescription, setAppointmentIdForPrescription] =
+    useState<string | null>(null);
   const navigate = useNavigate();
 
   // Get today's date for filtering
@@ -149,7 +150,7 @@ const Telemedicine = () => {
   // Store full API appointments for detail view (filter out deleted patients)
   const fullAppointments = useMemo(() => {
     return (appointmentsResponse?.data || []).filter(
-      (apt) => apt.patient !== null && apt.patient !== undefined
+      (apt) => apt.patient !== null && apt.patient !== undefined,
     );
   }, [appointmentsResponse]);
 
@@ -157,7 +158,7 @@ const Telemedicine = () => {
   const queueNumberMap = useMemo(() => {
     if (appointmentsResponse?.data) {
       const validAppointments = appointmentsResponse.data.filter(
-        (apt) => apt.patient !== null && apt.patient !== undefined
+        (apt) => apt.patient !== null && apt.patient !== undefined,
       );
       return assignQueueNumbers(validAppointments);
     }
@@ -187,7 +188,7 @@ const Telemedicine = () => {
         apt.date === today &&
         (apt.status === "serving" ||
           apt.status === "accepted" ||
-          apt.status === "completed")
+          apt.status === "completed"),
     );
   }, [allAppointments, today]);
 
@@ -247,7 +248,7 @@ const Telemedicine = () => {
   const handleViewAppointment = (appointment: any) => {
     // Find the full appointment data from API response
     const fullAppointment = fullAppointments.find(
-      (apt) => apt._id === appointment.id
+      (apt) => apt._id === appointment.id,
     );
 
     if (fullAppointment && fullAppointment.patient) {
@@ -292,7 +293,7 @@ const Telemedicine = () => {
   const handleMarkAsDone = (appointmentId: string) => {
     // Find the appointment to get patient ID
     const appointment = todayAppointments.find(
-      (apt) => apt.id === appointmentId
+      (apt) => apt.id === appointmentId,
     );
 
     if (!appointment) {
@@ -304,7 +305,7 @@ const Telemedicine = () => {
 
     // Get the full appointment data to access patient ID
     const fullAppointment = fullAppointments.find(
-      (apt) => apt._id === appointmentId
+      (apt) => apt._id === appointmentId,
     );
 
     if (!fullAppointment || !fullAppointment.patient) {
@@ -339,7 +340,7 @@ const Telemedicine = () => {
     try {
       // Find the current appointment being marked as done
       const currentAppointment = todayAppointments.find(
-        (apt) => apt.id === appointmentId
+        (apt) => apt.id === appointmentId,
       );
 
       if (!currentAppointment) {
@@ -365,7 +366,7 @@ const Telemedicine = () => {
         .filter(
           (apt) =>
             apt.status === "accepted" &&
-            (apt.queueNumber || 0) > currentQueueNumber
+            (apt.queueNumber || 0) > currentQueueNumber,
         )
         .sort((a, b) => (a.queueNumber || 0) - (b.queueNumber || 0))[0];
 
@@ -382,7 +383,7 @@ const Telemedicine = () => {
 
           // Show success notification
           setSnackbarMessage(
-            `Medical record created and appointment marked as done. ${nextPatient.name} (Queue #${nextPatient.queueNumber}) is now being served.`
+            `Medical record created and appointment marked as done. ${nextPatient.name} (Queue #${nextPatient.queueNumber}) is now being served.`,
           );
           setSnackbarType("success");
           setShowSnackbar(true);
@@ -391,7 +392,7 @@ const Telemedicine = () => {
           console.error("Failed to update next patient status:", err);
           await refetch();
           setSnackbarMessage(
-            "Medical record created and appointment marked as done. Failed to start serving next patient."
+            "Medical record created and appointment marked as done. Failed to start serving next patient.",
           );
           setSnackbarType("warning");
           setShowSnackbar(true);
@@ -403,15 +404,17 @@ const Telemedicine = () => {
 
         // Show success notification
         setSnackbarMessage(
-          "Medical record created and appointment marked as done."
+          "Medical record created and appointment marked as done.",
         );
         setSnackbarType("success");
         setShowSnackbar(true);
       }
 
-      // Close modal after successful completion
+      // Close medical record modal, then open prescription upload for this appointment
       setIsMedicalRecordModalOpen(false);
       setAppointmentForMedicalRecord(null);
+      setAppointmentIdForPrescription(appointmentId);
+      setIsUploadPrescriptionModalOpen(true);
     } catch (err: any) {
       const errorMessage =
         err?.data?.message ||
@@ -465,7 +468,7 @@ const Telemedicine = () => {
   const handleStartVideoCall = (appointmentId: string, patientId: string) => {
     // Find the appointment to get patient details
     const appointment = fullAppointments.find(
-      (apt) => apt._id === appointmentId
+      (apt) => apt._id === appointmentId,
     );
     if (appointment && appointment.patient) {
       const patient = appointment.patient;
@@ -509,7 +512,7 @@ const Telemedicine = () => {
 
       // Show success notification
       setSnackbarMessage(
-        `Started serving ${nextAppointment.name} (Queue #${nextAppointment.queueNumber})`
+        `Started serving ${nextAppointment.name} (Queue #${nextAppointment.queueNumber})`,
       );
       setSnackbarType("success");
       setShowSnackbar(true);
@@ -641,7 +644,7 @@ const Telemedicine = () => {
                   disabled={
                     isStartingServing ||
                     !todayAppointments.some(
-                      (apt) => apt.status === "accepted"
+                      (apt) => apt.status === "accepted",
                     ) ||
                     todayAppointments.some((apt) => apt.status === "serving")
                   }
@@ -686,9 +689,9 @@ const Telemedicine = () => {
             requestToDelete
               ? {
                   id: requestToDelete,
-                  patientName:
-                    pendingRequests.find((req) => req.id === requestToDelete)
-                      ?.name,
+                  patientName: pendingRequests.find(
+                    (req) => req.id === requestToDelete,
+                  )?.name,
                 }
               : null
           }
@@ -716,6 +719,22 @@ const Telemedicine = () => {
           onError={(error) => {
             setSnackbarMessage(error);
             setSnackbarType("error");
+            setShowSnackbar(true);
+          }}
+        />
+
+        {/* Upload Prescription Modal (opens after medical record submit when marking done) */}
+        <UploadPrescriptionModal
+          isOpen={isUploadPrescriptionModalOpen}
+          onClose={() => {
+            setIsUploadPrescriptionModalOpen(false);
+            setAppointmentIdForPrescription(null);
+          }}
+          appointmentId={appointmentIdForPrescription}
+          onSuccess={() => {
+            refetch();
+            setSnackbarMessage("Prescription uploaded.");
+            setSnackbarType("success");
             setShowSnackbar(true);
           }}
         />

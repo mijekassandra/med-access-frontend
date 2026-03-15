@@ -32,9 +32,12 @@ const RescheduleAppointmentModal: React.FC<RescheduleAppointmentModalProps> = ({
   const [dateError, setDateError] = useState("");
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [snackbarType, setSnackbarType] = useState<"success" | "error">("success");
+  const [snackbarType, setSnackbarType] = useState<"success" | "error">(
+    "success",
+  );
 
-  const [rescheduleAppointment, { isLoading }] = useRescheduleAppointmentMutation();
+  const [rescheduleAppointment, { isLoading }] =
+    useRescheduleAppointmentMutation();
 
   useEffect(() => {
     if (isOpen && appointment) {
@@ -65,7 +68,9 @@ const RescheduleAppointmentModal: React.FC<RescheduleAppointmentModalProps> = ({
       onClose();
     } catch (err: any) {
       const message =
-        err?.data?.message || err?.message || "Failed to reschedule appointment.";
+        err?.data?.message ||
+        err?.message ||
+        "Failed to reschedule appointment.";
       setSnackbarMessage(message);
       setSnackbarType("error");
       setShowSnackbar(true);

@@ -182,7 +182,8 @@ const AppointmentDetail: React.FC<AppointmentDetailProps> = ({
             )}
 
             {/* Prescription - when uploaded (clickable to view image/PDF) */}
-            {(appointment.prescriptionUrl || appointment.prescriptionFileName) && (
+            {(appointment.prescriptionUrl ||
+              appointment.prescriptionFileName) && (
               <div className="space-y-1">
                 <p className="appointment-card-label-style">Prescription</p>
                 <div className="mt-1">
@@ -209,7 +210,7 @@ const AppointmentDetail: React.FC<AppointmentDetailProps> = ({
                       Uploaded
                       {appointment.prescriptionUploadedAt &&
                         ` at ${new Date(
-                          appointment.prescriptionUploadedAt
+                          appointment.prescriptionUploadedAt,
                         ).toLocaleString()}`}
                       {appointment.prescriptionUploadedBy &&
                         ` by ${appointment.prescriptionUploadedBy}`}
