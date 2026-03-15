@@ -1,11 +1,13 @@
 import React from "react";
 import Modal from "../../../global-components/Modal";
 import Chip from "../../../global-components/Chip";
+import Button from "../../../global-components/Button";
 
 interface AppointmentDetailProps {
   isOpen: boolean;
   onClose: () => void;
   appointment: any;
+  onOpenUploadPrescription?: (appointmentId: string) => void;
 }
 
 // Simple hash function to mask patient ID
@@ -31,6 +33,7 @@ const AppointmentDetail: React.FC<AppointmentDetailProps> = ({
   isOpen,
   onClose,
   appointment,
+  onOpenUploadPrescription,
 }) => {
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -138,7 +141,11 @@ const AppointmentDetail: React.FC<AppointmentDetailProps> = ({
                     Appointment Type
                   </p>
                   <p className="mt-1 appointment-card-value-style">
-                    {appointment.appointmentType}
+                    {appointment.appointmentType === "telemedicine"
+                      ? "Telemedicine"
+                      : appointment.appointmentType === "in-person"
+                        ? "In-Person"
+                        : appointment.appointmentType}
                   </p>
                 </div>
                 {/* <div>
@@ -166,14 +173,65 @@ const AppointmentDetail: React.FC<AppointmentDetailProps> = ({
                   Cancellation Remarks
                 </p>
                 <p className="mt-1 appointment-card-value-style">
-                  {appointment.cancellationRemarks ||
+                  {appointment.doctorCancellationRemarks ||
+                    appointment.cancellationRemarks ||
                     appointment.cancellation_remarks ||
                     "No remarks provided"}
                 </p>
               </div>
             )}
 
-            {/* Action Buttons */}
+            {/* Prescription - when uploaded (clickable to view image/PDF) */}
+            {(appointment.prescriptionUrl || appointment.prescriptionFileName) && (
+              <div className="space-y-1">
+                <p className="appointment-card-label-style">Prescription</p>
+                <div className="mt-1">
+                  {appointment.prescriptionUrl ? (
+                    <a
+                      href={appointment.prescriptionUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="appointment-card-value-style text-primary700 hover:underline cursor-pointer inline-flex items-center gap-1 font-medium"
+                    >
+                      {appointment.prescriptionFileName || "View prescription"}
+                      <span className="text-caption-reg text-primary600">
+                        (opens in new tab)
+                      </span>
+                    </a>
+                  ) : (
+                    <span className="appointment-card-value-style">
+                      {appointment.prescriptionFileName}
+                    </span>
+                  )}
+                  {(appointment.prescriptionUploadedAt ||
+                    appointment.prescriptionUploadedBy) && (
+                    <p className="text-caption-reg text-szBlack600 mt-1">
+                      Uploaded
+                      {appointment.prescriptionUploadedAt &&
+                        ` at ${new Date(
+                          appointment.prescriptionUploadedAt
+                        ).toLocaleString()}`}
+                      {appointment.prescriptionUploadedBy &&
+                        ` by ${appointment.prescriptionUploadedBy}`}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Upload prescription - for staff when completed or serving */}
+            {onOpenUploadPrescription &&
+              (appointment.status === "completed" ||
+                appointment.status === "serving") && (
+                <div className="flex justify-end pt-4 border-t border-gray-200">
+                  <Button
+                    label="Upload prescription"
+                    size="medium"
+                    variant="primary"
+                    onClick={() => onOpenUploadPrescription(appointment.id)}
+                  />
+                </div>
+              )}
             {/* {appointment?.status === "serving" && onMarkAsDone && (
               <div className="flex justify-end pt-4 border-t border-gray-200">
                 <Button

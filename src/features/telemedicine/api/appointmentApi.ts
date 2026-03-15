@@ -16,6 +16,11 @@ export interface Appointment {
   date: string; // ISO 8601 date string
   reason: string;
   queueNumber: number | null;
+  doctorCancellationRemarks?: string | null;
+  prescriptionUrl?: string | null;
+  prescriptionFileName?: string | null;
+  prescriptionUploadedAt?: string | null;
+  prescriptionUploadedBy?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -35,6 +40,12 @@ export interface AppointmentUpdate {
 
 export interface AppointmentStatusUpdate {
   status: "pending" | "accepted" | "serving" | "completed" | "denied";
+  doctorCancellationRemarks?: string; // Required when doctor/admin sets status to 'denied'; max 1000 chars
+}
+
+export interface AppointmentReschedule {
+  date: string; // ISO date string, required
+  reason?: string;
 }
 
 export interface ApiResponse<T> {
@@ -127,15 +138,55 @@ export const appointmentApi = createApi({
     }),
 
     // Update appointment status -------------------------------------------------------------------
-    updateAppointmentStatus: builder.mutation<ApiResponse<Appointment>, { id: string; status: AppointmentStatusUpdate["status"] }>({
-      query: ({ id, status }) => ({
+    updateAppointmentStatus: builder.mutation<
+      ApiResponse<Appointment>,
+      { id: string; status: AppointmentStatusUpdate["status"]; doctorCancellationRemarks?: string }
+    >({
+      query: ({ id, status, doctorCancellationRemarks }) => ({
         url: `/appointments/${id}/status`,
         method: "PATCH",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: { status },
+        body: { status, ...(doctorCancellationRemarks != null && { doctorCancellationRemarks }) },
       }),
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: "Appointment", id: "LIST" },
+        { type: "Appointment", id },
+      ],
+    }),
+
+    // Reschedule appointment -------------------------------------------------------------------
+    rescheduleAppointment: builder.mutation<
+      ApiResponse<Appointment>,
+      { id: string; data: AppointmentReschedule }
+    >({
+      query: ({ id, data }) => ({
+        url: `/appointments/${id}/reschedule`,
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: data,
+      }),
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: "Appointment", id: "LIST" },
+        { type: "Appointment", id },
+      ],
+    }),
+
+    // Upload prescription (doctor/admin) -------------------------------------------------------------------
+    uploadPrescription: builder.mutation<ApiResponse<Appointment>, { id: string; file: File }>({
+      query: ({ id, file }) => {
+        const formData = new FormData();
+        formData.append("prescription", file);
+        return {
+          url: `/appointments/${id}/prescription`,
+          method: "PATCH",
+          body: formData,
+          // Do not set Content-Type; browser sets multipart/form-data with boundary
+        };
+      },
       invalidatesTags: (_result, _error, { id }) => [
         { type: "Appointment", id: "LIST" },
         { type: "Appointment", id },
@@ -174,6 +225,8 @@ export const {
   useCreateAppointmentMutation,
   useUpdateAppointmentMutation,
   useUpdateAppointmentStatusMutation,
+  useRescheduleAppointmentMutation,
+  useUploadPrescriptionMutation,
   useAcceptAppointmentMutation,
-  useDeleteAppointmentMutation
+  useDeleteAppointmentMutation,
 } = appointmentApi;

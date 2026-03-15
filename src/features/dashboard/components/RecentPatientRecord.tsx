@@ -5,6 +5,7 @@ import { useMemo } from "react";
 interface PatientRecord {
   id: string;
   name: string;
+  doctorName: string;
   dateOfRecord: string;
 }
 
@@ -31,6 +32,7 @@ const RecentPatientRecord = () => {
         return {
           id: record._id,
           name: `${patient.lastName}, ${patient.firstName}`,
+          doctorName: record.doctorName ?? "",
           dateOfRecord: new Date(record.dateOfRecord).toLocaleDateString(
             "en-US",
             {
@@ -85,14 +87,19 @@ const RecentPatientRecord = () => {
               <div className="px-4 py-2 hover:bg-gray-50 transition-colors">
                 <div className="flex justify-between items-center gap-2 my-[6px]">
                   {/* Name */}
-                  <div className="col-span-5">
+                  <div className="col-span-5 min-w-0 flex-1">
                     <p className="text-sm text-gray-900 truncate">
                       {record.name}
                     </p>
+                    {record.doctorName ? (
+                      <p className="text-xs text-gray-500 truncate mt-0.5">
+                        {record.doctorName}
+                      </p>
+                    ) : null}
                   </div>
 
                   {/* Date of Record */}
-                  <div className="col-span-5">
+                  <div className="col-span-5 shrink-0">
                     <p className="text-sm text-gray-700 truncate">
                       {record.dateOfRecord}
                     </p>

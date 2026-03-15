@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
 
 // components
 import Modal from "../../../global-components/Modal";
 import Inputs from "../../../global-components/Inputs";
 
-// icons
-import { CloseCircle } from "iconsax-react";
+// RTK
+import { useUpdateAppointmentStatusMutation } from "../api/appointmentApi";
+import type { RootState } from "../../../store";
 
 export interface CancelAppointmentModalAppointment {
   id: string;
@@ -16,39 +18,56 @@ interface CancelAppointmentModalProps {
   isOpen: boolean;
   onClose: () => void;
   appointment: CancelAppointmentModalAppointment | null;
-  onSubmit?: (appointmentId: string, remarks: string) => void | Promise<void>;
+  onSuccess?: () => void;
+  onError?: (message: string) => void;
 }
 
 const CancelAppointmentModal: React.FC<CancelAppointmentModalProps> = ({
   isOpen,
   onClose,
   appointment,
-  onSubmit,
+  onSuccess,
+  onError,
 }) => {
   const [remarks, setRemarks] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [remarksError, setRemarksError] = useState("");
+  const user = useSelector((state: RootState) => state.auth.user);
+  const [updateAppointmentStatus, { isLoading }] =
+    useUpdateAppointmentStatusMutation();
 
-  // Reset form when modal opens or appointment changes
+  const isStaff = user?.role === "doctor" || user?.role === "admin";
+
   useEffect(() => {
     if (isOpen) {
       setRemarks("");
-      setIsLoading(false);
+      setRemarksError("");
     }
   }, [isOpen, appointment]);
 
   const handleSubmit = async () => {
     if (!appointment) return;
-    setIsLoading(true);
+    setRemarksError("");
+    if (isStaff && !remarks.trim()) {
+      setRemarksError("Remarks are required when cancelling as staff.");
+      return;
+    }
+    if (remarks.length > 1000) {
+      setRemarksError("Remarks must be 1000 characters or less.");
+      return;
+    }
     try {
-      if (onSubmit) {
-        await Promise.resolve(onSubmit(appointment.id, remarks));
-      } else {
-        // Frontend-only: simulate submit delay
-        await new Promise((resolve) => setTimeout(resolve, 500));
-      }
+      await updateAppointmentStatus({
+        id: appointment.id,
+        status: "denied",
+        doctorCancellationRemarks: remarks.trim() || undefined,
+      }).unwrap();
+      onSuccess?.();
       onClose();
-    } finally {
-      setIsLoading(false);
+    } catch (err: any) {
+      const message =
+        err?.data?.message || err?.message || "Failed to cancel appointment.";
+      onError?.(message);
+      setRemarksError(message);
     }
   };
 
@@ -72,7 +91,7 @@ const CancelAppointmentModal: React.FC<CancelAppointmentModalProps> = ({
           disabled: isLoading,
         },
         {
-          label: "Submit",
+          label: "Cancel appointment",
           variant: "secondaryDark",
           onClick: handleSubmit,
           size: "medium",
@@ -85,16 +104,23 @@ const CancelAppointmentModal: React.FC<CancelAppointmentModalProps> = ({
         <div className="flex flex-col gap-4 py-2">
           <p className="text-body-small-reg text-szBlack700">
             Please provide a reason for cancelling this appointment
-            {appointment?.patientName ? ` for ${appointment.patientName}` : ""}.
+            {appointment?.patientName ? ` for ${appointment.patientName}` : ""}
+            {isStaff ? " (required for staff)." : "."}
           </p>
           <Inputs
             label="Remarks"
-            placeholder="Enter reason for cancellation..."
+            placeholder="Enter reason for cancellation (required for staff)."
             value={remarks}
-            onChange={(e) => setRemarks(e.target.value)}
+            onChange={(e) => {
+              setRemarks(e.target.value);
+              if (remarksError) setRemarksError("");
+            }}
             isTextarea={true}
-            maxCharacter={500}
+            maxCharacter={1000}
           />
+          {remarksError && (
+            <p className="text-caption-reg text-error700">{remarksError}</p>
+          )}
         </div>
       }
     />

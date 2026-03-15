@@ -42,6 +42,7 @@ interface MedicalRecordDisplay {
   id: string;
   patientName: string;
   patientId: string; // Patient user ID for API operations
+  doctorName: string;
   diagnosis: string;
   treatmentPlan: string;
   dateOfRecord: string;
@@ -102,6 +103,7 @@ const MedicalRecordTable: React.FC = () => {
           _id: record._id,
           patientName: `${patient.firstName} ${patient.lastName}`,
           patientId: patient._id, // Store patient ID for edit mode
+          doctorName: record.doctorName ?? "",
           diagnosis: record.diagnosis,
           treatmentPlan: record.treatmentPlan,
           dateOfRecord: record.dateOfRecord,
@@ -128,6 +130,7 @@ const MedicalRecordTable: React.FC = () => {
   // Export functionality
   const exportColumns: ExportColumn[] = [
     { key: "patientName", header: "Patient Name" },
+    { key: "doctorName", header: "Doctor" },
     { key: "diagnosis", header: "Diagnosis" },
     { key: "treatmentPlan", header: "Treatment Plan" },
     { key: "dateOfRecord", header: "Date of Record" },
@@ -182,6 +185,17 @@ const MedicalRecordTable: React.FC = () => {
       render: (value) => (
         <span className="text-body-small-reg text-szBlack700 font-medium">
           {value}
+        </span>
+      ),
+    },
+    {
+      key: "doctorName",
+      header: "Doctor",
+      width: "140px",
+      sortable: true,
+      render: (value) => (
+        <span className="text-body-small-reg text-szBlack700">
+          {value || "—"}
         </span>
       ),
     },
@@ -255,6 +269,7 @@ const MedicalRecordTable: React.FC = () => {
 
           await generateMedicalRecordPDF({
             patientName: record.patientName,
+            doctorName: record.doctorName,
             diagnosis: record.diagnosis,
             treatmentPlan: record.treatmentPlan,
             dateOfRecord: record.dateOfRecord,
@@ -429,6 +444,7 @@ const MedicalRecordTable: React.FC = () => {
                 id: selectedRecord._id,
                 fullName: selectedRecord.patientName,
                 patientId: selectedRecord.patientId, // Pass patient ID for proper dropdown selection
+                doctorName: selectedRecord.doctorName,
                 diagnosis: selectedRecord.diagnosis,
                 dateOfRecord: selectedRecord.dateOfRecord,
                 treatmentPlan: selectedRecord.treatmentPlan,
@@ -450,6 +466,7 @@ const MedicalRecordTable: React.FC = () => {
             ? {
                 id: selectedRecord._id,
                 fullName: selectedRecord.patientName,
+                doctorName: selectedRecord.doctorName,
                 diagnosis: selectedRecord.diagnosis,
                 dateOfRecord: selectedRecord.dateOfRecord,
                 treatmentPlan: selectedRecord.treatmentPlan,

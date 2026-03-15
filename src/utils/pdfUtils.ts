@@ -6,6 +6,7 @@ interface MedicalRecordForPDF {
   diagnosis: string;
   treatmentPlan: string;
   dateOfRecord: string;
+  doctorName?: string;
   // Optional patient details
   email?: string;
   firstName?: string;
@@ -341,6 +342,12 @@ export const generateMedicalRecordPDF = async (
   );
   const dateHeight = addSection("Date of Record", formattedDate, yPosition);
   yPosition += dateHeight + 4; // More gap between sections
+
+  // Doctor section (optional)
+  if (record.doctorName) {
+    const doctorHeight = addSection("Doctor", record.doctorName, yPosition);
+    yPosition += doctorHeight + 4;
+  }
 
   // Diagnosis section
   const diagnosisLines = doc.splitTextToSize(record.diagnosis, 180);
@@ -738,7 +745,17 @@ export const generateAllPatientRecordsPDF = async (
       formattedDate,
       yPosition
     );
-    yPosition += dateHeight + 2; // Reduced gap between Date of Record and Diagnosis
+    yPosition += dateHeight + 2; // Reduced gap between Date of Record and Doctor/Diagnosis
+
+    // Doctor section (optional)
+    if (record.doctorName) {
+      const doctorHeight = addRecordSection(
+        "Doctor",
+        record.doctorName,
+        yPosition
+      );
+      yPosition += doctorHeight + 2;
+    }
 
     // Check for page break before diagnosis
     if (yPosition > 260) {

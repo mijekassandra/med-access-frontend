@@ -11,8 +11,8 @@ import Inputs from "../../../global-components/Inputs";
 import Button from "../../../global-components/Button";
 import SnackbarAlert from "../../../global-components/SnackbarAlert";
 import ButtonsIcon from "../../../global-components/ButtonsIcon";
-import DeleteConfirmation from "../../../components/DeleteConfirmation";
 import AppointmentDetail from "../components/AppointmentDetail";
+import CancelAppointmentModal from "../components/CancelAppointmentModal";
 import Loading from "../../../components/Loading";
 import CreateAppointmentModal from "../components/CreateAppointmentModal";
 import AddUserMedicalModal from "../../medical-records/components/AddUserMedicalModal";
@@ -129,9 +129,6 @@ const Telemedicine = () => {
   >(null);
   const [isStartingServing, setIsStartingServing] = useState(false);
   const [markingAsDoneId, setMarkingAsDoneId] = useState<string | null>(null);
-  const [rejectingAppointmentId, setRejectingAppointmentId] = useState<
-    string | null
-  >(null);
   const navigate = useNavigate();
 
   // Get today's date for filtering
@@ -241,45 +238,6 @@ const Telemedicine = () => {
   const handleDeleteRequest = (id: string) => {
     setRequestToDelete(id);
     setIsDeleteModalOpen(true);
-  };
-
-  const confirmDelete = async () => {
-    if (requestToDelete) {
-      setRejectingAppointmentId(requestToDelete);
-      try {
-        await updateAppointmentStatus({
-          id: requestToDelete,
-          status: "denied",
-        }).unwrap();
-
-        // Refetch appointments to get updated data and wait for it to complete
-        await refetch();
-
-        // Show success notification
-        setSnackbarMessage("Appointment request rejected successfully");
-        setSnackbarType("success");
-        setShowSnackbar(true);
-      } catch (err: any) {
-        const errorMessage =
-          err?.data?.message ||
-          "Failed to reject appointment. Please try again.";
-        setSnackbarMessage(errorMessage);
-        setSnackbarType("error");
-        setShowSnackbar(true);
-      } finally {
-        setRejectingAppointmentId(null);
-      }
-    }
-    setIsDeleteModalOpen(false);
-    setRequestToDelete(null);
-  };
-
-  const cancelDelete = () => {
-    if (rejectingAppointmentId !== null) {
-      return; // Prevent closing during rejection process
-    }
-    setIsDeleteModalOpen(false);
-    setRequestToDelete(null);
   };
 
   const handleCloseSnackbar = () => {
@@ -717,20 +675,34 @@ const Telemedicine = () => {
           </div>
         </div>
 
-        {/* Confirmation Modal */}
-        <DeleteConfirmation
+        {/* Reject appointment (with remarks) */}
+        <CancelAppointmentModal
           isOpen={isDeleteModalOpen}
-          onClose={cancelDelete}
-          onClick={confirmDelete}
-          description={`Are you sure you want to reject the appointment request from ${
+          onClose={() => {
+            setIsDeleteModalOpen(false);
+            setRequestToDelete(null);
+          }}
+          appointment={
             requestToDelete
-              ? pendingRequests.find((req) => req.id === requestToDelete)
-                  ?.name || "this patient"
-              : "this patient"
-          }?`}
-          buttonLabel="Reject Request"
-          subDescription="The appointment request will be permanently removed from the pending list."
-          isLoading={rejectingAppointmentId !== null}
+              ? {
+                  id: requestToDelete,
+                  patientName:
+                    pendingRequests.find((req) => req.id === requestToDelete)
+                      ?.name,
+                }
+              : null
+          }
+          onSuccess={() => {
+            refetch();
+            setSnackbarMessage("Appointment request rejected successfully.");
+            setSnackbarType("success");
+            setShowSnackbar(true);
+          }}
+          onError={(message) => {
+            setSnackbarMessage(message);
+            setSnackbarType("error");
+            setShowSnackbar(true);
+          }}
         />
 
         {/* Medical Record Modal (opened when marking appointment as done) */}

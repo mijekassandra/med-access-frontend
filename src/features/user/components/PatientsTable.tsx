@@ -264,6 +264,7 @@ const PatientsTable = () => {
               ?.map((medicalRecord) => {
                 return {
                   patientName: record.fullName,
+                  doctorName: medicalRecord.doctorName ?? "",
                   diagnosis: medicalRecord.diagnosis,
                   treatmentPlan: medicalRecord.treatmentPlan,
                   dateOfRecord: medicalRecord.dateOfRecord,

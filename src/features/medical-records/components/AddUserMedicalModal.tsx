@@ -15,6 +15,7 @@ interface MedicalRecord {
   id: string;
   fullName: string;
   patientId?: string; // Optional patient ID for edit mode
+  doctorName?: string;
   diagnosis: string;
   dateOfRecord: string;
   treatmentPlan: string;
@@ -254,8 +255,11 @@ const AddUserMedicalModal = ({
           treatmentPlan: formData.treatmentPlan.trim(),
         };
 
-        await createMedicalRecord(createData).unwrap();
-        const successMsg = "Medical record added successfully";
+        const result = await createMedicalRecord(createData).unwrap();
+        const doctorName = result?.data?.doctorName ?? "";
+        const successMsg = doctorName
+          ? `Medical record added successfully. Doctor: ${doctorName}`
+          : "Medical record added successfully";
         setSnackbarMessage(successMsg);
         setSnackbarType("success");
         setShowSnackbar(true);
@@ -265,6 +269,7 @@ const AddUserMedicalModal = ({
             id: "",
             fullName:
               getUserById(formData.fullName)?.fullName || formData.fullName,
+            doctorName,
             diagnosis: formData.diagnosis,
             dateOfRecord: dateOfRecordISO,
             treatmentPlan: formData.treatmentPlan,
@@ -445,6 +450,16 @@ const AddUserMedicalModal = ({
               error={!!formErrors.fullName}
               usePortal={true}
             />
+
+            {/* Doctor name (read-only in view/edit) */}
+            {(mode === "view" || mode === "edit") && medicalRecord?.doctorName && (
+              <Inputs
+                label="DOCTOR"
+                placeholder="Doctor"
+                value={medicalRecord.doctorName}
+                disabled
+              />
+            )}
 
             {/* 2-column grid for other inputs */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-[16px]">

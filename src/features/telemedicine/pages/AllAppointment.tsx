@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import type { RootState } from "../../../store";
 
 //icons
 import {
@@ -12,6 +14,8 @@ import {
   ExportCurve,
   ArrowLeft2,
   CloseCircle,
+  CalendarEdit,
+  DocumentUpload,
 } from "iconsax-react";
 
 //components
@@ -37,13 +41,14 @@ import { useExport } from "../../../hooks/useExport";
 // RTK Query
 import {
   useGetAppointmentsQuery,
-  // useUpdateAppointmentStatusMutation,
   useDeleteAppointmentMutation,
   type Appointment as ApiAppointment,
 } from "../api/appointmentApi";
 import UpdateAppointmentModal from "../components/UpdateAppointmentModal";
 import AppointmentDetail from "../components/AppointmentDetail";
 import CancelAppointmentModal from "../components/CancelAppointmentModal";
+import RescheduleAppointmentModal from "../components/RescheduleAppointmentModal";
+import UploadPrescriptionModal from "../components/UploadPrescriptionModal";
 
 // Appointment data interface for component
 interface Appointment {
@@ -57,6 +62,11 @@ interface Appointment {
   reason: string;
   notes?: string;
   queueNumber?: number | null;
+  doctorCancellationRemarks?: string | null;
+  prescriptionUrl?: string | null;
+  prescriptionFileName?: string | null;
+  prescriptionUploadedAt?: string | null;
+  prescriptionUploadedBy?: string | null;
 }
 
 // Helper function to assign proper queue numbers based on appointments grouped by date
@@ -128,11 +138,17 @@ const mapApiAppointmentToComponent = (
     scheduledTime,
     reason: apiAppt.reason,
     queueNumber: calculatedQueueNumber || apiAppt.queueNumber,
+    doctorCancellationRemarks: apiAppt.doctorCancellationRemarks ?? null,
+    prescriptionUrl: apiAppt.prescriptionUrl ?? null,
+    prescriptionFileName: apiAppt.prescriptionFileName ?? null,
+    prescriptionUploadedAt: apiAppt.prescriptionUploadedAt ?? null,
+    prescriptionUploadedBy: apiAppt.prescriptionUploadedBy ?? null,
   };
 };
 
 const AllAppointment: React.FC = () => {
   const navigate = useNavigate();
+  const user = useSelector((state: RootState) => state.auth.user);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -204,6 +220,13 @@ const AllAppointment: React.FC = () => {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null);
+  const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
+  const [appointmentToReschedule, setAppointmentToReschedule] =
+    useState<ApiAppointment | null>(null);
+  const [isUploadPrescriptionModalOpen, setIsUploadPrescriptionModalOpen] =
+    useState(false);
+  const [appointmentForPrescription, setAppointmentForPrescription] =
+    useState<ApiAppointment | null>(null);
 
   // Assign proper queue numbers based on appointments (only valid patients)
   const queueNumberMap = useMemo(() => {
@@ -536,16 +559,47 @@ const AllAppointment: React.FC = () => {
     },
   ];
 
+  const handleRescheduleAppointment = (record: Appointment) => {
+    const full = appointmentsResponse?.data?.find(
+      (apt) => apt._id === record.id,
+    );
+    if (full) {
+      setAppointmentToReschedule(full);
+      setIsRescheduleModalOpen(true);
+    }
+  };
+
+  const handleUploadPrescription = (record: Appointment) => {
+    const full = appointmentsResponse?.data?.find(
+      (apt) => apt._id === record.id,
+    );
+    if (full) {
+      setIsDetailModalOpen(false);
+      setSelectedAppointment(null);
+      setAppointmentForPrescription(full);
+      setIsUploadPrescriptionModalOpen(true);
+    }
+  };
+
+  const isStaff = user?.role === "doctor" || user?.role === "admin";
+
   // Define actions
   const actions: TableAction<Appointment>[] = [
     {
       label: "Edit Appointment",
       icon: <TickCircle size={16} />,
-      onClick: (record) => {
-        handleEditAppointment(record);
-      },
+      onClick: (record) => handleEditAppointment(record),
       visible: (record) => record.status === "pending",
       disabled: (record) => record.status !== "pending",
+    },
+    {
+      label: "Reschedule",
+      icon: <CalendarEdit size={16} />,
+      onClick: (record) => handleRescheduleAppointment(record),
+      visible: (record) =>
+        record.status === "pending" ||
+        record.status === "accepted" ||
+        record.status === "serving",
     },
     {
       label: "Cancel Appointment",
@@ -555,6 +609,14 @@ const AllAppointment: React.FC = () => {
         setIsCancelModalOpen(true);
       },
       visible: (record) => record.status === "accepted",
+    },
+    {
+      label: "Upload prescription",
+      icon: <DocumentUpload size={16} />,
+      onClick: (record) => handleUploadPrescription(record),
+      visible: (record) =>
+        isStaff &&
+        (record.status === "completed" || record.status === "serving"),
     },
 
     // {
@@ -970,10 +1032,23 @@ const AllAppointment: React.FC = () => {
             setIsCancelModalOpen(false);
             setAppointmentToCancel(null);
           }}
-          appointment={appointmentToCancel}
-          onSubmit={() => {
-            setSnackbarMessage("Appointment cancel request submitted");
+          appointment={
+            appointmentToCancel
+              ? {
+                  id: appointmentToCancel.id,
+                  patientName: appointmentToCancel.patientName,
+                }
+              : null
+          }
+          onSuccess={() => {
+            refetch();
+            setSnackbarMessage("Appointment cancelled.");
             setSnackbarType("success");
+            setShowSnackbar(true);
+          }}
+          onError={(message) => {
+            setSnackbarMessage(message);
+            setSnackbarType("error");
             setShowSnackbar(true);
           }}
         />
@@ -987,6 +1062,38 @@ const AllAppointment: React.FC = () => {
           onClose={handleCloseEditModal}
           appointment={appointmentToEdit}
           onSave={handleAppointmentUpdated}
+        />
+
+        {/* Reschedule Modal */}
+        <RescheduleAppointmentModal
+          isOpen={isRescheduleModalOpen}
+          onClose={() => {
+            setIsRescheduleModalOpen(false);
+            setAppointmentToReschedule(null);
+          }}
+          appointment={appointmentToReschedule}
+          onSuccess={() => {
+            refetch();
+            setSnackbarMessage("Appointment rescheduled.");
+            setSnackbarType("success");
+            setShowSnackbar(true);
+          }}
+        />
+
+        {/* Upload Prescription Modal */}
+        <UploadPrescriptionModal
+          isOpen={isUploadPrescriptionModalOpen}
+          onClose={() => {
+            setIsUploadPrescriptionModalOpen(false);
+            setAppointmentForPrescription(null);
+          }}
+          appointmentId={appointmentForPrescription?._id ?? null}
+          onSuccess={() => {
+            refetch();
+            setSnackbarMessage("Prescription uploaded.");
+            setSnackbarType("success");
+            setShowSnackbar(true);
+          }}
         />
 
         {/* Appointment Detail Modal */}
@@ -1003,6 +1110,21 @@ const AllAppointment: React.FC = () => {
                   name: selectedAppointment.patientName,
                 }
               : null
+          }
+          onOpenUploadPrescription={
+            isStaff
+              ? (id) => {
+                  const full = appointmentsResponse?.data?.find(
+                    (apt) => apt._id === id,
+                  );
+                  if (full) {
+                    setIsDetailModalOpen(false);
+                    setSelectedAppointment(null);
+                    setAppointmentForPrescription(full);
+                    setIsUploadPrescriptionModalOpen(true);
+                  }
+                }
+              : undefined
           }
         />
       </div>
